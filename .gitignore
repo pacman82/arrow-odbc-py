@@ -1,0 +1,11 @@
+# Python
+**/__pycache__/
+
+# Pytest
+/.pytest_cache/
+
+# Poetry
+poetry.lock
+
+# Build
+/dist/
