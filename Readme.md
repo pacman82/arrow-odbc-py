@@ -15,7 +15,7 @@ Fill Apache Arrow arrays from ODBC data sources. This crate is build on top of t
 ## Usage
 
 ```python
-import arrow_odbc
+from arrow_odbc import Connection
 ```
 
 ## Matching of ODBC to Arrow types
