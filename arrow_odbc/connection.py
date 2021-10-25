@@ -24,10 +24,14 @@ class Connection:
         <https://www.connectionstrings.com/>
         """
         connection_string_bytes = connection_string.encode("utf-8")
+
+        # In case of an error this is going to be a non null handle to the error
+        error_out = ffi.new("Error **")
+
         native_connection = lib.arrow_odbc_connect_with_connection_string(
-            connection_string_bytes, len(connection_string_bytes)
+            connection_string_bytes, len(connection_string_bytes), error_out
         )
         if native_connection == ffi.NULL:
-            raise OdbcError()
+            raise OdbcError(error_out[0])
         self = cls()
         return self
