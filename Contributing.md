@@ -1,3 +1,7 @@
+# Contributions
+
+Whether they be in code, interesting feature suggestions, design critique or bug reports, all contributions are welcome. Please start an issue, before investing a lot of work. This helps avoid situations there I would feel the need to reject a large body of work, and a lot of your time has been wasted. `odbc-arrow-py` is a pet project and a work of love, which implies that I maintain it in my spare time. Please understand that I may not always react immediately. If you contribute code to fix a Bug, please also contribute the test to fix it. Happy contributing.
+
 ## Local build and test setup
 
 Running local tests currently requires:
@@ -15,7 +19,6 @@ You can install these requirements from here:
 * [Microsoft ODBC Driver 17 for SQL Server](https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15).
 * An ODBC Driver manager if you are not on windows: <http://www.unixodbc.org/>
 * There are many ways to setup Python on a system here is one: <https://www.python.org/downloads/>
-
 
 With docker installed run:
 
@@ -35,4 +38,18 @@ We now can execute the tests in typical fashion using:
 
 ```shell
 pytest
+```
+
+## Regenerating the C-Bindings
+
+In case your contribution needs to touch upon the C-Interface you want to install the `cbindgen` command line tool using:
+
+```shell
+cargo install cbindgen
+```
+
+You can then generate the `arrow_odbc.h` header file using:
+
+```shell
+cbindgen -o arrow_odbc.h
 ```
