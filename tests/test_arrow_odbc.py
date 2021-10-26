@@ -1,6 +1,6 @@
 from pytest import raises
 
-from arrow_odbc import Connection, OdbcError
+from arrow_odbc import Connection, Error
 
 MSSQL = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;"
 
@@ -11,7 +11,7 @@ def test_should_report_error_on_invalid_connection_string():
     this connection fail, but with a nice error.
     """
     with raises(
-        OdbcError, match="Data source name not found and no default driver specified"
+        Error, match="Data source name not found and no default driver specified"
     ):
         connection = Connection.from_connection_string("foo")
 
@@ -24,6 +24,6 @@ def test_should_report_error_on_invalid_query():
 
     connection = Connection.from_connection_string(MSSQL)
     with raises(
-        OdbcError, match="Invalid object name 'Foo'"
+        Error, match="Invalid object name 'Foo'"
     ):
         connection.read_arrow_batches(query, batch_size=100)

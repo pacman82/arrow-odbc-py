@@ -3,12 +3,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-typedef struct ArrowOdbcReader ArrowOdbcReader;
-
 /**
  * Handle to an error emmitted by arrow odbc
  */
-typedef struct Error Error;
+typedef struct ArrowOdbcError ArrowOdbcError;
+
+typedef struct ArrowOdbcReader ArrowOdbcReader;
 
 /**
  * Opaque type to transport connection to an ODBC Datasource over language boundry
@@ -26,7 +26,7 @@ typedef struct OdbcConnection OdbcConnection;
  */
 struct OdbcConnection *arrow_odbc_connect_with_connection_string(const uint8_t *connection_string_buf,
                                                                  uintptr_t connection_string_len,
-                                                                 struct Error **error_out);
+                                                                 struct ArrowOdbcError **error_out);
 
 /**
  * Frees the resources associated with an OdbcConnection
@@ -50,7 +50,7 @@ struct ArrowOdbcReader *arrow_odbc_reader_make(struct OdbcConnection *connection
                                                const uint8_t *query_buf,
                                                uintptr_t query_len,
                                                uintptr_t batch_size,
-                                               struct Error **error_out);
+                                               struct ArrowOdbcError **error_out);
 
 /**
  * Deallocates the resources associated with an error.
@@ -59,7 +59,7 @@ struct ArrowOdbcReader *arrow_odbc_reader_make(struct OdbcConnection *connection
  *
  * Error must be a valid non null pointer to an Error.
  */
-void odbc_error_free(struct Error *error);
+void arrow_odbc_error_free(struct ArrowOdbcError *error);
 
 /**
  * A zero terminated string describing the error
@@ -68,4 +68,4 @@ void odbc_error_free(struct Error *error);
  *
  * Error must be a valid non null pointer to an Error.
  */
-const char *odbc_error_message(const struct Error *error);
+const char *arrow_odbc_error_message(const struct ArrowOdbcError *error);

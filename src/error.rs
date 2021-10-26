@@ -2,16 +2,16 @@ use std::{ffi::CString, os::raw::c_char, ptr::NonNull};
 use arrow_odbc::odbc_api;
 
 /// Handle to an error emmitted by arrow odbc
-pub struct Error{
+pub struct ArrowOdbcError{
     message: CString
 }
 
-impl Error {
-    pub fn new(source: odbc_api::Error) -> Error {
+impl ArrowOdbcError {
+    pub fn new(source: odbc_api::Error) -> ArrowOdbcError {
         let bytes = source.to_string().into_bytes();
         // Terminating Nul will be appended by `new`.
         let message = CString::new(bytes).unwrap();
-        Error { message }
+        ArrowOdbcError { message }
     }
 }
 
@@ -21,7 +21,7 @@ impl Error {
 /// 
 /// Error must be a valid non null pointer to an Error.
 #[no_mangle]
-pub unsafe extern "C" fn odbc_error_free(error: NonNull<Error>){
+pub unsafe extern "C" fn arrow_odbc_error_free(error: NonNull<ArrowOdbcError>){
     Box::from_raw(error.as_ptr());
 }
 
@@ -31,7 +31,7 @@ pub unsafe extern "C" fn odbc_error_free(error: NonNull<Error>){
 /// 
 /// Error must be a valid non null pointer to an Error.
 #[no_mangle]
-pub unsafe extern "C" fn odbc_error_message(error: *const Error) -> * const c_char {
+pub unsafe extern "C" fn arrow_odbc_error_message(error: *const ArrowOdbcError) -> * const c_char {
     let error = &*error;
     error.message.as_ptr()
 }

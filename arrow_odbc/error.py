@@ -1,7 +1,6 @@
-from ._arrow_odbc_c import lib, ffi
+from ._arrow_odbc_c import lib, ffi # type: ignore
 
-
-class OdbcError(Exception):
+class Error(Exception):
     """
     An error emmited by the ODBC API.
     """
@@ -10,10 +9,10 @@ class OdbcError(Exception):
         self.handle = handle
 
     def message(self) -> str:
-        return ffi.string(lib.odbc_error_message(self.handle)).decode("utf-8")
+        return ffi.string(lib.arrow_odbc_error_message(self.handle)).decode("utf-8")
 
     def __str__(self) -> str:
         return f"{self.message()}"
 
     def __del__(self):
-        lib.odbc_error_free(self.handle)
+        lib.arrow_odbc_error_free(self.handle)

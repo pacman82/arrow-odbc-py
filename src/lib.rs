@@ -8,7 +8,7 @@ use std::{
 use arrow_odbc::odbc_api::{Connection, Environment};
 use lazy_static::lazy_static;
 
-pub use error::{odbc_error_free, odbc_error_message, Error};
+pub use error::{arrow_odbc_error_free, arrow_odbc_error_message, ArrowOdbcError};
 
 lazy_static! {
     static ref ENV: Environment = Environment::new().unwrap();
@@ -28,7 +28,7 @@ pub struct OdbcConnection(Connection<'static>);
 pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
     connection_string_buf: *const u8,
     connection_string_len: usize,
-    error_out: *mut *mut Error,
+    error_out: *mut *mut ArrowOdbcError,
 ) -> Option<NonNull<OdbcConnection>> {
     let connection_string = slice::from_raw_parts(connection_string_buf, connection_string_len);
     let connection_string = str::from_utf8(connection_string).unwrap();
@@ -39,7 +39,7 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
             NonNull::new(Box::into_raw(Box::new(OdbcConnection(connection))))
         }
         Err(error) => {
-            *error_out = Box::into_raw(Box::new(Error::new(error)));
+            *error_out = Box::into_raw(Box::new(ArrowOdbcError::new(error)));
             None
         }
     }
@@ -70,7 +70,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     query_buf: * const u8,
     query_len: usize,
     batch_size: usize,
-    error_out: *mut *mut Error,
+    error_out: *mut *mut ArrowOdbcError,
 ) -> Option<NonNull<ArrowOdbcReader>> {
     let query = slice::from_raw_parts(query_buf, query_len);
     let query = str::from_utf8(query).unwrap();
@@ -78,7 +78,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     match connection.as_ref().0.execute(query, ()) {
         Ok(_) => todo!(),
         Err(error) => {
-            *error_out = Box::into_raw(Box::new(Error::new(error)));
+            *error_out = Box::into_raw(Box::new(ArrowOdbcError::new(error)));
             None
         }
     }
