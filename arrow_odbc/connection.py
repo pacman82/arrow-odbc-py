@@ -11,8 +11,11 @@ class Connection:
     An ODBC connection. Can be used to create Arrow Odbc readers.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, native_connection):
+        self.native_connection = native_connection
+
+    def __del__(self):
+        lib.odbc_connection_free(self.native_connection)
 
     @classmethod
     def from_connection_string(cls: Type[T], connection_string: str) -> T:
@@ -28,10 +31,28 @@ class Connection:
         # In case of an error this is going to be a non null handle to the error
         error_out = ffi.new("Error **")
 
+        # Open connection to ODBC Data Source
         native_connection = lib.arrow_odbc_connect_with_connection_string(
             connection_string_bytes, len(connection_string_bytes), error_out
         )
-        if native_connection == ffi.NULL:
+        # See if we connected successfully and return an error if not
+        if error_out[0] != ffi.NULL:
             raise OdbcError(error_out[0])
-        self = cls()
+
+        # Create self
+        self = cls(native_connection)
         return self
+
+    def read_arrow_batches(self, query: str, batch_size=100):
+        query = query.encode("utf-8")
+
+        # In case of an error this is going to be a non null handle to the error
+        error_out = ffi.new("Error **")
+
+        lib.arrow_odbc_reader_make(
+            self.native_connection, query, len(query), batch_size, error_out
+        )
+
+        # See if we connected successfully and return an error if not
+        if error_out[0] != ffi.NULL:
+            raise OdbcError(error_out[0])

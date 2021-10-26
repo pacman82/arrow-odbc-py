@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+typedef struct ArrowOdbcReader ArrowOdbcReader;
+
 /**
  * Handle to an error emmitted by arrow odbc
  */
@@ -27,6 +29,30 @@ struct OdbcConnection *arrow_odbc_connect_with_connection_string(const uint8_t *
                                                                  struct Error **error_out);
 
 /**
+ * Frees the resources associated with an OdbcConnection
+ *
+ * # Safety
+ *
+ * `connection` must point to a valid OdbcConnection.
+ */
+void odbc_connection_free(struct OdbcConnection *connection);
+
+/**
+ * Creates an Arrow ODBC reader instance
+ *
+ * # Safety
+ *
+ * * `connection` must point to a valid OdbcConnection.
+ * * `query_buf` must point to a valid utf-8 string
+ * * `query_len` describes the len of `query_buf` in bytes.
+ */
+struct ArrowOdbcReader *arrow_odbc_reader_make(struct OdbcConnection *connection,
+                                               const uint8_t *query_buf,
+                                               uintptr_t query_len,
+                                               uintptr_t batch_size,
+                                               struct Error **error_out);
+
+/**
  * Deallocates the resources associated with an error.
  *
  * # Safety
@@ -36,7 +62,7 @@ struct OdbcConnection *arrow_odbc_connect_with_connection_string(const uint8_t *
 void odbc_error_free(struct Error *error);
 
 /**
- * Deallocates the resources associated with an error.
+ * A zero terminated string describing the error
  *
  * # Safety
  *

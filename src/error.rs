@@ -1,4 +1,4 @@
-use std::{ffi::CString, os::raw::c_char};
+use std::{ffi::CString, os::raw::c_char, ptr::NonNull};
 use arrow_odbc::odbc_api;
 
 /// Handle to an error emmitted by arrow odbc
@@ -21,11 +21,11 @@ impl Error {
 /// 
 /// Error must be a valid non null pointer to an Error.
 #[no_mangle]
-pub unsafe extern "C" fn odbc_error_free(error: *mut Error){
-    Box::from_raw(error);
+pub unsafe extern "C" fn odbc_error_free(error: NonNull<Error>){
+    Box::from_raw(error.as_ptr());
 }
 
-/// Deallocates the resources associated with an error.
+/// A zero terminated string describing the error
 /// 
 /// # Safety
 /// 
