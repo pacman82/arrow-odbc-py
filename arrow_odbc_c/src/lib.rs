@@ -1,3 +1,5 @@
+//! Defines C bindings for `arrow-odbc` to enable using it from Python.
+
 mod error;
 
 use std::{
