@@ -3,6 +3,9 @@ name = "arrow-odbc-c"
 version = "0.1.0"
 edition = "2021"
 
+# This is only published as part of a python wheel, not as a stand alone crate.
+publish = false
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]

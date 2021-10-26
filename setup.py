@@ -9,7 +9,7 @@ def build_native(spec):
     # build rust library
     build = spec.add_external_build(
         cmd=['cargo', 'build', '--release'],
-        path='.'
+        path='arrow_odbc_c'
     )
 
     spec.add_cffi_module(

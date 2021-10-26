@@ -16,6 +16,5 @@
 /arrow_odbc/_arrow_odbc_c__ffi.py
 /arrow_odbc/_arrow_odbc_c.py
 
-
 # Cargo
-/target
+/arrow_odbc_c/target

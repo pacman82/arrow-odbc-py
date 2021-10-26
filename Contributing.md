@@ -51,5 +51,6 @@ cargo install cbindgen
 You can then generate the `arrow_odbc.h` header file using:
 
 ```shell
+cd arrow_odbc_c
 cbindgen -o arrow_odbc.h
 ```
