@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from typing import Any
-from ._arrow_odbc_c import lib, ffi
-from .error import Error
+
+from ._arrow_odbc_c import ffi, lib
+from .error import make_error_out, raise_on_error
+
 
 class Connection:
     """
@@ -27,15 +29,14 @@ class Connection:
         connection_string_bytes = connection_string.encode("utf-8")
 
         # In case of an error this is going to be a non null handle to the error
-        error_out = ffi.new("ArrowOdbcError **")
+        error_out = make_error_out()
 
         # Open connection to ODBC Data Source
         native_connection = lib.arrow_odbc_connect_with_connection_string(
             connection_string_bytes, len(connection_string_bytes), error_out
         )
         # See if we connected successfully and return an error if not
-        if error_out[0] != ffi.NULL:
-            raise Error(error_out[0])
+        raise_on_error(error_out)
 
         # Create self
         self = cls(native_connection)
@@ -45,12 +46,12 @@ class Connection:
         query_bytes = query.encode("utf-8")
 
         # In case of an error this is going to be a non null handle to the error
-        error_out = ffi.new("ArrowOdbcError **")
+        error_out = make_error_out()
 
         lib.arrow_odbc_reader_make(
             self.native_connection, query_bytes, len(query_bytes), batch_size, error_out
         )
 
-        # See if we connected successfully and return an error if not
-        if error_out[0] != ffi.NULL:
-            raise Error(error_out[0])
+        # See if we managed to execute the query successfully and return an
+        # error if not
+        raise_on_error(error_out)
