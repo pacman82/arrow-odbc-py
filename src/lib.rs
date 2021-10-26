@@ -1,7 +1,11 @@
-use std::{ffi::CString, os::raw::c_char, ptr::null_mut, slice, str};
+mod error;
 
-use arrow_odbc::odbc_api::{self, Environment};
+use std::{ptr::null_mut, slice, str};
+
+use arrow_odbc::odbc_api::Environment;
 use lazy_static::lazy_static;
+
+pub use error::{Error, odbc_error_free, odbc_error_message};
 
 lazy_static! {
     static ref ENV: Environment = Environment::new().unwrap();
@@ -9,40 +13,6 @@ lazy_static! {
 
 /// Opaque type to transport connection to an ODBC Datasource over language boundry
 pub struct OdbcConnection();
-
-pub struct Error{
-    message: CString
-}
-
-impl Error {
-    pub fn new(source: odbc_api::Error) -> Error {
-        let mut bytes = source.to_string().into_bytes();
-        // Terminating Nul will be appended by `new`.
-        let message = CString::new(bytes).unwrap();
-        Error { message }
-    }
-}
-
-/// Deallocates the resources associated with an error.
-/// 
-/// # Safety
-/// 
-/// Error must be a valid non null pointer to an Error.
-#[no_mangle]
-pub unsafe extern "C" fn odbc_error_free(error: *mut Error){
-    Box::from_raw(error);
-}
-
-/// Deallocates the resources associated with an error.
-/// 
-/// # Safety
-/// 
-/// Error must be a valid non null pointer to an Error.
-#[no_mangle]
-pub unsafe extern "C" fn odbc_error_message(error: *const Error) -> * const c_char {
-    let error = &*error;
-    error.message.as_ptr()
-}
 
 /// Allocate and open an ODBC connection using the specified connection string. In case of an error
 /// this function returns a NULL pointer.
