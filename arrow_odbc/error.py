@@ -12,7 +12,7 @@ class Error(Exception):
         return ffi.string(lib.arrow_odbc_error_message(self.handle)).decode("utf-8")
 
     def __str__(self) -> str:
-        return f"{self.message()}"
+        return self.message()
 
     def __del__(self):
         lib.arrow_odbc_error_free(self.handle)
