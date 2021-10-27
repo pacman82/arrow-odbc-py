@@ -4,7 +4,9 @@ class BatchReader:
     """
     Iterates over Arrow batches from an ODBC data source
     """
-    def __init__(self, handle):
+    def __init__(self, handle, connection):
+        # Must keep connection alive, for the lifetime of the reader
+        self.connection = connection
         self.handle = handle
 
     def __del__(self):

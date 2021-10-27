@@ -1,5 +1,7 @@
 import os
 
+from subprocess import run
+
 from pytest import raises
 
 from arrow_odbc import Connection, Error
@@ -44,7 +46,7 @@ def test_insert_statement():
     query = f"INSERT INTO {table} (a) VALUES (42);"
 
     connection = Connection.from_connection_string(MSSQL)
-    
+
     assert connection.read_arrow_batches(query, batch_size=100) is None
 
 
@@ -61,7 +63,27 @@ def test_empty_table():
     connection = Connection.from_connection_string(MSSQL)
     reader = connection.read_arrow_batches(query, batch_size=100)
 
-    with raises(
-        StopIteration
-    ):
+    with raises(StopIteration):
         next(iter(reader))
+
+
+def test_one_row():
+    """
+    Query a table with one row. Should return one batch
+    """
+    table = "SmallBatch"
+    os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv query -c "{MSSQL}" "CREATE TABLE {table} (a int);"')
+    rows = "a\n42"
+    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+
+    query = f"SELECT * FROM {table}"
+
+    connection = Connection.from_connection_string(MSSQL)
+    reader = connection.read_arrow_batches(query, batch_size=100)
+    it = iter(reader)
+
+    batch = next(it)
+
+    with raises(StopIteration):
+        next(it)

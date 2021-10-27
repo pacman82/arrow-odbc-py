@@ -1,5 +1,4 @@
-use arrow_odbc::odbc_api;
-use std::{ffi::CString, os::raw::c_char, ptr::NonNull};
+use std::{ffi::CString, fmt::Display, os::raw::c_char, ptr::NonNull};
 
 /// Handle to an error emmitted by arrow odbc
 pub struct ArrowOdbcError {
@@ -7,9 +6,8 @@ pub struct ArrowOdbcError {
 }
 
 impl ArrowOdbcError {
-
-    pub fn from_odbc_error(source: odbc_api::Error) -> ArrowOdbcError {
-        let bytes = source.to_string().into_bytes();
+    pub fn new(source: impl Display) -> ArrowOdbcError {
+        let bytes = source.to_string();
         // Terminating Nul will be appended by `new`.
         let message = CString::new(bytes).unwrap();
         ArrowOdbcError { message }
@@ -51,7 +49,7 @@ macro_rules! try_odbc {
                 value
             }
             Err(error) => {
-                *$error_out = ArrowOdbcError::from_odbc_error(error).into_raw();
+                *$error_out = ArrowOdbcError::new(error).into_raw();
                 // Early return in case of error
                 return null_mut();
             }
