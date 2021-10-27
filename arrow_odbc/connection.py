@@ -68,4 +68,4 @@ class Connection:
             # The query ran successfully but did not produce a result set
             return None
         else:
-            return BatchReader(reader)
+            return BatchReader(reader, self)
