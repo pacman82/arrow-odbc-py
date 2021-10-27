@@ -20,19 +20,23 @@ You can install these requirements from here:
 * An ODBC Driver manager if you are not on windows: <http://www.unixodbc.org/>
 * There are many ways to setup Python on a system here is one: <https://www.python.org/downloads/>
 
-With docker installed run:
+With docker installed we start the Microsoft SQL Server used for testing:
 
 ```shell
 docker-compose up
 ```
 
-This starts the Microsoft SQL Server used for testing.
+Tests rely on `odbcsv` to fill the test db with data:
+
+```shell
+cargo install odbcsv
+```
+
+To install this package with the requirements for testing.
 
 ```shell
 pip install -e .[test]
 ```
-
-To install this package with the requirements for testing.
 
 We now can execute the tests in typical fashion using:
 
