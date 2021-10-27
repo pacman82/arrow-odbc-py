@@ -7,14 +7,6 @@ pub struct ArrowOdbcError {
 }
 
 impl ArrowOdbcError {
-    pub fn no_result_set() -> Self {
-        Self {
-            message: CString::new(
-                "The statement has been succesfully executed, but it did not produce a result set.",
-            )
-            .unwrap(),
-        }
-    }
 
     pub fn from_odbc_error(source: odbc_api::Error) -> ArrowOdbcError {
         let bytes = source.to_string().into_bytes();
@@ -61,7 +53,7 @@ macro_rules! try_odbc {
             Err(error) => {
                 *$error_out = ArrowOdbcError::from_odbc_error(error).into_raw();
                 // Early return in case of error
-                return None;
+                return null_mut();
             }
         }
     };

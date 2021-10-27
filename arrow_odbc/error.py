@@ -8,14 +8,14 @@ class Error(Exception):
     def __init__(self, handle):
         self.handle = handle
 
+    def __del__(self):
+        lib.arrow_odbc_error_free(self.handle)
+
     def message(self) -> str:
         return ffi.string(lib.arrow_odbc_error_message(self.handle)).decode("utf-8")
 
     def __str__(self) -> str:
         return self.message()
-
-    def __del__(self):
-        lib.arrow_odbc_error_free(self.handle)
 
 
 def make_error_out():

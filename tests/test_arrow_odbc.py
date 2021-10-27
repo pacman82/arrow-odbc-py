@@ -34,7 +34,7 @@ def test_should_report_error_on_invalid_query():
 
 def test_insert_statement():
     """
-    Should return an error if statement does not produce a result set
+    BatchReader should be `None` if statement does not produce a result set.
     """
     table = "EmptyResult"
     os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
@@ -44,16 +44,13 @@ def test_insert_statement():
     query = f"INSERT INTO {table} (a) VALUES (42);"
 
     connection = Connection.from_connection_string(MSSQL)
-    with raises(
-        Error,
-        match="The statement has been succesfully executed, but it did not produce a result set.",
-    ):
-        connection.read_arrow_batches(query, batch_size=100)
+    
+    assert connection.read_arrow_batches(query, batch_size=100) is None
 
 
 def test_empty_table():
     """
-    Should return an empty iterator querying an empty table
+    Should return an empty iterator querying an empty table.
     """
     table = "Empty"
     os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')

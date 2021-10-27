@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 from ._arrow_odbc_c import ffi, lib
 from .error import make_error_out, raise_on_error
@@ -43,13 +43,20 @@ class Connection:
         self = cls(native_connection)
         return self
 
-    def read_arrow_batches(self, query: str, batch_size=100) -> BatchReader:
+    def read_arrow_batches(self, query: str, batch_size=100) -> Optional[BatchReader]:
+        """
+        Execute the query and read the result as an iterator over Arrow batches.
+        
+        In case the query does not produce a result set (e.g. in case of an INSERT statement), None
+        is returned instead of a BatchReader.
+        """
+
         query_bytes = query.encode("utf-8")
 
         # In case of an error this is going to be a non null handle to the error
         error_out = make_error_out()
 
-        lib.arrow_odbc_reader_make(
+        reader = lib.arrow_odbc_reader_make(
             self.native_connection, query_bytes, len(query_bytes), batch_size, error_out
         )
 
@@ -57,4 +64,8 @@ class Connection:
         # error if not
         raise_on_error(error_out)
 
-        return BatchReader()
+        if reader == ffi.NULL:
+            # The query ran successfully but did not produce a result set
+            return None
+        else:
+            return BatchReader(reader)

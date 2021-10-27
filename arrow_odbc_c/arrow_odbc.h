@@ -53,6 +53,15 @@ struct ArrowOdbcReader *arrow_odbc_reader_make(struct OdbcConnection *connection
                                                struct ArrowOdbcError **error_out);
 
 /**
+ * Frees the resources associated with an ArrowOdbcReader
+ *
+ * # Safety
+ *
+ * `connection` must point to a valid ArrowOdbcReader.
+ */
+void arrow_odbc_reader_free(struct ArrowOdbcReader *connection);
+
+/**
  * Deallocates the resources associated with an error.
  *
  * # Safety
