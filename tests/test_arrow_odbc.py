@@ -1,3 +1,5 @@
+import os
+
 from pytest import raises
 
 from arrow_odbc import Connection, Error
@@ -27,3 +29,19 @@ def test_should_report_error_on_invalid_query():
         Error, match="Invalid object name 'Foo'"
     ):
         connection.read_arrow_batches(query, batch_size=100)
+
+
+def test_empty_table():
+    """
+    Should return an empty iterator querying an empty table
+    """
+
+    # Given
+    table = "Empty"
+    os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv query -c "{MSSQL}" "CREATE TABLE {table} (a int);"')
+
+    query = f"SELECT * FROM {table}" # This table does not exist in the datasource
+
+    connection = Connection.from_connection_string(MSSQL)
+    connection.read_arrow_batches(query, batch_size=100)

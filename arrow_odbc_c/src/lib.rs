@@ -78,7 +78,10 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     let query = str::from_utf8(query).unwrap();
 
     match connection.as_ref().0.execute(query, ()) {
-        Ok(_) => todo!(),
+        Ok(_) => {
+            *error_out = null_mut();
+            None
+        },
         Err(error) => {
             *error_out = Box::into_raw(Box::new(ArrowOdbcError::new(error)));
             None
