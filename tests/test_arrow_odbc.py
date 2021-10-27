@@ -63,3 +63,8 @@ def test_empty_table():
 
     connection = Connection.from_connection_string(MSSQL)
     reader = connection.read_arrow_batches(query, batch_size=100)
+
+    with raises(
+        StopIteration
+    ):
+        next(iter(reader))

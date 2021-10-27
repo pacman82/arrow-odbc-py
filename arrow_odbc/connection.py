@@ -4,6 +4,7 @@ from typing import Any
 
 from ._arrow_odbc_c import ffi, lib
 from .error import make_error_out, raise_on_error
+from .reader import BatchReader
 
 
 class Connection:
@@ -42,7 +43,7 @@ class Connection:
         self = cls(native_connection)
         return self
 
-    def read_arrow_batches(self, query: str, batch_size=100):
+    def read_arrow_batches(self, query: str, batch_size=100) -> BatchReader:
         query_bytes = query.encode("utf-8")
 
         # In case of an error this is going to be a non null handle to the error
@@ -55,3 +56,5 @@ class Connection:
         # See if we managed to execute the query successfully and return an
         # error if not
         raise_on_error(error_out)
+
+        return BatchReader()
