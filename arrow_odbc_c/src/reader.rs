@@ -1,16 +1,19 @@
 use std::{
-    ptr::{null_mut, NonNull},
+    ptr::{null, null_mut, NonNull},
     slice, str,
 };
 
-use arrow_odbc::{OdbcReader, odbc_api::{CursorImpl, StatementConnection}};
+use arrow_odbc::{
+    odbc_api::{CursorImpl, StatementConnection},
+    OdbcReader,
+};
 
 use crate::{try_odbc, ArrowOdbcError, OdbcConnection};
 
 pub struct ArrowOdbcReader(OdbcReader<CursorImpl<StatementConnection<'static>>>);
 
 /// Creates an Arrow ODBC reader instance.
-/// 
+///
 /// Takes ownership of connection, also in case of an error.
 ///
 /// # Safety
@@ -48,4 +51,20 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_free(connection: NonNull<ArrowOdbcReader>) {
     Box::from_raw(connection.as_ptr());
+}
+
+pub struct ArrowOdbcBatch;
+
+#[no_mangle]
+pub unsafe extern "C" fn arrow_odbc_reader_next(
+    mut reader: NonNull<ArrowOdbcReader>,
+    error_out: *mut *mut ArrowOdbcError,
+) -> *mut ArrowOdbcBatch {
+    if let Some(result) = reader.as_mut().0.next() {
+        let batch = try_odbc!(result, error_out);
+        let mut batch = ArrowOdbcBatch;
+        &mut batch as *mut ArrowOdbcBatch
+    } else {
+        null_mut()
+    }
 }
