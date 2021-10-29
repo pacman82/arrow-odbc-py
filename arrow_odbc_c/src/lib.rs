@@ -4,7 +4,7 @@ mod error;
 mod reader;
 
 use std::{
-    ptr::{null_mut, NonNull},
+    ptr::null_mut,
     slice, str,
 };
 
@@ -43,14 +43,4 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
     );
 
     Box::into_raw(Box::new(OdbcConnection(connection)))
-}
-
-/// Frees the resources associated with an OdbcConnection
-///
-/// # Safety
-///
-/// `connection` must point to a valid OdbcConnection.
-#[no_mangle]
-pub unsafe extern "C" fn odbc_connection_free(connection: NonNull<OdbcConnection>) {
-    Box::from_raw(connection.as_ptr());
 }
