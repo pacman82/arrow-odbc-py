@@ -21,7 +21,15 @@ class BatchReader:
         return self
 
     def __next__(self):
-        raise StopIteration()
+        # In case of an error this is going to be a non null handle to the error
+        error_out = make_error_out()
+        batch = lib.arrow_odbc_reader_next(self.handle, error_out)
+        raise_on_error(error_out)
+
+        if batch == ffi.NULL:
+            raise StopIteration()
+        else:
+            batch
 
 
 def read_arrow_batches_from_odbc(
@@ -43,9 +51,6 @@ def read_arrow_batches_from_odbc(
     error_out = make_error_out()
 
     connection_string_bytes = connection_string.encode("utf-8")
-
-    # In case of an error this is going to be a non null handle to the error
-    error_out = make_error_out()
 
     # Open connection to ODBC Data Source
     connection = lib.arrow_odbc_connect_with_connection_string(

@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+typedef struct ArrowOdbcBatch ArrowOdbcBatch;
+
 /**
  * Handle to an error emmitted by arrow odbc
  */
@@ -29,16 +31,27 @@ struct OdbcConnection *arrow_odbc_connect_with_connection_string(const uint8_t *
                                                                  struct ArrowOdbcError **error_out);
 
 /**
- * Frees the resources associated with an OdbcConnection
+ * Deallocates the resources associated with an error.
  *
  * # Safety
  *
- * `connection` must point to a valid OdbcConnection.
+ * Error must be a valid non null pointer to an Error.
  */
-void odbc_connection_free(struct OdbcConnection *connection);
+void arrow_odbc_error_free(struct ArrowOdbcError *error);
 
 /**
- * Creates an Arrow ODBC reader instance
+ * A zero terminated string describing the error
+ *
+ * # Safety
+ *
+ * Error must be a valid non null pointer to an Error.
+ */
+const char *arrow_odbc_error_message(const struct ArrowOdbcError *error);
+
+/**
+ * Creates an Arrow ODBC reader instance.
+ *
+ * Takes ownership of connection, also in case of an error.
  *
  * # Safety
  *
@@ -61,20 +74,5 @@ struct ArrowOdbcReader *arrow_odbc_reader_make(struct OdbcConnection *connection
  */
 void arrow_odbc_reader_free(struct ArrowOdbcReader *connection);
 
-/**
- * Deallocates the resources associated with an error.
- *
- * # Safety
- *
- * Error must be a valid non null pointer to an Error.
- */
-void arrow_odbc_error_free(struct ArrowOdbcError *error);
-
-/**
- * A zero terminated string describing the error
- *
- * # Safety
- *
- * Error must be a valid non null pointer to an Error.
- */
-const char *arrow_odbc_error_message(const struct ArrowOdbcError *error);
+struct ArrowOdbcBatch *arrow_odbc_reader_next(struct ArrowOdbcReader *reader,
+                                              struct ArrowOdbcError **error_out);
