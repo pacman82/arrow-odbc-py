@@ -15,9 +15,6 @@ class Connection:
     def __init__(self, native_connection):
         self.native_connection = native_connection
 
-    def __del__(self):
-        lib.odbc_connection_free(self.native_connection)
-
     @classmethod
     def from_connection_string(cls: Any, connection_string: str) -> Connection:
         """
@@ -68,4 +65,4 @@ class Connection:
             # The query ran successfully but did not produce a result set
             return None
         else:
-            return BatchReader(reader, self)
+            return BatchReader(reader)

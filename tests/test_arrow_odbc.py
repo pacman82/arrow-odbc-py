@@ -4,7 +4,7 @@ from subprocess import run
 
 from pytest import raises
 
-from arrow_odbc import Connection, Error
+from arrow_odbc import read_arrow_batches_from_odbc, Error
 
 MSSQL = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;"
 
@@ -18,7 +18,9 @@ def test_should_report_error_on_invalid_connection_string():
     with raises(
         Error, match="Data source name not found and no default driver specified"
     ):
-        connection = Connection.from_connection_string("foo")
+        connection = read_arrow_batches_from_odbc(
+            query="SELECT * FROM Table", batch_size=100, connection_string="foo"
+        )
 
 
 def test_should_report_error_on_invalid_query():
@@ -29,9 +31,10 @@ def test_should_report_error_on_invalid_query():
     # 'Foo' does not exist in the datasource
     query = "SELECT * FROM Foo"
 
-    connection = Connection.from_connection_string(MSSQL)
     with raises(Error, match="Invalid object name 'Foo'"):
-        connection.read_arrow_batches(query, batch_size=100)
+        connection = read_arrow_batches_from_odbc(
+            query=query, batch_size=100, connection_string=MSSQL
+        )
 
 
 def test_insert_statement():
@@ -45,9 +48,12 @@ def test_insert_statement():
     # This statement does not produce a result set
     query = f"INSERT INTO {table} (a) VALUES (42);"
 
-    connection = Connection.from_connection_string(MSSQL)
-
-    assert connection.read_arrow_batches(query, batch_size=100) is None
+    assert (
+        read_arrow_batches_from_odbc(
+            query=query, batch_size=100, connection_string=MSSQL
+        )
+        is None
+    )
 
 
 def test_empty_table():
@@ -60,8 +66,9 @@ def test_empty_table():
 
     query = f"SELECT * FROM {table}"
 
-    connection = Connection.from_connection_string(MSSQL)
-    reader = connection.read_arrow_batches(query, batch_size=100)
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
 
     with raises(StopIteration):
         next(iter(reader))
@@ -79,8 +86,9 @@ def test_one_row():
 
     query = f"SELECT * FROM {table}"
 
-    connection = Connection.from_connection_string(MSSQL)
-    reader = connection.read_arrow_batches(query, batch_size=100)
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
     it = iter(reader)
 
     batch = next(it)
