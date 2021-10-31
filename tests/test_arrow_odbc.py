@@ -1,5 +1,7 @@
 import os
 
+import pyarrow as pa
+
 from subprocess import run
 
 from pytest import raises
@@ -78,7 +80,7 @@ def test_one_row():
     """
     Query a table with one row. Should return one batch
     """
-    table = "SmallBatch"
+    table = "OneRow"
     os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
     os.system(f'odbcsv query -c "{MSSQL}" "CREATE TABLE {table} (a int);"')
     rows = "a\n42"
@@ -95,3 +97,23 @@ def test_one_row():
 
     with raises(StopIteration):
         next(it)
+
+def test_schema():
+    """
+    Query a table with one row. Should return one batch
+    """
+    table = "TestSchema"
+    os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv query -c "{MSSQL}" "CREATE TABLE {table} (a INT, b VARCHAR(50));"')
+
+    query = f"SELECT * FROM {table}"
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+    
+    actual = reader.schema()
+
+    # Todo: understand difference:
+    # expected = pa.schema([('a', pa.int32()), ('b', pa.string())])
+    # assert expected == actual
+    

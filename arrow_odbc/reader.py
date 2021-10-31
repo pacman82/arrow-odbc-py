@@ -1,9 +1,11 @@
 from typing import Optional
 
+from pyarrow.cffi import ffi as arrow_ffi
+from pyarrow import DataType
+
 from ._arrow_odbc_c import ffi, lib
 from ._arrow_odbc_c import lib  # type: ignore
 from .error import make_error_out, raise_on_error
-
 
 class BatchReader:
     """
@@ -13,6 +15,9 @@ class BatchReader:
     def __init__(self, handle):
         # Must keep connection alive, for the lifetime of the reader
         self.handle = handle
+        # Use this member to cache the schema, since it is constant for all
+        # batches.
+        self.schema_ = None
 
     def __del__(self):
         lib.arrow_odbc_reader_free(self.handle)
@@ -30,6 +35,16 @@ class BatchReader:
             raise StopIteration()
         else:
             batch
+
+    def schema(self):
+        if self.schema_ is None:
+            # https://github.com/apache/arrow/blob/5ead37593472c42f61c76396dde7dcb8954bde70/python/pyarrow/tests/test_cffi.py
+            schema_out = arrow_ffi.new("struct ArrowSchema *")
+            error_out = make_error_out()
+            lib.arrow_odbc_reader_schema(self.handle, schema_out, error_out)
+            ptr_schema = int(ffi.cast("uintptr_t", schema_out))
+            self.schema_ = DataType._import_from_c(ptr_schema)        
+        return self.schema_
 
 
 def read_arrow_batches_from_odbc(
