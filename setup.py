@@ -40,7 +40,7 @@ setup(
     # ],
     extras_require=extras,
     setup_requires=["milksnake"],
-    install_requires=["milksnake"],
+    install_requires=["milksnake", "pyarrow"],
     milksnake_tasks=[build_native],
     zip_safe=False,
 )

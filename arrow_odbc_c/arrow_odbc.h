@@ -76,3 +76,7 @@ void arrow_odbc_reader_free(struct ArrowOdbcReader *connection);
 
 struct ArrowOdbcBatch *arrow_odbc_reader_next(struct ArrowOdbcReader *reader,
                                               struct ArrowOdbcError **error_out);
+
+void arrow_odbc_reader_schema(struct ArrowOdbcReader *reader,
+                              void *out_schema,
+                              struct ArrowOdbcError **error_out);

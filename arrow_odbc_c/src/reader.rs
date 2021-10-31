@@ -1,9 +1,11 @@
 use std::{
-    ptr::{null, null_mut, NonNull},
+    ffi::c_void,
+    ptr::{null_mut, NonNull},
     slice, str,
 };
 
 use arrow_odbc::{
+    arrow::{ffi::FFI_ArrowSchema, record_batch::RecordBatchReader},
     odbc_api::{CursorImpl, StatementConnection},
     OdbcReader,
 };
@@ -66,5 +68,25 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
         &mut batch as *mut ArrowOdbcBatch
     } else {
         null_mut()
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn arrow_odbc_reader_schema(
+    mut reader: NonNull<ArrowOdbcReader>,
+    out_schema: *mut c_void,
+    error_out: *mut *mut ArrowOdbcError,
+) {
+    let out_schema: *mut FFI_ArrowSchema = out_schema as *mut FFI_ArrowSchema;
+
+    let reader = &mut reader.as_mut().0;
+    let schema_ref = reader.schema();
+    let schema = (*schema_ref).clone();
+    match schema.try_into() {
+        Ok(schema_ffi) => {
+            *out_schema = schema_ffi;
+            *error_out = null_mut();
+        }
+        Err(e) => *error_out = ArrowOdbcError::new(e).into_raw(),
     }
 }
