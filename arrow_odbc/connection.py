@@ -43,7 +43,7 @@ class Connection:
     def read_arrow_batches(self, query: str, batch_size=100) -> Optional[BatchReader]:
         """
         Execute the query and read the result as an iterator over Arrow batches.
-        
+
         In case the query does not produce a result set (e.g. in case of an INSERT statement), None
         is returned instead of a BatchReader.
         """

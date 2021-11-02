@@ -5,12 +5,16 @@ use std::{
 };
 
 use arrow_odbc::{
-    arrow::{ffi::FFI_ArrowSchema, record_batch::RecordBatchReader},
+    arrow::{
+        array::{Array, StructArray},
+        ffi::FFI_ArrowSchema,
+        record_batch::RecordBatchReader,
+    },
     odbc_api::{CursorImpl, StatementConnection},
     OdbcReader,
 };
 
-use crate::{try_odbc, ArrowOdbcError, OdbcConnection};
+use crate::{ArrowOdbcError, OdbcConnection, success_or_null, try_unit};
 
 pub struct ArrowOdbcReader(OdbcReader<CursorImpl<StatementConnection<'static>>>);
 
@@ -36,9 +40,9 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
 
     let connection = *Box::from_raw(connection.as_ptr());
 
-    let maybe_cursor = try_odbc!(connection.0.into_cursor(query, ()), error_out);
+    let maybe_cursor = success_or_null!(connection.0.into_cursor(query, ()), error_out);
     if let Some(cursor) = maybe_cursor {
-        let reader = try_odbc!(OdbcReader::new(cursor, batch_size), error_out);
+        let reader = success_or_null!(OdbcReader::new(cursor, batch_size), error_out);
         Box::into_raw(Box::new(ArrowOdbcReader(reader)))
     } else {
         null_mut()
@@ -55,19 +59,22 @@ pub unsafe extern "C" fn arrow_odbc_reader_free(connection: NonNull<ArrowOdbcRea
     Box::from_raw(connection.as_ptr());
 }
 
-pub struct ArrowOdbcBatch;
-
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_next(
     mut reader: NonNull<ArrowOdbcReader>,
+    array_out: *mut *mut c_void,
+    schema_out: *mut *mut c_void,
     error_out: *mut *mut ArrowOdbcError,
-) -> *mut ArrowOdbcBatch {
+) {
     if let Some(result) = reader.as_mut().0.next() {
-        let batch = try_odbc!(result, error_out);
-        let mut batch = ArrowOdbcBatch;
-        &mut batch as *mut ArrowOdbcBatch
+        let batch = try_unit!(result, error_out);
+        let struct_array: StructArray = batch.into();
+        let (ffi_array_ptr, ffi_schema_ptr) = try_unit!(struct_array.to_raw(), error_out);
+        *array_out = ffi_array_ptr as *mut c_void;
+        *schema_out = ffi_schema_ptr as *mut c_void; 
     } else {
-        null_mut()
+        *array_out = null_mut();
+        *schema_out = null_mut();
     }
 }
 

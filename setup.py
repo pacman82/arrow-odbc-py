@@ -1,23 +1,25 @@
 from setuptools import setup
+
 # from setuptools_rust import Binding, RustExtension
 
 extras = {}
 extras["test"] = ["pytest"]
 # extras["docs"] = ["sphinx", "sphinx_rtd_theme", "setuptools_rust"]
 
+
 def build_native(spec):
     # build rust library
     build = spec.add_external_build(
-        cmd=['cargo', 'build', '--release'],
-        path='arrow_odbc_c'
+        cmd=["cargo", "build", "--release"], path="arrow_odbc_c"
     )
 
     spec.add_cffi_module(
-        module_path='arrow_odbc._arrow_odbc_c',
-        dylib=lambda: build.find_dylib('arrow_odbc_c', in_path='target/release'),
-        header_filename=lambda: build.find_header('arrow_odbc.h', in_path='.'),
-        rtld_flags=['NOW', 'NODELETE']
+        module_path="arrow_odbc._arrow_odbc_c",
+        dylib=lambda: build.find_dylib("arrow_odbc_c", in_path="target/release"),
+        header_filename=lambda: build.find_header("arrow_odbc.h", in_path="."),
+        rtld_flags=["NOW", "NODELETE"],
     )
+
 
 setup(
     name="arrow-odbc",

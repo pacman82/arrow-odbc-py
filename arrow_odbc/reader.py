@@ -1,11 +1,12 @@
 from typing import Optional
 
 from pyarrow.cffi import ffi as arrow_ffi
-from pyarrow import DataType
+from pyarrow import DataType, Array
 
 from ._arrow_odbc_c import ffi, lib
 from ._arrow_odbc_c import lib  # type: ignore
 from .error import make_error_out, raise_on_error
+
 
 class BatchReader:
     """
@@ -28,13 +29,17 @@ class BatchReader:
     def __next__(self):
         # In case of an error this is going to be a non null handle to the error
         error_out = make_error_out()
-        batch = lib.arrow_odbc_reader_next(self.handle, error_out)
+        array_out = ffi.new("void **")
+        schema_out = ffi.new("void **")
+        lib.arrow_odbc_reader_next(self.handle, array_out, schema_out, error_out)
         raise_on_error(error_out)
 
-        if batch == ffi.NULL:
+        if array_out[0] == ffi.NULL:
             raise StopIteration()
         else:
-            batch
+            array_ptr = int(ffi.cast("uintptr_t", array_out[0]))
+            schema_ptr = int(ffi.cast("uintptr_t", schema_out[0]))
+            return Array._import_from_c(array_ptr, schema_ptr)
 
     def schema(self):
         if self.schema_ is None:
@@ -43,7 +48,7 @@ class BatchReader:
             error_out = make_error_out()
             lib.arrow_odbc_reader_schema(self.handle, schema_out, error_out)
             ptr_schema = int(ffi.cast("uintptr_t", schema_out))
-            self.schema_ = DataType._import_from_c(ptr_schema)        
+            self.schema_ = DataType._import_from_c(ptr_schema)
         return self.schema_
 
 

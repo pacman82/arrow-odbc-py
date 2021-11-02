@@ -37,7 +37,7 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
     let connection_string = slice::from_raw_parts(connection_string_buf, connection_string_len);
     let connection_string = str::from_utf8(connection_string).unwrap();
 
-    let connection = try_odbc!(
+    let connection = success_or_null!(
         ENV.connect_with_connection_string(connection_string),
         error_out
     );

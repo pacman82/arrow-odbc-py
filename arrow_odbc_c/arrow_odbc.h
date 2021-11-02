@@ -3,8 +3,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-typedef struct ArrowOdbcBatch ArrowOdbcBatch;
-
 /**
  * Handle to an error emmitted by arrow odbc
  */
@@ -74,8 +72,10 @@ struct ArrowOdbcReader *arrow_odbc_reader_make(struct OdbcConnection *connection
  */
 void arrow_odbc_reader_free(struct ArrowOdbcReader *connection);
 
-struct ArrowOdbcBatch *arrow_odbc_reader_next(struct ArrowOdbcReader *reader,
-                                              struct ArrowOdbcError **error_out);
+void arrow_odbc_reader_next(struct ArrowOdbcReader *reader,
+                            void **array_out,
+                            void **schema_out,
+                            struct ArrowOdbcError **error_out);
 
 void arrow_odbc_reader_schema(struct ArrowOdbcReader *reader,
                               void *out_schema,

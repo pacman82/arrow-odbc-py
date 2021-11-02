@@ -93,10 +93,14 @@ def test_one_row():
     )
     it = iter(reader)
 
-    batch = next(it)
+    actual = next(it)
+
+    expected = pa.StructArray.from_arrays([pa.array([42], pa.int32())], names=["a"])
+    assert expected == actual
 
     with raises(StopIteration):
         next(it)
+
 
 def test_schema():
     """
@@ -104,16 +108,17 @@ def test_schema():
     """
     table = "TestSchema"
     os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv query -c "{MSSQL}" "CREATE TABLE {table} (a INT, b VARCHAR(50));"')
+    os.system(
+        f'odbcsv query -c "{MSSQL}" "CREATE TABLE {table} (a INT, b VARCHAR(50));"'
+    )
 
     query = f"SELECT * FROM {table}"
     reader = read_arrow_batches_from_odbc(
         query=query, batch_size=100, connection_string=MSSQL
     )
-    
+
     actual = reader.schema()
 
     # Todo: understand difference:
     # expected = pa.schema([('a', pa.int32()), ('b', pa.string())])
     # assert expected == actual
-    

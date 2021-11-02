@@ -1,4 +1,5 @@
-from ._arrow_odbc_c import lib, ffi # type: ignore
+from ._arrow_odbc_c import lib, ffi  # type: ignore
+
 
 class Error(Exception):
     """
@@ -33,4 +34,4 @@ def raise_on_error(error_out):
     Raises if the argument points to an error
     """
     if error_out[0] != ffi.NULL:
-            raise Error(error_out[0])
+        raise Error(error_out[0])
