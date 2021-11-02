@@ -20,7 +20,7 @@ def test_should_report_error_on_invalid_connection_string():
     with raises(
         Error, match="Data source name not found and no default driver specified"
     ):
-        connection = read_arrow_batches_from_odbc(
+        read_arrow_batches_from_odbc(
             query="SELECT * FROM Table", batch_size=100, connection_string="foo"
         )
 
@@ -34,7 +34,7 @@ def test_should_report_error_on_invalid_query():
     query = "SELECT * FROM Foo"
 
     with raises(Error, match="Invalid object name 'Foo'"):
-        connection = read_arrow_batches_from_odbc(
+        read_arrow_batches_from_odbc(
             query=query, batch_size=100, connection_string=MSSQL
         )
 
@@ -122,3 +122,21 @@ def test_schema():
     # Todo: understand difference:
     # expected = pa.schema([('a', pa.int32()), ('b', pa.string())])
     # assert expected == actual
+
+def test_usage():
+    """
+    Validate usage works like in the readme
+    """
+    table = "Usage"
+    os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv query -c "{MSSQL}" "CREATE TABLE {table} (a int);"')
+
+    query = f"SELECT * FROM {table}"
+
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+
+    for batch in reader:
+
+        pass

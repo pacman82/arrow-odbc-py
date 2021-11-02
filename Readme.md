@@ -15,7 +15,18 @@ Fill Apache Arrow arrays from ODBC data sources. This crate is build on top of t
 ## Usage
 
 ```python
-from arrow_odbc import Connection
+from arrow_odbc import read_arrow_batches_from_odbc
+
+connection_string="Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;"
+query = f"SELECT * FROM MyTable"
+
+reader = read_arrow_batches_from_odbc(
+    query=query, batch_size=1000, connection_string=connection_string
+)
+
+for batch in reader:
+    # Process arrow batch
+    pass
 ```
 
 ## Matching of ODBC to Arrow types

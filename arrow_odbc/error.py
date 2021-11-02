@@ -3,7 +3,7 @@ from ._arrow_odbc_c import lib, ffi  # type: ignore
 
 class Error(Exception):
     """
-    An error emmited by the ODBC API.
+    An error emmited by the arrow-odbc-py bindings.
     """
 
     def __init__(self, handle):

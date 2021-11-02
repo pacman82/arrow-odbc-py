@@ -14,6 +14,12 @@ class BatchReader:
     """
 
     def __init__(self, handle):
+        """
+        Low level constructor, users should rather invoke
+        `read_arrow_batches_from_odbc` in order to create instances of
+        `BatchReader`.
+        """
+
         # Must keep connection alive, for the lifetime of the reader
         self.handle = handle
         # Use this member to cache the schema, since it is constant for all
@@ -21,12 +27,16 @@ class BatchReader:
         self.schema_ = None
 
     def __del__(self):
+        # Free the resources associated with this handle.
         lib.arrow_odbc_reader_free(self.handle)
 
     def __iter__(self):
+        # Implement iterable protocol so reader can be used in for loops.
         return self
 
     def __next__(self):
+        # Implment iterator protocol
+        
         # In case of an error this is going to be a non null handle to the error
         error_out = make_error_out()
         array_out = ffi.new("void **")
@@ -42,6 +52,9 @@ class BatchReader:
             return Array._import_from_c(array_ptr, schema_ptr)
 
     def schema(self):
+        """
+        The arrow schema of the batches returned by this reader.
+        """
         if self.schema_ is None:
             # https://github.com/apache/arrow/blob/5ead37593472c42f61c76396dde7dcb8954bde70/python/pyarrow/tests/test_cffi.py
             schema_out = arrow_ffi.new("struct ArrowSchema *")
