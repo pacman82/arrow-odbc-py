@@ -16,11 +16,14 @@ use arrow_odbc::{
 
 use crate::{try_, ArrowOdbcError, OdbcConnection};
 
+/// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
+/// type also has ownership of the ODBC Connection handle.
 pub struct ArrowOdbcReader(OdbcReader<CursorImpl<StatementConnection<'static>>>);
 
 /// Creates an Arrow ODBC reader instance.
 ///
-/// Takes ownership of connection, also in case of an error.
+/// Takes ownership of connection even in case of an error. `reader_out` is assigned a NULL pointer
+/// in case the query does not return a result set.
 ///
 /// # Safety
 ///

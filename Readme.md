@@ -4,6 +4,12 @@
 
 Fill Apache Arrow arrays from ODBC data sources. This crate is build on top of the [`arrow`](https://pypi.org/project/arrow/) Python package and [`arrow-odbc`](https://crates.io/crates/arrow-odbc) Rust crate and enables you to read the data of an ODBC data source as sequence of Apache Arrow record batches.
 
+## State
+
+I am writing this mainly to learn how to exchange Arrow Arrays via the C Interface between Rust and Python. If you happen to know how this is supposed to work your review and contribution would be highly welcome (not that it wouldn't otherwise).
+
+Users looking for a mature solution for bulk fetching data from ODBC data sources in Python should also take a look at [`turbodbc`](https://github.com/blue-yonder/turbodbc) which has a helpful community and seen a lot more battle testing than this. Also this Python package is more narrow in Scope (which is a fancy way of saying it has less features), as it is only concerned with bulk fetching Arrow Arrays and nothing else.
+
 ## About Arrow
 
 > [Apache Arrow](https://arrow.apache.org/) defines a language-independent columnar memory format for flat and hierarchical data, organized for efficient analytic operations on modern hardware like CPUs and GPUs. The Arrow memory format also supports zero-copy reads for lightning-fast data access without serialization overhead.
@@ -25,7 +31,7 @@ reader = read_arrow_batches_from_odbc(
 )
 
 for batch in reader:
-    # Process arrow batch
+    # Process arrow batches
     pass
 ```
 
