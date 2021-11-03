@@ -41,34 +41,13 @@ pub unsafe extern "C" fn arrow_odbc_error_message(error: *const ArrowOdbcError) 
 }
 
 #[macro_export]
-macro_rules! success_or_null {
-    ($call:expr, $error_out:ident) => {
+macro_rules! try_ {
+    ($call:expr) => {
         match $call {
-            Ok(value) => {
-                *$error_out = null_mut();
-                value
-            }
+            Ok(value) => value,
             Err(error) => {
-                *$error_out = ArrowOdbcError::new(error).into_raw();
                 // Early return in case of error
-                return null_mut();
-            }
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! try_unit {
-    ($call:expr, $error_out:ident) => {
-        match $call {
-            Ok(value) => {
-                *$error_out = null_mut();
-                value
-            }
-            Err(error) => {
-                *$error_out = ArrowOdbcError::new(error).into_raw();
-                // Early return in case of error
-                return;
+                return ArrowOdbcError::new(error).into_raw();
             }
         }
     };

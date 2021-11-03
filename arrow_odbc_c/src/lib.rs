@@ -3,10 +3,7 @@
 mod error;
 mod reader;
 
-use std::{
-    ptr::null_mut,
-    slice, str,
-};
+use std::{ptr::null_mut, slice, str};
 
 use arrow_odbc::odbc_api::{Connection, Environment};
 use lazy_static::lazy_static;
@@ -32,15 +29,13 @@ pub struct OdbcConnection(Connection<'static>);
 pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
     connection_string_buf: *const u8,
     connection_string_len: usize,
-    error_out: *mut *mut ArrowOdbcError,
-) -> *mut OdbcConnection {
+    connection_out: *mut *mut OdbcConnection,
+) -> *mut ArrowOdbcError {
     let connection_string = slice::from_raw_parts(connection_string_buf, connection_string_len);
     let connection_string = str::from_utf8(connection_string).unwrap();
 
-    let connection = success_or_null!(
-        ENV.connect_with_connection_string(connection_string),
-        error_out
-    );
+    let connection = try_!(ENV.connect_with_connection_string(connection_string));
 
-    Box::into_raw(Box::new(OdbcConnection(connection)))
+    *connection_out = Box::into_raw(Box::new(OdbcConnection(connection)));
+    null_mut()
 }

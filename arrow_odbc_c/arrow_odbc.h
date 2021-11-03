@@ -24,9 +24,9 @@ typedef struct OdbcConnection OdbcConnection;
  * `connection_string_buf` must point to a valid utf-8 encoded string. `connection_string_len` must
  * hold the length of text in `connection_string_buf`.
  */
-struct OdbcConnection *arrow_odbc_connect_with_connection_string(const uint8_t *connection_string_buf,
+struct ArrowOdbcError *arrow_odbc_connect_with_connection_string(const uint8_t *connection_string_buf,
                                                                  uintptr_t connection_string_len,
-                                                                 struct ArrowOdbcError **error_out);
+                                                                 struct OdbcConnection **connection_out);
 
 /**
  * Deallocates the resources associated with an error.
@@ -57,11 +57,11 @@ const char *arrow_odbc_error_message(const struct ArrowOdbcError *error);
  * * `query_buf` must point to a valid utf-8 string
  * * `query_len` describes the len of `query_buf` in bytes.
  */
-struct ArrowOdbcReader *arrow_odbc_reader_make(struct OdbcConnection *connection,
-                                               const uint8_t *query_buf,
-                                               uintptr_t query_len,
-                                               uintptr_t batch_size,
-                                               struct ArrowOdbcError **error_out);
+struct ArrowOdbcError *arrow_odbc_reader_make(struct OdbcConnection *connection,
+                                              const uint8_t *query_buf,
+                                              uintptr_t query_len,
+                                              uintptr_t batch_size,
+                                              struct ArrowOdbcReader **reader_out);
 
 /**
  * Frees the resources associated with an ArrowOdbcReader
@@ -72,11 +72,8 @@ struct ArrowOdbcReader *arrow_odbc_reader_make(struct OdbcConnection *connection
  */
 void arrow_odbc_reader_free(struct ArrowOdbcReader *connection);
 
-void arrow_odbc_reader_next(struct ArrowOdbcReader *reader,
-                            void **array_out,
-                            void **schema_out,
-                            struct ArrowOdbcError **error_out);
+struct ArrowOdbcError *arrow_odbc_reader_next(struct ArrowOdbcReader *reader,
+                                              void **array_out,
+                                              void **schema_out);
 
-void arrow_odbc_reader_schema(struct ArrowOdbcReader *reader,
-                              void *out_schema,
-                              struct ArrowOdbcError **error_out);
+struct ArrowOdbcError *arrow_odbc_reader_schema(struct ArrowOdbcReader *reader, void *out_schema);

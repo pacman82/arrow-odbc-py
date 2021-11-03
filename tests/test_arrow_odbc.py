@@ -123,6 +123,7 @@ def test_schema():
     # expected = pa.schema([('a', pa.int32()), ('b', pa.string())])
     # assert expected == actual
 
+
 def test_usage():
     """
     Validate usage works like in the readme

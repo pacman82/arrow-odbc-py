@@ -1,11 +1,11 @@
 from typing import Optional
 
-from pyarrow.cffi import ffi as arrow_ffi
-from pyarrow import DataType, Array
+from pyarrow.cffi import ffi as arrow_ffi # type: ignore
+from pyarrow import DataType, Array # type: ignore
 
 from ._arrow_odbc_c import ffi, lib
 from ._arrow_odbc_c import lib  # type: ignore
-from .error import make_error_out, raise_on_error
+from .error import raise_on_error
 
 
 class BatchReader:
@@ -36,13 +36,12 @@ class BatchReader:
 
     def __next__(self):
         # Implment iterator protocol
-        
+
         # In case of an error this is going to be a non null handle to the error
-        error_out = make_error_out()
         array_out = ffi.new("void **")
         schema_out = ffi.new("void **")
-        lib.arrow_odbc_reader_next(self.handle, array_out, schema_out, error_out)
-        raise_on_error(error_out)
+        error = lib.arrow_odbc_reader_next(self.handle, array_out, schema_out)
+        raise_on_error(error)
 
         if array_out[0] == ffi.NULL:
             raise StopIteration()
@@ -58,8 +57,8 @@ class BatchReader:
         if self.schema_ is None:
             # https://github.com/apache/arrow/blob/5ead37593472c42f61c76396dde7dcb8954bde70/python/pyarrow/tests/test_cffi.py
             schema_out = arrow_ffi.new("struct ArrowSchema *")
-            error_out = make_error_out()
-            lib.arrow_odbc_reader_schema(self.handle, schema_out, error_out)
+            error = lib.arrow_odbc_reader_schema(self.handle, schema_out)
+            raise_on_error(error)
             ptr_schema = int(ffi.cast("uintptr_t", schema_out))
             self.schema_ = DataType._import_from_c(ptr_schema)
         return self.schema_
@@ -80,26 +79,29 @@ def read_arrow_batches_from_odbc(
 
     query_bytes = query.encode("utf-8")
 
-    # In case of an error this is going to be a non null handle to the error
-    error_out = make_error_out()
-
     connection_string_bytes = connection_string.encode("utf-8")
 
+    connection_out = ffi.new("OdbcConnection **")
+
     # Open connection to ODBC Data Source
-    connection = lib.arrow_odbc_connect_with_connection_string(
-        connection_string_bytes, len(connection_string_bytes), error_out
+    error = lib.arrow_odbc_connect_with_connection_string(
+        connection_string_bytes, len(connection_string_bytes), connection_out
     )
     # See if we connected successfully and return an error if not
-    raise_on_error(error_out)
+    raise_on_error(error)
 
-    reader = lib.arrow_odbc_reader_make(
-        connection, query_bytes, len(query_bytes), batch_size, error_out
+    reader_out = ffi.new("ArrowOdbcReader **")
+
+    connection = connection_out[0]
+    error = lib.arrow_odbc_reader_make(
+        connection, query_bytes, len(query_bytes), batch_size, reader_out
     )
 
     # See if we managed to execute the query successfully and return an
     # error if not
-    raise_on_error(error_out)
+    raise_on_error(error)
 
+    reader = reader_out[0]
     if reader == ffi.NULL:
         # The query ran successfully but did not produce a result set
         return None
