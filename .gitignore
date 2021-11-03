@@ -16,5 +16,8 @@
 /arrow_odbc/_arrow_odbc_c__ffi.py
 /arrow_odbc/_arrow_odbc_c.py
 
+# Wheel and source dist
+/dist/
+
 # Cargo
 /arrow_odbc_c/target
