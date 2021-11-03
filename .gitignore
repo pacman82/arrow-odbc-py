@@ -2,6 +2,8 @@
 **/__pycache__/
 **/*.pyd
 
+/.eggs
+
 # Pytest
 /.pytest_cache/
 

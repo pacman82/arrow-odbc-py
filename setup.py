@@ -10,7 +10,7 @@ extras["test"] = ["pytest"]
 def build_native(spec):
     # build rust library
     build = spec.add_external_build(
-        cmd=["cargo", "build", "--release"], path="arrow_odbc_c"
+        cmd=["cargo", "build", "--release"], path="./arrow_odbc_c"
     )
 
     spec.add_cffi_module(
@@ -20,16 +20,20 @@ def build_native(spec):
         rtld_flags=["NOW", "NODELETE"],
     )
 
+def readme():
+    with open('Readme.md') as f:
+        return f.read()
 
 setup(
     name="arrow-odbc",
     version="0.1.0",
+    packages=["arrow_odbc"],
     description="Read the data of an ODBC data source as sequence of Apache Arrow record batches.",
-    long_description=open("Readme.md", "r", encoding="utf-8").read(),
+    long_description=readme(),
     long_description_content_type="text/markdown",
     keywords="arrow odbc",
     author="Markus Klein",
-    url="https://github.com/pacman82/odbc-api",
+    url="https://github.com/pacman82/arrow-odbc-py",
     license="MIT",
     # rust_extensions=[
     #     RustExtension(
@@ -45,4 +49,5 @@ setup(
     install_requires=["milksnake", "pyarrow"],
     milksnake_tasks=[build_native],
     zip_safe=False,
+    include_package_data = True
 )
