@@ -8,10 +8,12 @@
 
 name: Upload Python Package
 
-# on:
-#   release:
-#     types: [published]
-on: [push, pull_request]
+on:
+  push:
+    types: [published]
+      # Sequence of patterns matched against refs/tags
+      tags:
+        - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
   linux-wheel:
@@ -30,11 +32,11 @@ jobs:
         pip install build
     - name: Build package
       run: python -m build
-    # - name: Publish package
-    #   uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-    #   with:
-    #     user: __token__
-    #     password: ${{ secrets.PYPI_API_TOKEN }}
+    - name: Publish package
+      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
 
   windows-wheel:
 
@@ -52,11 +54,11 @@ jobs:
         pip install build
     - name: Build package
       run: python -m build
-    # - name: Publish package
-    #   uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-    #   with:
-    #     user: __token__
-    #     password: ${{ secrets.PYPI_API_TOKEN }}
+    - name: Publish package
+      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
 
   os-x-wheel:
 
@@ -74,8 +76,8 @@ jobs:
         pip install build
     - name: Build package
       run: python -m build
-    # - name: Publish package
-    #   uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-    #   with:
-    #     user: __token__
-    #     password: ${{ secrets.PYPI_API_TOKEN }}
+    - name: Publish package
+      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+      with:
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
