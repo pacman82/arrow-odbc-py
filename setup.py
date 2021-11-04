@@ -27,7 +27,6 @@ def readme():
 setup(
     name="arrow-odbc",
     version="0.1.0",
-    packages=["arrow_odbc"],
     description="Read the data of an ODBC data source as sequence of Apache Arrow record batches.",
     long_description=readme(),
     long_description_content_type="text/markdown",
