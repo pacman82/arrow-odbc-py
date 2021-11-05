@@ -25,17 +25,12 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
-    - name: Install dependencies
+    - name: Publish package
       run: |
         python -m pip install --upgrade pip
         pip install maturin cffi
         maturin build -b cffi
-        pip install twine
-    - name: Build package
-      run: |
-        maturin build -b cffi
-    - name: Publish package
-      run: maturin upload -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} target/wheels/*
+        maturin upload -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} target/wheels/*
 
   os-x-wheel:
 
@@ -47,14 +42,9 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
-    - name: Install dependencies
+    - name: Publish package
       run: |
         python -m pip install --upgrade pip
         pip install maturin cffi
         maturin build -b cffi
-        pip install twine
-    - name: Build package
-      run: |
-        maturin build -b cffi
-    - name: Publish package
-      run: maturin upload -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} target/wheels/*
+        maturin upload -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} target/wheels/*
