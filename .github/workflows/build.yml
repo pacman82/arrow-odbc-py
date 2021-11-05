@@ -43,5 +43,10 @@ jobs:
         run: cargo install odbcsv
       - name: Test
         run: |
-          pip install -e .[test]
+          python -m venv venv
+          source venv/bin/activate
+          pip install maturin
+          maturin build -b cffi
+          maturin develop -b cffi
+          pip install .[test]          
           pytest -vv

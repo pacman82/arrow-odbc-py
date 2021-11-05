@@ -36,6 +36,14 @@ dependencies = [
 
 [[package]]
 name = "arrow-odbc"
+version = "0.1.0"
+dependencies = [
+ "arrow-odbc 0.4.1",
+ "lazy_static",
+]
+
+[[package]]
+name = "arrow-odbc"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c543ec0b408ed114e99cb3c1731b120613cd67cb6f44fe226a3baaaa66a3c609"
@@ -45,14 +53,6 @@ dependencies = [
  "chrono",
  "odbc-api",
  "thiserror",
-]
-
-[[package]]
-name = "arrow-odbc-c"
-version = "0.1.0"
-dependencies = [
- "arrow-odbc",
- "lazy_static",
 ]
 
 [[package]]

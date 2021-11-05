@@ -1,5 +1,0 @@
-include LICENSE
-include ./arrow_odbc_c/Cargo.toml
-include ./arrow_odbc_c/Cargo.lock
-include ./arrow_odbc_c/arrow_odbc.h
-recursive-include ./arrow_odbc_c/src *.rs

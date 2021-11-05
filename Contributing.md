@@ -32,29 +32,17 @@ Tests rely on `odbcsv` to fill the test db with data:
 cargo install odbcsv
 ```
 
-To install this package with the requirements for testing.
+Inside a virtula environment install the requirements for developing/testing.
 
 ```shell
-pip install -e .[test]
+pip install maturin
+maturin build -b cffi
+maturin develop -b cffi
+pip install .[test]
 ```
 
-We now can execute the tests in typical fashion using:
+We now can execute the tests using:
 
 ```shell
 pytest
-```
-
-## Regenerating the C-Bindings
-
-In case your contribution needs to touch upon the C-Interface you want to install the `cbindgen` command line tool using:
-
-```shell
-cargo install cbindgen
-```
-
-You can then generate the `arrow_odbc.h` header file using:
-
-```shell
-cd arrow_odbc_c
-cbindgen -o arrow_odbc.h
 ```

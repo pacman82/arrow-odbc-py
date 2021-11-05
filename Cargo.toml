@@ -1,5 +1,5 @@
 [package]
-name = "arrow-odbc-c"
+name = "arrow-odbc"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,6 +9,8 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
+# Name needs to be identical to python package name
+name = "arrow_odbc"
 crate-type = ["cdylib"]
 
 [dependencies]
