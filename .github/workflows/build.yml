@@ -45,8 +45,7 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-          pip install maturin
+          pip install maturin pyarrow pytest cfii
           maturin build -b cffi
           maturin develop -b cffi
-          pip install .[test]          
           pytest -vv
