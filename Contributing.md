@@ -36,7 +36,9 @@ Inside a virtula environment install the requirements for developing/testing.
 
 ```shell
 pip install maturin
-maturin build -b cffi
+# Yes three times
+maturin develop -b cffi
+maturin develop -b cffi
 maturin develop -b cffi
 pip install .[test]
 ```

@@ -63,6 +63,10 @@ pub unsafe extern "C" fn arrow_odbc_reader_free(connection: NonNull<ArrowOdbcRea
     Box::from_raw(connection.as_ptr());
 }
 
+/// # Safety
+/// 
+/// * `reader` must be valid non-null reader, allocated by [`arrow_odbc_reader_make`].
+/// * `array_out` and `schema_out` must both point to valid pointers, which themselves may be null.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_next(
     mut reader: NonNull<ArrowOdbcReader>,

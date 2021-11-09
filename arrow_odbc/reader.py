@@ -3,7 +3,7 @@ from typing import Optional
 from pyarrow.cffi import ffi as arrow_ffi # type: ignore
 from pyarrow import DataType, Array # type: ignore
 
-from .arrow_odbc import ffi, lib
+from .arrow_odbc import ffi, lib # type: ignore
 from .error import raise_on_error
 
 

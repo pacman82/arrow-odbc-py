@@ -139,5 +139,4 @@ def test_usage():
     )
 
     for batch in reader:
-
         pass

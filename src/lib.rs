@@ -9,7 +9,9 @@ use arrow_odbc::odbc_api::{Connection, Environment};
 use lazy_static::lazy_static;
 
 pub use error::{arrow_odbc_error_free, arrow_odbc_error_message, ArrowOdbcError};
-pub use reader::{arrow_odbc_reader_free, arrow_odbc_reader_make, ArrowOdbcReader};
+pub use reader::{
+    arrow_odbc_reader_free, arrow_odbc_reader_make, arrow_odbc_reader_next, ArrowOdbcReader,
+};
 
 lazy_static! {
     static ref ENV: Environment = Environment::new().unwrap();

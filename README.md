@@ -2,7 +2,7 @@
 
 [![Licence](https://img.shields.io/crates/l/arrow-odbc)](https://github.com/pacman82/arrow-odbc-py/blob/master/License)
 
-Fill Apache Arrow arrays from ODBC data sources. This crate is build on top of the [`arrow`](https://pypi.org/project/arrow/) Python package and [`arrow-odbc`](https://crates.io/crates/arrow-odbc) Rust crate and enables you to read the data of an ODBC data source as sequence of Apache Arrow record batches.
+Fill Apache Arrow arrays from ODBC data sources. This crate is build on top of the [`pyarrow`](https://pypi.org/project/arrow/) Python package and [`arrow-odbc`](https://crates.io/crates/arrow-odbc) Rust crate and enables you to read the data of an ODBC data source as sequence of Apache Arrow record batches.
 
 ## State
 
@@ -17,6 +17,10 @@ Users looking for a mature solution for bulk fetching data from ODBC data source
 ## About ODBC
 
 [ODBC](https://docs.microsoft.com/en-us/sql/odbc/microsoft-open-database-connectivity-odbc) (Open DataBase Connectivity) is a standard which enables you to access data from a wide variaty of data sources using SQL.
+
+## Compatibility
+
+Should work with any Python 3.x and any Arrow version recent enough to support the Arrow C-Interface.
 
 ## Usage
 

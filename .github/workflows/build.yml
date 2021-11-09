@@ -39,14 +39,16 @@ jobs:
         shell: sudo bash {0}
       - name: Print odbcinst.ini
         run: cat /etc/odbcinst.ini
+        # odbcsv tool is used by the tests to setup tables
       - name: Install odbcsv
         run: cargo install odbcsv
       - name: Test
         run: |
           python -m venv venv
           source venv/bin/activate
-          pip install maturin cffi
-          maturin build -b cffi
-          pip install .[test]
+          pip install maturin
           maturin develop -b cffi
+          maturin develop -b cffi
+          maturin develop -b cffi
+          pip install .[test]
           pytest -vv
