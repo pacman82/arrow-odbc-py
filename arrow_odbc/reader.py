@@ -37,16 +37,19 @@ class BatchReader:
         # Implment iterator protocol
 
         # In case of an error this is going to be a non null handle to the error
-        array_out = ffi.new("void **")
-        schema_out = ffi.new("void **")
-        error = lib.arrow_odbc_reader_next(self.handle, array_out, schema_out)
+        array = arrow_ffi.new("struct ArrowArray *")
+        schema = arrow_ffi.new("struct ArrowSchema *")
+
+        has_next_out = ffi.new("int*")
+
+        error = lib.arrow_odbc_reader_next(self.handle, array, schema, has_next_out)
         raise_on_error(error)
 
-        if array_out[0] == ffi.NULL:
+        if has_next_out[0] == 0:
             raise StopIteration()
         else:
-            array_ptr = int(ffi.cast("uintptr_t", array_out[0]))
-            schema_ptr = int(ffi.cast("uintptr_t", schema_out[0]))
+            array_ptr = int(ffi.cast("uintptr_t", array))
+            schema_ptr = int(ffi.cast("uintptr_t", schema))
             return Array._import_from_c(array_ptr, schema_ptr)
 
     def schema(self):

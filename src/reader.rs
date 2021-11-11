@@ -1,18 +1,6 @@
-use std::{
-    ffi::c_void,
-    ptr::{null_mut, NonNull},
-    slice, str,
-};
+use std::{ffi::c_void, mem::swap, os::raw::c_int, ptr::{null_mut, NonNull}, slice, str, sync::Arc};
 
-use arrow_odbc::{
-    arrow::{
-        array::{Array, StructArray},
-        ffi::FFI_ArrowSchema,
-        record_batch::RecordBatchReader,
-    },
-    odbc_api::{CursorImpl, StatementConnection},
-    OdbcReader,
-};
+use arrow_odbc::{OdbcReader, arrow::{array::{Array, StructArray}, datatypes::Schema, ffi::{FFI_ArrowArray, FFI_ArrowSchema}, record_batch::RecordBatchReader}, odbc_api::{CursorImpl, StatementConnection}};
 
 use crate::{try_, ArrowOdbcError, OdbcConnection};
 
@@ -70,18 +58,34 @@ pub unsafe extern "C" fn arrow_odbc_reader_free(connection: NonNull<ArrowOdbcRea
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_next(
     mut reader: NonNull<ArrowOdbcReader>,
-    array_out: *mut *mut c_void,
-    schema_out: *mut *mut c_void,
+    array: *mut c_void,
+    schema: *mut c_void,
+    has_next_out: *mut c_int,
 ) -> *mut ArrowOdbcError {
+    let schema = schema as *mut FFI_ArrowSchema;
+    let array = array as *mut FFI_ArrowArray;
+
     if let Some(result) = reader.as_mut().0.next() {
+
+        *array = FFI_ArrowArray::empty();
+        *schema = FFI_ArrowSchema::empty();
+
         let batch = try_!(result);
         let struct_array: StructArray = batch.into();
+        
         let (ffi_array_ptr, ffi_schema_ptr) = try_!(struct_array.to_raw());
-        *array_out = ffi_array_ptr as *mut c_void;
-        *schema_out = ffi_schema_ptr as *mut c_void;
+
+        let mut arc_schema = Arc::from_raw(ffi_schema_ptr);
+        let source_schema = Arc::get_mut(&mut arc_schema).unwrap();
+        swap(&mut *schema, source_schema);
+
+        let mut arc_array = Arc::from_raw(ffi_array_ptr);
+        let source_array = Arc::get_mut(&mut arc_array).unwrap();
+        swap(&mut *array, source_array);
+
+        *has_next_out = 1;
     } else {
-        *array_out = null_mut();
-        *schema_out = null_mut();
+        *has_next_out = 0;
     }
     null_mut()
 }
@@ -95,7 +99,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_schema(
 
     let reader = &mut reader.as_mut().0;
     let schema_ref = reader.schema();
-    let schema = (*schema_ref).clone();
+    let schema = &*schema_ref;
     let schema_ffi = try_!(schema.try_into());
     *out_schema = schema_ffi;
     null_mut()

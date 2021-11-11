@@ -124,13 +124,15 @@ def test_schema():
     # assert expected == actual
 
 
-def test_usage():
+def test_iris():
     """
     Validate usage works like in the readme
     """
-    table = "Usage"
+    table = "Iris"
     os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv query -c "{MSSQL}" "CREATE TABLE {table} (a int);"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(20) )"')
+    os.system(f'odbcsv insert -c "{MSSQL}" --table {table} -i .\iris.csv')
+
 
     query = f"SELECT * FROM {table}"
 
