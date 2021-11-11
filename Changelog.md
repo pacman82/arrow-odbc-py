@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.5
+
+* Fix windows wheel
+
 ## 0.1.4
 
 * Fixed a memory leak, than iterating over batches.
