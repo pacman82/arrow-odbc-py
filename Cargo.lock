@@ -13,9 +13,9 @@ dependencies = [
 
 [[package]]
 name = "arrow"
-version = "6.0.0"
+version = "6.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "337e668497751234149fd607f5cb41a6ae7b286b6329589126fe67f0ac55d637"
+checksum = "a900a6164aa0abf26d7a6dfea727116a3619456decfbf573e60c7615bf49e84c"
 dependencies = [
  "bitflags",
  "chrono",
@@ -38,15 +38,15 @@ dependencies = [
 name = "arrow-odbc"
 version = "0.1.0"
 dependencies = [
- "arrow-odbc 0.4.1",
+ "arrow-odbc 0.5.0",
  "lazy_static",
 ]
 
 [[package]]
 name = "arrow-odbc"
-version = "0.4.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c543ec0b408ed114e99cb3c1731b120613cd67cb6f44fe226a3baaaa66a3c609"
+checksum = "8633f59d102b4d6b8bee2f98219593283bd88a64e3c533a3a0a808f6f809a6d3"
 dependencies = [
  "arrow",
  "atoi",
@@ -257,9 +257,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.105"
+version = "0.2.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "869d572136620d55835903746bcb5cdc54cb2851fd0aeec53220b4bb65ef3013"
+checksum = "fbe5e23404da5b4f555ef85ebed98fb4083e55a00c317800bc2a50ede9f3d219"
 
 [[package]]
 name = "log"
@@ -312,9 +312,9 @@ dependencies = [
 
 [[package]]
 name = "num-bigint"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74e768dff5fb39a41b3bcd30bb25cf989706c90d028d1ad71971987aa309d535"
+checksum = "f93ab6289c7b344a8a9f60f88d80aa20032336fe78da341afc91c8a2341fc75f"
 dependencies = [
  "autocfg",
  "num-integer",
@@ -374,9 +374,9 @@ dependencies = [
 
 [[package]]
 name = "odbc-api"
-version = "0.29.3"
+version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39446dac457a797256f6e9b7fb7cd5a881f7635268b210c308649904156d1c42"
+checksum = "6ee872ea12edffa0cfad82b96b98dba63a526fccb169dfa49cb5f3ea1561e26f"
 dependencies = [
  "force-send-sync",
  "log",
@@ -513,9 +513,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.68"
+version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f690853975602e1bfe1ccbf50504d67174e3bcf340f23b5ea9992e0587a52d8"
+checksum = "e466864e431129c7e0d3476b92f20458e5879919a0596c6472738d9fa2d342f8"
 dependencies = [
  "indexmap",
  "itoa",

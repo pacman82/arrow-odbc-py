@@ -8,7 +8,7 @@ bindings = "cffi"
 [project]
 name = "arrow-odbc"
 dependencies = ["pyarrow", "cffi"]
-version = "0.1.3"
+version = "0.1.4"
 description = "Read the data of an ODBC data source as sequence of Apache Arrow record batches."
 readme = "README.md"
 license = {file = "LICENSE"}

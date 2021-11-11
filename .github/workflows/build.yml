@@ -48,7 +48,8 @@ jobs:
           source venv/bin/activate
           pip install maturin
           maturin develop -b cffi
-          maturin develop -b cffi
-          maturin develop -b cffi
           pip install .[test]
+          maturin develop -b cffi
+          maturin develop -b cffi
+          maturin develop -b cffi
           pytest -vv

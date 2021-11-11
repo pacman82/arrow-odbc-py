@@ -1,6 +1,6 @@
 use std::{ffi::c_void, mem::swap, os::raw::c_int, ptr::{null_mut, NonNull}, slice, str, sync::Arc};
 
-use arrow_odbc::{OdbcReader, arrow::{array::{Array, StructArray}, datatypes::Schema, ffi::{FFI_ArrowArray, FFI_ArrowSchema}, record_batch::RecordBatchReader}, odbc_api::{CursorImpl, StatementConnection}};
+use arrow_odbc::{OdbcReader, arrow::{array::{Array, StructArray}, ffi::{FFI_ArrowArray, FFI_ArrowSchema}, record_batch::RecordBatchReader}, odbc_api::{CursorImpl, StatementConnection}};
 
 use crate::{try_, ArrowOdbcError, OdbcConnection};
 
