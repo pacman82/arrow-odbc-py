@@ -36,14 +36,6 @@ dependencies = [
 
 [[package]]
 name = "arrow-odbc"
-version = "0.1.0"
-dependencies = [
- "arrow-odbc 0.5.0",
- "lazy_static",
-]
-
-[[package]]
-name = "arrow-odbc"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8633f59d102b4d6b8bee2f98219593283bd88a64e3c533a3a0a808f6f809a6d3"
@@ -294,6 +286,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "native"
+version = "0.1.0"
+dependencies = [
+ "arrow-odbc",
+ "lazy_static",
 ]
 
 [[package]]
