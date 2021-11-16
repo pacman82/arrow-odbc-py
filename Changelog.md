@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6
+
+Replace maturin with milksnake
+
 ## 0.1.5
 
 * Fix windows wheel

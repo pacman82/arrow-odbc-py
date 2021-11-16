@@ -35,11 +35,6 @@ cargo install odbcsv
 Inside a virtula environment install the requirements for developing/testing.
 
 ```shell
-pip install maturin
-# Yes three times
-maturin develop -b cffi
-maturin develop -b cffi
-maturin develop -b cffi
 pip install .[test]
 ```
 
