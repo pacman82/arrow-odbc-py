@@ -1,5 +1,5 @@
 [package]
-name = "arrow-odbc"
+name = "native"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,7 +10,7 @@ publish = false
 
 [lib]
 # Name needs to be identical to python package name
-name = "arrow_odbc"
+name = "native"
 crate-type = ["cdylib"]
 
 [dependencies]
