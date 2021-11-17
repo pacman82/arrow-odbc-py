@@ -4,10 +4,6 @@
 
 Fill Apache Arrow arrays from ODBC data sources. This crate is build on top of the [`pyarrow`](https://pypi.org/project/arrow/) Python package and [`arrow-odbc`](https://crates.io/crates/arrow-odbc) Rust crate and enables you to read the data of an ODBC data source as sequence of Apache Arrow record batches.
 
-## State
-
-I am writing this mainly to learn how to exchange Arrow Arrays via the C Interface between Rust and Python. If you happen to know how this is supposed to work your review and contribution would be highly welcome (not that it wouldn't otherwise).
-
 Users looking for a mature solution for bulk fetching data from ODBC data sources in Python should also take a look at [`turbodbc`](https://github.com/blue-yonder/turbodbc) which has a helpful community and seen a lot more battle testing than this. Also this Python package is more narrow in Scope (which is a fancy way of saying it has less features), as it is only concerned with bulk fetching Arrow Arrays and nothing else.
 
 ## About Arrow
@@ -17,10 +13,6 @@ Users looking for a mature solution for bulk fetching data from ODBC data source
 ## About ODBC
 
 [ODBC](https://docs.microsoft.com/en-us/sql/odbc/microsoft-open-database-connectivity-odbc) (Open DataBase Connectivity) is a standard which enables you to access data from a wide variaty of data sources using SQL.
-
-## Compatibility
-
-Should work with any Python 3.x and any Arrow version recent enough to support the Arrow C-Interface.
 
 ## Usage
 
@@ -38,6 +30,16 @@ for batch in reader:
     # Process arrow batches
     pass
 ```
+
+## Installation
+
+Wheels have been uploaded to [PyPi](https://pypi.org) and can be installed using pip.
+
+```shell
+pip install arrow-odbc
+```
+
+`arrow-odbc` utilizes `cffi` and the Arrow C-Interface to glue Rust and Python code together. Therefore the wheel does not need to be build against the precise version either of Python or Arrow.
 
 ## Matching of ODBC to Arrow types
 
