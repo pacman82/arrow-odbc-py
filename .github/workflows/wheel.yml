@@ -48,3 +48,16 @@ jobs:
         python -m build
         pip install twine
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
+
+  manylinux-wheel:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build Manylinux wheel
+      run: |
+        docker build -t cargodock ./manylinux
+        docker run --rm -v ${PWD}:/io cargodock bash /io/manylinux/build_wheel.sh
+        pip install twine
+        twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*

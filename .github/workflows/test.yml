@@ -1,0 +1,51 @@
+name: Build and test
+
+on: [push, pull_request]
+
+jobs:
+
+  linux:
+    name: Build & Test Linux
+    runs-on: ubuntu-latest
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+        ports:
+        - 1433:1433
+        env:
+          ACCEPT_EULA: Y
+          SA_PASSWORD: My@Test@Password1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.10.0
+      - name: Install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: "1.56.0"
+          default: true
+          override: true
+      - name: Install ODBC Drivers
+        run: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+          curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+          apt-get update
+          ACCEPT_EULA=Y apt-get install -y msodbcsql17
+          ln -s /opt/microsoft/msodbcsql17/lib64/libmsodbcsql-17.*.so.* /opt/microsoft/msodbcsql17/lib64/libmsodbcsql-17.so
+        shell: sudo bash {0}
+      - name: Print odbcinst.ini
+        run: cat /etc/odbcinst.ini
+        # odbcsv tool is used by the tests to setup tables
+      - name: Install odbcsv
+        run: cargo install odbcsv
+      - name: Test
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -e .[test]
+          pytest -vv
