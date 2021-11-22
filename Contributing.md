@@ -35,7 +35,7 @@ cargo install odbcsv
 Inside a virtual environment install the requirements for developing/testing.
 
 ```shell
-pip install .[test]
+pip install -e .[test]
 ```
 
 We now can execute the tests using:
