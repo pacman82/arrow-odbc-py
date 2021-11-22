@@ -4,13 +4,13 @@ def build_native(spec):
     # build rust library
     build = spec.add_external_build(
         cmd=['cargo', 'build', '--release'],
-        path='rust'
+        path='.'
     )
 
     spec.add_cffi_module(
         module_path='arrow_odbc._native',
         dylib=lambda: build.find_dylib('native', in_path='/target/release'),
-        header_filename=lambda: build.find_header('native.h', in_path='.'),
+        header_filename=lambda: build.find_header('native.h', in_path='rust'),
         rtld_flags=['NOW', 'NODELETE']
     )
 

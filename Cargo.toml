@@ -1,0 +1,12 @@
+# Having a top level Cargo.toml apart from the one in the `rust` subdirectory
+# usually makes for a smoother local development experience. As tooling like
+# rust-analyzer might look for a top-level `Cargo.toml`.
+
+[workspace]
+members = ['rust']
+
+[profile.release]
+# Panics should only be caused by logic errors and are considered bugs
+panic = 'abort'
+# Link time Optimization
+lto = true
