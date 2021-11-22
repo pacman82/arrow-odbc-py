@@ -23,4 +23,4 @@
 /*/_native/native.so
 
 # Cargo
-/target
+rust/target

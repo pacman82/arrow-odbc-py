@@ -32,7 +32,7 @@ Tests rely on `odbcsv` to fill the test db with data:
 cargo install odbcsv
 ```
 
-Inside a virtula environment install the requirements for developing/testing.
+Inside a virtual environment install the requirements for developing/testing.
 
 ```shell
 pip install .[test]
