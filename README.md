@@ -42,6 +42,37 @@ pip install arrow-odbc
 
 `arrow-odbc` utilizes `cffi` and the Arrow C-Interface to glue Rust and Python code together. Therefore the wheel does not need to be build against the precise version either of Python or Arrow.
 
+To build from source you need to install the Rust toolchain. Installation instruction can be found
+here: <https://www.rust-lang.org/tools/install>
+
+### Installing ODBC driver manager
+
+The provided wheels dynamically link against the driver manager, which must be provided by the system.
+
+#### Windows
+
+Nothing to do. ODBC driver manager is preinstalled.
+
+#### Ubuntu
+
+```shell
+sudo apt-get install unixodbc-dev
+```
+
+To build the wheel from source you need
+
+```shell
+sudo apt-get install unixodbc-dev
+```
+
+#### OS-X
+
+You can use homebrew to install UnixODBC
+
+```shell
+brew install unixodbc
+```
+
 ## Matching of ODBC to Arrow types
 
 | ODBC               | Arrow                |
