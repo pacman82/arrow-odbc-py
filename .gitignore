@@ -22,5 +22,8 @@
 # Dynamic library
 /*/_native/native.so
 
+# Build directory for documentation using sphinx
+/doc/build/
+
 # Cargo
 /target/
