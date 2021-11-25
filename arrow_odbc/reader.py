@@ -72,11 +72,14 @@ def read_arrow_batches_from_odbc(
     """
     Execute the query and read the result as an iterator over Arrow batches.
 
-    In case the query does not produce a result set (e.g. in case of an INSERT
-    statement), None is returned instead of a BatchReader.
-
-    To find out your connection string try:
-    <https://www.connectionstrings.com/>
+    :param query: The SQL statement yielding the result set which is converted into arrow record
+        batches.
+    :param batch_size: The maxmium number rows within each batch.
+    :param connection_string: ODBC Connection string used to connect to the data source. To find a
+        connection string for your data source try https://www.connectionstrings.com/.
+    :return: In case the query does not produce a result set (e.g. in case of an INSERT
+        statement), None is returned. Should the statement return a result set a ``BatchReader`` is
+        returned, which implements the iterator protocol and iterates over individual arrow batches.
     """
 
     query_bytes = query.encode("utf-8")
