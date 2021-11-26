@@ -131,7 +131,7 @@ def test_iris():
     table = "Iris"
     os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(20) )"')
-    os.system(f'odbcsv insert -c "{MSSQL}" --table {table} -i .\iris.csv')
+    os.system(f'odbcsv insert -c "{MSSQL}" -i ./tests/iris.csv {table}')
 
 
     query = f"SELECT * FROM {table}"
@@ -141,4 +141,4 @@ def test_iris():
     )
 
     for batch in reader:
-        pass
+        df = batch.to_pandas()

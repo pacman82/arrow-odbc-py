@@ -27,7 +27,7 @@ setup(
     setup_requires=['milksnake'],
     install_requires=['pyarrow', 'milksnake'],
     extras_require={
-        "test": ["pytest"],
+        "test": ["pytest", "pandas"],
     },
     milksnake_tasks=[
         build_native

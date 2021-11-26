@@ -29,7 +29,8 @@ reader = read_arrow_batches_from_odbc(
 
 for batch in reader:
     # Process arrow batches
-    pass
+    df = batch.to_pandas()
+    # ...
 ```
 
 ## Installation
