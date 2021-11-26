@@ -19,10 +19,11 @@ class BatchReader:
         `BatchReader`.
         """
 
-        # Must keep connection alive, for the lifetime of the reader
+        # We take owners of the corresponding reader written in Rust and keep it alive until `self`
+        # is deleted
         self.handle = handle
         # Use this member to cache the schema, since it is constant for all
-        # batches.
+        # batches. This member is set the first time `schema()` is called.
         self.schema_ = None
 
     def __del__(self):

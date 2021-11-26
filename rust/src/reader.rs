@@ -15,9 +15,13 @@ pub struct ArrowOdbcReader(OdbcReader<CursorImpl<StatementConnection<'static>>>)
 ///
 /// # Safety
 ///
-/// * `connection` must point to a valid OdbcConnection.
+/// * `connection` must point to a valid OdbcConnection. This function takes ownership of the
+///   connection, even in case of an error. So The connection must not be freed explicitly
+///   afterwards.
 /// * `query_buf` must point to a valid utf-8 string
 /// * `query_len` describes the len of `query_buf` in bytes.
+/// * `reader_out` in case of success this will point to an instance of `ArrowOdbcReader`. 
+///   Ownership is transferred to the caller.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_make(
     connection: NonNull<OdbcConnection>,
@@ -45,10 +49,10 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
 ///
 /// # Safety
 ///
-/// `connection` must point to a valid ArrowOdbcReader.
+/// `reader` must point to a valid ArrowOdbcReader.
 #[no_mangle]
-pub unsafe extern "C" fn arrow_odbc_reader_free(connection: NonNull<ArrowOdbcReader>) {
-    Box::from_raw(connection.as_ptr());
+pub unsafe extern "C" fn arrow_odbc_reader_free(reader: NonNull<ArrowOdbcReader>) {
+    Box::from_raw(reader.as_ptr());
 }
 
 /// # Safety
@@ -75,6 +79,12 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
         
         let (ffi_array_ptr, ffi_schema_ptr) = try_!(struct_array.to_raw());
 
+        // In order to avoid memory leaks we must convert both pointers returned by the  `to_raw`
+        // method. So we must back to `Arc` again, so they are freed at the end of this function
+        // call in order to avoid memory leaks. Furthermore it is the callers responsibility to
+        // provide us with the FFI_Arrow* structures to fill, and the caller maintains ownership
+        // over them.
+
         let mut arc_schema = Arc::from_raw(ffi_schema_ptr);
         let source_schema = Arc::get_mut(&mut arc_schema).unwrap();
         swap(&mut *schema, source_schema);
@@ -90,6 +100,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
     null_mut()
 }
 
+/// Retrieve the associated schema from a reader.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_schema(
     mut reader: NonNull<ArrowOdbcReader>,
