@@ -2,7 +2,8 @@
 
 ## 0.1.7
 
-Fix: BatchReader now returns `pyarrow.RecordBatch`. Previous version returned a `StructArray`.
+Fix: `BatchReader.__next__()` now returns `pyarrow.RecordBatch`. Previous version returned a `StructArray`.
+Fix: `BatchReader.schema()` now return `pyarrow.Schema` instead of `pyarrow.Datatype`.
 
 ## 0.1.6
 
