@@ -1,7 +1,7 @@
 from typing import Optional
 
 from pyarrow.cffi import ffi as arrow_ffi # type: ignore
-from pyarrow import DataType, Array # type: ignore
+from pyarrow import RecordBatch, DataType, Array # type: ignore
 
 from ._native import ffi, lib # type: ignore
 from .error import raise_on_error
@@ -33,7 +33,7 @@ class BatchReader:
         # Implement iterable protocol so reader can be used in for loops.
         return self
 
-    def __next__(self):
+    def __next__(self) -> RecordBatch:
         # Implment iterator protocol
 
         # In case of an error this is going to be a non null handle to the error
@@ -50,7 +50,8 @@ class BatchReader:
         else:
             array_ptr = int(ffi.cast("uintptr_t", array))
             schema_ptr = int(ffi.cast("uintptr_t", schema))
-            return Array._import_from_c(array_ptr, schema_ptr)
+            struct_array = Array._import_from_c(array_ptr, schema_ptr)
+            return RecordBatch.from_struct_array(struct_array)
 
     def schema(self):
         """

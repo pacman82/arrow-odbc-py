@@ -95,7 +95,8 @@ def test_one_row():
 
     actual = next(it)
 
-    expected = pa.StructArray.from_arrays([pa.array([42], pa.int32())], names=["a"])
+    schema = pa.schema([('a', pa.int32())])
+    expected = pa.RecordBatch.from_pydict({"a": [42]}, schema)
     assert expected == actual
 
     with raises(StopIteration):
