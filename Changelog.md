@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.7
+
+Fix: BatchReader now returns `pyarrow.RecordBatch`. Previous version returned a `StructArray`.
+
 ## 0.1.6
 
 Replace maturin with milksnake

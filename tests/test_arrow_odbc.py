@@ -120,9 +120,8 @@ def test_schema():
 
     actual = reader.schema()
 
-    # Todo: understand difference:
-    # expected = pa.schema([('a', pa.int32()), ('b', pa.string())])
-    # assert expected == actual
+    expected = pa.schema([('a', pa.int32()), ('b', pa.string())])
+    assert expected == actual
 
 
 def test_iris():

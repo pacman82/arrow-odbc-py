@@ -1,7 +1,7 @@
 from typing import Optional
 
 from pyarrow.cffi import ffi as arrow_ffi # type: ignore
-from pyarrow import RecordBatch, DataType, Array # type: ignore
+from pyarrow import RecordBatch, Schema, Array # type: ignore
 
 from ._native import ffi, lib # type: ignore
 from .error import raise_on_error
@@ -63,7 +63,7 @@ class BatchReader:
             error = lib.arrow_odbc_reader_schema(self.handle, schema_out)
             raise_on_error(error)
             ptr_schema = int(ffi.cast("uintptr_t", schema_out))
-            self.schema_ = DataType._import_from_c(ptr_schema)
+            self.schema_ = Schema._import_from_c(ptr_schema)
         return self.schema_
 
 
