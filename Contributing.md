@@ -43,3 +43,17 @@ We now can execute the tests using:
 ```shell
 pytest
 ```
+
+## Build wheels
+
+```shell
+python -m pip install build
+python -m build
+```
+
+## Generate documentation
+
+```shell
+cd docs
+make html
+```
