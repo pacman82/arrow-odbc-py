@@ -34,7 +34,7 @@ setup(
     ],
     url='https://github.com/pacman82/arrow-odbc-py',
     author='Markus Klein',
-    version='0.1.7',
+    version='0.1.8`',
     license = 'MIT',
     description='Read the data of an ODBC data source as sequence of Apache Arrow record batches.',
     long_description=readme(),

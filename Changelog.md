@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.8
+
+Fix: An upstream issue causing overflows for `timestamp['us']` has been fixed.
+
 ## 0.1.7
 
 Fix: `BatchReader.__next__()` now returns `pyarrow.RecordBatch`. Previous version returned a `StructArray`.
