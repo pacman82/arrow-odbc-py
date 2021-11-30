@@ -44,8 +44,8 @@ def test_insert_statement():
     BatchReader should be `None` if statement does not produce a result set.
     """
     table = "EmptyResult"
-    os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv query -c "{MSSQL}" "CREATE TABLE {table} (a int);"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a int);"')
 
     # This statement does not produce a result set
     query = f"INSERT INTO {table} (a) VALUES (42);"
@@ -63,8 +63,8 @@ def test_empty_table():
     Should return an empty iterator querying an empty table.
     """
     table = "Empty"
-    os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv query -c "{MSSQL}" "CREATE TABLE {table} (a int);"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a int);"')
 
     query = f"SELECT * FROM {table}"
 
@@ -81,8 +81,8 @@ def test_one_row():
     Query a table with one row. Should return one batch
     """
     table = "OneRow"
-    os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv query -c "{MSSQL}" "CREATE TABLE {table} (a int);"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a int);"')
     rows = "a\n42"
     run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
 
@@ -108,9 +108,9 @@ def test_schema():
     Query a table with one row. Should return one batch
     """
     table = "TestSchema"
-    os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
     os.system(
-        f'odbcsv query -c "{MSSQL}" "CREATE TABLE {table} (a INT, b VARCHAR(50));"'
+        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a INT, b VARCHAR(50));"'
     )
 
     query = f"SELECT * FROM {table}"
@@ -129,7 +129,7 @@ def test_iris():
     Validate usage works like in the readme
     """
     table = "Iris"
-    os.system(f'odbcsv query -c "{MSSQL}" "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(20) )"')
     os.system(f'odbcsv insert -c "{MSSQL}" -i ./tests/iris.csv {table}')
 
