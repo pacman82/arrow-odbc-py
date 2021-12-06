@@ -17,8 +17,11 @@ def test_should_report_error_on_invalid_connection_string():
     is not a valid connection string. Therefore we want to see the creation of
     this connection fail, but with a nice error.
     """
+    # Error on windows: Data source name not found and no default driver specified
+    # Erron on linux: Data source name not found, and no default driver specified
+    # We assert on less, so we don't care about the comma (,)
     with raises(
-        Error, match="Data source name not found and no default driver specified"
+        Error, match="Data source name not found"
     ):
         read_arrow_batches_from_odbc(
             query="SELECT * FROM Table", batch_size=100, connection_string="foo"
