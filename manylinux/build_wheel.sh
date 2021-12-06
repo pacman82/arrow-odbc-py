@@ -15,6 +15,8 @@ PYBIN="/opt/python/cp310-cp310/bin"
 #
 # So we won't call auditwheel repair
 
+mkdir /io/dist
+
 for f in /wheelhouse/arrow_odbc-*.whl
 do
     # We won't do that, see above
@@ -31,7 +33,7 @@ do
     mv $f /wheelhouse/arrow_odbc-${ver}.zip
     unzip /wheelhouse/arrow_odbc-${ver}.zip -d /wheelhouse/arrow_odbc-${ver}-edit
 
-    mv /io/manylinux/WHEEL "/wheelhouse/arrow_odbc-${ver}-edit/arrow_odbc-${ver}.dist-info/WHEEL"
+    cp /io/manylinux/WHEEL "/wheelhouse/arrow_odbc-${ver}-edit/arrow_odbc-${ver}.dist-info/WHEEL"
 
     cd /wheelhouse/arrow_odbc-${ver}-edit/
     zip -rv /io/dist/arrow_odbc-${ver}-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.whl .
