@@ -1,0 +1,5 @@
+Wheel-Version: 1.0
+Generator: bdist_wheel (0.37.0)
+Root-Is-Purelib: false
+Tag: py3-none-manylinux_2_12_x86_64
+Tag: py3-none-manylinux2010_x86_64
