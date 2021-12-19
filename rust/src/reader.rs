@@ -1,6 +1,21 @@
-use std::{ffi::c_void, mem::swap, os::raw::c_int, ptr::{null_mut, NonNull}, slice, str, sync::Arc};
+use std::{
+    ffi::c_void,
+    mem::swap,
+    os::raw::c_int,
+    ptr::{null_mut, NonNull},
+    slice, str,
+    sync::Arc,
+};
 
-use arrow_odbc::{OdbcReader, arrow::{array::{Array, StructArray}, ffi::{FFI_ArrowArray, FFI_ArrowSchema}, record_batch::RecordBatchReader}, odbc_api::{CursorImpl, StatementConnection}};
+use arrow_odbc::{
+    arrow::{
+        array::{Array, StructArray},
+        ffi::{FFI_ArrowArray, FFI_ArrowSchema},
+        record_batch::RecordBatchReader,
+    },
+    odbc_api::{CursorImpl, StatementConnection},
+    OdbcReader,
+};
 
 use crate::{try_, ArrowOdbcError, OdbcConnection};
 
@@ -20,7 +35,7 @@ pub struct ArrowOdbcReader(OdbcReader<CursorImpl<StatementConnection<'static>>>)
 ///   afterwards.
 /// * `query_buf` must point to a valid utf-8 string
 /// * `query_len` describes the len of `query_buf` in bytes.
-/// * `reader_out` in case of success this will point to an instance of `ArrowOdbcReader`. 
+/// * `reader_out` in case of success this will point to an instance of `ArrowOdbcReader`.
 ///   Ownership is transferred to the caller.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_make(
@@ -56,7 +71,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_free(reader: NonNull<ArrowOdbcReader>
 }
 
 /// # Safety
-/// 
+///
 /// * `reader` must be valid non-null reader, allocated by [`arrow_odbc_reader_make`].
 /// * `array_out` and `schema_out` must both point to valid pointers, which themselves may be null.
 #[no_mangle]
@@ -70,13 +85,12 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
     let array = array as *mut FFI_ArrowArray;
 
     if let Some(result) = reader.as_mut().0.next() {
-
         *array = FFI_ArrowArray::empty();
         *schema = FFI_ArrowSchema::empty();
 
         let batch = try_!(result);
         let struct_array: StructArray = batch.into();
-        
+
         let (ffi_array_ptr, ffi_schema_ptr) = try_!(struct_array.to_raw());
 
         // In order to avoid memory leaks we must convert both pointers returned by the  `to_raw`

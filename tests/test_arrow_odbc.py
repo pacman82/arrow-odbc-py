@@ -20,9 +20,7 @@ def test_should_report_error_on_invalid_connection_string():
     # Error on windows: Data source name not found and no default driver specified
     # Erron on linux: Data source name not found, and no default driver specified
     # We assert on less, so we don't care about the comma (,)
-    with raises(
-        Error, match="Data source name not found"
-    ):
+    with raises(Error, match="Data source name not found"):
         read_arrow_batches_from_odbc(
             query="SELECT * FROM Table", batch_size=100, connection_string="foo"
         )
@@ -98,7 +96,7 @@ def test_one_row():
 
     actual = next(it)
 
-    schema = pa.schema([('a', pa.int32())])
+    schema = pa.schema([("a", pa.int32())])
     expected = pa.RecordBatch.from_pydict({"a": [42]}, schema)
     assert expected == actual
 
@@ -123,7 +121,7 @@ def test_schema():
 
     actual = reader.schema()
 
-    expected = pa.schema([('a', pa.int32()), ('b', pa.string())])
+    expected = pa.schema([("a", pa.int32()), ("b", pa.string())])
     assert expected == actual
 
 
@@ -146,10 +144,41 @@ def test_timestamp_us():
 
     actual = next(it)
 
-    schema = pa.schema([('a', pa.timestamp('us'))])
+    schema = pa.schema([("a", pa.timestamp("us"))])
     expected = pa.RecordBatch.from_pydict({"a": [1397510742074841]}, schema)
     print(expected[0])
     print(actual[0])
+    assert expected == actual
+
+    with raises(StopIteration):
+        next(it)
+
+
+def test_specify_user_and_password_separatly():
+    """
+    Query a table with one row. Should return one batch
+    """
+
+    query = f"SELECT 42 as a;"
+
+    # Connection string without credentials
+    connection_string = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;"
+    user = "SA"
+    password = "My@Test@Password1"
+
+    reader = read_arrow_batches_from_odbc(
+        query=query,
+        batch_size=100,
+        connection_string=connection_string,
+        user=user,
+        password=password,
+    )
+    it = iter(reader)
+
+    actual = next(it)
+
+    schema = pa.schema([("a", pa.int32())])
+    expected = pa.RecordBatch.from_pydict({"a": [42]}, schema)
     assert expected == actual
 
     with raises(StopIteration):
@@ -162,9 +191,10 @@ def test_iris():
     """
     table = "Iris"
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(20) )"')
+    os.system(
+        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(20) )"'
+    )
     os.system(f'odbcsv insert -c "{MSSQL}" -i ./tests/iris.csv {table}')
-
 
     query = f"SELECT * FROM {table}"
 

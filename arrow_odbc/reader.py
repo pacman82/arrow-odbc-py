@@ -1,9 +1,10 @@
 from typing import Optional
+from cffi.api import FFI
 
-from pyarrow.cffi import ffi as arrow_ffi # type: ignore
-from pyarrow import RecordBatch, Schema, Array # type: ignore
+from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
+from pyarrow import RecordBatch, Schema, Array  # type: ignore
 
-from ._native import ffi, lib # type: ignore
+from ._native import ffi, lib  # type: ignore
 from .error import raise_on_error
 
 
@@ -69,7 +70,11 @@ class BatchReader:
 
 
 def read_arrow_batches_from_odbc(
-    query: str, batch_size: int, connection_string: str
+    query: str,
+    batch_size: int,
+    connection_string: str,
+    user: Optional[str] = None,
+    password: Optional[str] = None,
 ) -> Optional[BatchReader]:
     """
     Execute the query and read the result as an iterator over Arrow batches.
@@ -79,6 +84,12 @@ def read_arrow_batches_from_odbc(
     :param batch_size: The maxmium number rows within each batch.
     :param connection_string: ODBC Connection string used to connect to the data source. To find a
         connection string for your data source try https://www.connectionstrings.com/.
+    :param user: Allows for specifying the user seperatly from the connection string if it is not
+        already part of it. The value will eventually be escaped and attached to the connection
+        string as `UID`.
+    :param password: Allows for specifying the password seperatly from the connection string if it
+        is not already part of it. The value will eventually be escaped and attached to the
+        connection string as `PWD`.
     :return: In case the query does not produce a result set (e.g. in case of an INSERT
         statement), None is returned. Should the statement return a result set a ``BatchReader`` is
         returned, which implements the iterator protocol and iterates over individual arrow batches.
@@ -88,11 +99,31 @@ def read_arrow_batches_from_odbc(
 
     connection_string_bytes = connection_string.encode("utf-8")
 
+    if user is None:
+        user_bytes = FFI.NULL
+        user_len = 0
+    else:
+        user_bytes = user.encode("utf-8")
+        user_len = len(user_bytes)
+
+    if password is None:
+        password_bytes = FFI.NULL
+        password_len = 0
+    else:
+        password_bytes = password.encode("utf-8")
+        password_len = len(password_bytes)
+
     connection_out = ffi.new("OdbcConnection **")
 
     # Open connection to ODBC Data Source
     error = lib.arrow_odbc_connect_with_connection_string(
-        connection_string_bytes, len(connection_string_bytes), connection_out
+        connection_string_bytes,
+        len(connection_string_bytes),
+        user_bytes,
+        user_len,
+        password_bytes,
+        password_len,
+        connection_out,
     )
     # See if we connected successfully and return an error if not
     raise_on_error(error)

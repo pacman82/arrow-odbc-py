@@ -27,9 +27,14 @@ typedef struct OdbcConnection OdbcConnection;
  *
  * `connection_string_buf` must point to a valid utf-8 encoded string. `connection_string_len` must
  * hold the length of text in `connection_string_buf`.
+ * `user` and or `password` are optional and are allowed to be `NULL`.
  */
 struct ArrowOdbcError *arrow_odbc_connect_with_connection_string(const uint8_t *connection_string_buf,
                                                                  uintptr_t connection_string_len,
+                                                                 const uint8_t *user,
+                                                                 uintptr_t user_len,
+                                                                 const uint8_t *password,
+                                                                 uintptr_t password_len,
                                                                  struct OdbcConnection **connection_out);
 
 /**
@@ -58,9 +63,13 @@ const char *arrow_odbc_error_message(const struct ArrowOdbcError *error);
  *
  * # Safety
  *
- * * `connection` must point to a valid OdbcConnection.
+ * * `connection` must point to a valid OdbcConnection. This function takes ownership of the
+ *   connection, even in case of an error. So The connection must not be freed explicitly
+ *   afterwards.
  * * `query_buf` must point to a valid utf-8 string
  * * `query_len` describes the len of `query_buf` in bytes.
+ * * `reader_out` in case of success this will point to an instance of `ArrowOdbcReader`.
+ *   Ownership is transferred to the caller.
  */
 struct ArrowOdbcError *arrow_odbc_reader_make(struct OdbcConnection *connection,
                                               const uint8_t *query_buf,
@@ -73,9 +82,9 @@ struct ArrowOdbcError *arrow_odbc_reader_make(struct OdbcConnection *connection,
  *
  * # Safety
  *
- * `connection` must point to a valid ArrowOdbcReader.
+ * `reader` must point to a valid ArrowOdbcReader.
  */
-void arrow_odbc_reader_free(struct ArrowOdbcReader *connection);
+void arrow_odbc_reader_free(struct ArrowOdbcReader *reader);
 
 /**
  * # Safety
@@ -88,4 +97,7 @@ struct ArrowOdbcError *arrow_odbc_reader_next(struct ArrowOdbcReader *reader,
                                               void *schema,
                                               int *has_next_out);
 
+/**
+ * Retrieve the associated schema from a reader.
+ */
 struct ArrowOdbcError *arrow_odbc_reader_schema(struct ArrowOdbcReader *reader, void *out_schema);
