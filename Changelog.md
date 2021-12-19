@@ -1,9 +1,12 @@
 # Changelog
 
+## 0.1.10
+
+- Allow specifying user and password seperatly from the connection string.
+
 ## 0.1.9
 
 - Fix: Manylinux wheel are now build against a recent version of Unix ODBC and link against the `libodbc.so` provided by the system.
-     
 
 ## 0.1.8
 

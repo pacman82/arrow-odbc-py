@@ -31,7 +31,7 @@ setup(
     milksnake_tasks=[build_native],
     url="https://github.com/pacman82/arrow-odbc-py",
     author="Markus Klein",
-    version="0.1.9",
+    version="0.1.10",
     license="MIT",
     description="Read the data of an ODBC data source as sequence of Apache Arrow record batches.",
     long_description=readme(),
