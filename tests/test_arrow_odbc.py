@@ -185,6 +185,43 @@ def test_specify_user_and_password_separatly():
         next(it)
 
 
+def test_query_char():
+    """
+    Query a string those UTF-16 representation is larger than the maximum binary column length on
+    the database.
+    """
+    # 'ab' is char(2) => 2 bytes on database. Yet, only one UTF-16 character can fit into 2 bytes.
+    query = "SELECT 'ab' as a"
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+
+    it = iter(reader)
+    batch = next(it)
+    actual = batch.to_pydict()
+    expected = {"a": ["ab"]}
+
+    assert expected == actual
+
+def test_query_wchar():
+    """
+    Query a string those UTF-8 representation is larger than the maximum binary column length on
+    the database.
+    """
+    # '™' is 3 bytes in UTF-8, but only 2 bytes in UTF-16
+    query = "SELECT CAST('™' AS NCHAR(1)) as a"
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+
+    it = iter(reader)
+    batch = next(it)
+    actual = batch.to_pydict()
+    expected = {"a": ["™"]}
+
+    assert expected == actual
+
+
 def test_iris():
     """
     Validate usage works like in the readme
