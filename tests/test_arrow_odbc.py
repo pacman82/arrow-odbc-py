@@ -240,4 +240,4 @@ def test_iris():
     )
 
     for batch in reader:
-        df = batch.to_pandas()
+        df = batch.to_pydict()
