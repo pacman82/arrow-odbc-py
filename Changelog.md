@@ -4,6 +4,7 @@
 
 - Fix: There had been an issue, there the correct binary size for the longest possible text has been underestimated on Linux then querying a column with UTF-16 encoded characters.
 - Fix: There had been an issue, there the correct binary size for the longest possible text has been underestimated on Windown then querying a column with UTF-8 encoded characters.
+
 ## 0.1.10
 
 - Allow specifying user and password seperatly from the connection string.
