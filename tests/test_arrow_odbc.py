@@ -222,6 +222,24 @@ def test_query_wchar():
     assert expected == actual
 
 
+def test_query_umlaut():
+    """
+    Query a string those UTF-8 representation is larger in bytes than in
+    characters.
+    """
+    query = "SELECT CAST('Ü' AS VARCHAR(1)) as a"
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+
+    it = iter(reader)
+    batch = next(it)
+    actual = batch.to_pydict()
+    expected = {"a": ["Ü"]}
+
+    assert expected == actual
+
+
 def test_iris():
     """
     Validate usage works like in the readme
