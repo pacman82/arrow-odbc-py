@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.12
+
+Fix: There had been an issue, there the correct binary size for the longest possible text has been underestimated on Linux then querying a column with UTF-8 encoded characters.
+
 ## 0.1.11
 
 - Fix: There had been an issue, there the correct binary size for the longest possible text has been underestimated on Linux then querying a column with UTF-16 encoded characters.
