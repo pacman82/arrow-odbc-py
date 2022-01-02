@@ -240,6 +240,18 @@ def test_query_umlaut():
     assert expected == actual
 
 
+def test_query_varchar_max():
+    """
+    Query a string those UTF-8 representation is larger in bytes than in
+    characters.
+    """
+    query = "SELECT CAST('a' AS VARCHAR(MAX)) as a"
+    with raises(Error, match="ODBC reported a size of '0' for the column"):
+        read_arrow_batches_from_odbc(
+            query=query, batch_size=100, connection_string=MSSQL
+        )
+
+
 def test_iris():
     """
     Validate usage works like in the readme
