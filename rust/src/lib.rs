@@ -2,6 +2,7 @@
 
 mod error;
 mod reader;
+mod parameter;
 
 use std::{borrow::Cow, ptr::null_mut, slice, str};
 

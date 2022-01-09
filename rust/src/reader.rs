@@ -17,7 +17,7 @@ use arrow_odbc::{
     OdbcReader,
 };
 
-use crate::{try_, ArrowOdbcError, OdbcConnection};
+use crate::{try_, ArrowOdbcError, OdbcConnection, parameter::ArrowOdbcParameter};
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
 /// type also has ownership of the ODBC Connection handle.
@@ -37,12 +37,17 @@ pub struct ArrowOdbcReader(OdbcReader<CursorImpl<StatementConnection<'static>>>)
 /// * `query_len` describes the len of `query_buf` in bytes.
 /// * `reader_out` in case of success this will point to an instance of `ArrowOdbcReader`.
 ///   Ownership is transferred to the caller.
+/// * `parameters` must contain only valid pointers. This function takes ownership of all of them
+///   independent if the function succeeds or not. Yet it does not take ownership of the array
+///   itself.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_make(
     connection: NonNull<OdbcConnection>,
     query_buf: *const u8,
     query_len: usize,
     batch_size: usize,
+    parameters: *const *mut ArrowOdbcParameter,
+    parameters_len: usize,
     reader_out: *mut *mut ArrowOdbcReader,
 ) -> *mut ArrowOdbcError {
     let query = slice::from_raw_parts(query_buf, query_len);
@@ -50,7 +55,16 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
 
     let connection = *Box::from_raw(connection.as_ptr());
 
-    let maybe_cursor = try_!(connection.0.into_cursor(query, ()));
+    let parameters = if parameters.is_null() {
+        Vec::new()
+    } else {
+        slice::from_raw_parts(parameters, parameters_len)
+            .iter()
+            .map(|&p| Box::from_raw(p).unwrap())
+            .collect()
+    };
+
+    let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
     if let Some(cursor) = maybe_cursor {
         let reader = try_!(OdbcReader::new(cursor, batch_size));
         *reader_out = Box::into_raw(Box::new(ArrowOdbcReader(reader)))

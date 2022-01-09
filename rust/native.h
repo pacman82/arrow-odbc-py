@@ -9,6 +9,11 @@
 typedef struct ArrowOdbcError ArrowOdbcError;
 
 /**
+ * Opaque type holding a parameter intended to be bound to a placeholder (`?`) in an SQL query.
+ */
+typedef struct ArrowOdbcParameter ArrowOdbcParameter;
+
+/**
  * Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
  * type also has ownership of the ODBC Connection handle.
  */
@@ -70,11 +75,16 @@ const char *arrow_odbc_error_message(const struct ArrowOdbcError *error);
  * * `query_len` describes the len of `query_buf` in bytes.
  * * `reader_out` in case of success this will point to an instance of `ArrowOdbcReader`.
  *   Ownership is transferred to the caller.
+ * * `parameters` must contain only valid pointers. This function takes ownership of all of them
+ *   independent if the function succeeds or not. Yet it does not take ownership of the array
+ *   itself.
  */
 struct ArrowOdbcError *arrow_odbc_reader_make(struct OdbcConnection *connection,
                                               const uint8_t *query_buf,
                                               uintptr_t query_len,
                                               uintptr_t batch_size,
+                                              struct ArrowOdbcParameter *const *parameters,
+                                              uintptr_t parameters_len,
                                               struct ArrowOdbcReader **reader_out);
 
 /**
@@ -101,3 +111,13 @@ struct ArrowOdbcError *arrow_odbc_reader_next(struct ArrowOdbcReader *reader,
  * Retrieve the associated schema from a reader.
  */
 struct ArrowOdbcError *arrow_odbc_reader_schema(struct ArrowOdbcReader *reader, void *out_schema);
+
+/**
+ * # Safety
+ *
+ * `char_buf` may be `NULL`, but if it is not, it must contain a valid utf-8 sequence not shorter
+ * than `char_len`. This function does not take ownership of the parameter. The parameter must at
+ * least be valid until the call make reader is finished.
+ */
+struct ArrowOdbcParameter *arrow_odbc_parameter_string_make(const uint8_t *char_buf,
+                                                            uintptr_t char_len);

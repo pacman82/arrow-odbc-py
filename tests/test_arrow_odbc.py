@@ -266,10 +266,10 @@ def test_query_with_string_parameter():
     rows = "column_a,column_b\nA,1\nB,2\nC,3\nD,4\n"
     run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
 
-    query = f"SELECT column_b FROM {table} WHERE column_a='B';"
+    query = f"SELECT column_b FROM {table} WHERE column_a=?;"
 
     reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=10, connection_string=MSSQL
+        query=query, batch_size=10, connection_string=MSSQL, parameters=["B"]
     )
     it = iter(reader)
 

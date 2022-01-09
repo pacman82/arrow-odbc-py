@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional, Tuple
 from cffi.api import FFI
 
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
@@ -6,6 +6,17 @@ from pyarrow import RecordBatch, Schema, Array  # type: ignore
 
 from ._native import ffi, lib  # type: ignore
 from .error import raise_on_error
+
+
+def _to_bytes_and_len(value: Optional[str]) -> Tuple[bytes, int]:
+    if value is None:
+        value_bytes = FFI.NULL
+        value_len = 0
+    else:
+        value_bytes = value.encode("utf-8")
+        value_len = len(value)
+
+    return (value_bytes, value_len)
 
 
 class BatchReader:
@@ -75,6 +86,7 @@ def read_arrow_batches_from_odbc(
     connection_string: str,
     user: Optional[str] = None,
     password: Optional[str] = None,
+    parameters: List[str] = None,
 ) -> Optional[BatchReader]:
     """
     Execute the query and read the result as an iterator over Arrow batches.
@@ -90,8 +102,10 @@ def read_arrow_batches_from_odbc(
     :param password: Allows for specifying the password seperatly from the connection string if it
         is not already part of it. The value will eventually be escaped and attached to the
         connection string as `PWD`.
-    :return: In case the query does not produce a result set (e.g. in case of an INSERT
-        statement), None is returned. Should the statement return a result set a ``BatchReader`` is
+    :param parameters: Positional parameters passed to the queries as string. Using this instead of
+        literals helps you avoid SQL injections.
+    :return: In case the query does not produce a result set (e.g. in case of an INSERT statement),
+        ``None`` is returned. Should the statement return a result set a ``BatchReader`` is
         returned, which implements the iterator protocol and iterates over individual arrow batches.
     """
 
@@ -99,19 +113,8 @@ def read_arrow_batches_from_odbc(
 
     connection_string_bytes = connection_string.encode("utf-8")
 
-    if user is None:
-        user_bytes = FFI.NULL
-        user_len = 0
-    else:
-        user_bytes = user.encode("utf-8")
-        user_len = len(user_bytes)
-
-    if password is None:
-        password_bytes = FFI.NULL
-        password_len = 0
-    else:
-        password_bytes = password.encode("utf-8")
-        password_len = len(password_bytes)
+    (user_bytes, user_len) = _to_bytes_and_len(user)
+    (password_bytes, password_len) = _to_bytes_and_len(password)
 
     connection_out = ffi.new("OdbcConnection **")
 
@@ -128,11 +131,32 @@ def read_arrow_batches_from_odbc(
     # See if we connected successfully and return an error if not
     raise_on_error(error)
 
+    if parameters is None:
+        parameters_array = FFI.NULL
+        parameters_len = 0
+        encoded_parameters = []
+    else:
+        parameters_array = ffi.new("ArrowOdbcParameter *[]", len(parameters))
+        parameters_len = len(parameters)
+        # Must be kept alive. Within Rust code we only allocate an additional
+        # indicator the string payload is just referenced. 
+        encoded_parameters = [_to_bytes_and_len(p) for p in parameters]
+
+    for p_index in range(0, parameters_len):
+        (p_bytes, p_len) = encoded_parameters[p_index]
+        parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(p_bytes, p_len)
+
     reader_out = ffi.new("ArrowOdbcReader **")
 
     connection = connection_out[0]
     error = lib.arrow_odbc_reader_make(
-        connection, query_bytes, len(query_bytes), batch_size, reader_out
+        connection,
+        query_bytes,
+        len(query_bytes),
+        batch_size,
+        parameters_array,
+        parameters_len,
+        reader_out,
     )
 
     # See if we managed to execute the query successfully and return an
@@ -145,3 +169,4 @@ def read_arrow_batches_from_odbc(
         return None
     else:
         return BatchReader(reader)
+
