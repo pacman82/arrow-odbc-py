@@ -203,6 +203,7 @@ def test_query_char():
 
     assert expected == actual
 
+
 def test_query_wchar():
     """
     Query a string those UTF-8 representation is larger than the maximum binary column length on
@@ -250,6 +251,36 @@ def test_query_varchar_max():
         read_arrow_batches_from_odbc(
             query=query, batch_size=100, connection_string=MSSQL
         )
+
+
+def test_query_with_string_parameter():
+    """
+    Use a string parameter in a where clause and verify that the result is
+    filtered accordingly
+    """
+    table = "QueryWithStringParameter"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(
+        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (column_a CHAR(1), column_b INTEGER);"'
+    )
+    rows = "column_a,column_b\nA,1\nB,2\nC,3\nD,4\n"
+    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+
+    query = f"SELECT column_b FROM {table} WHERE column_a='B';"
+
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=10, connection_string=MSSQL
+    )
+    it = iter(reader)
+
+    actual = next(it)
+
+    schema = pa.schema([("column_b", pa.int32())])
+    expected = pa.RecordBatch.from_pydict({"column_b": [2]}, schema)
+    assert expected == actual
+
+    with raises(StopIteration):
+        next(it)
 
 
 def test_iris():
