@@ -1,5 +1,5 @@
 from typing import List, Optional, Tuple
-from cffi.api import FFI # type: ignore
+from cffi.api import FFI  # type: ignore
 
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
 from pyarrow import RecordBatch, Schema, Array  # type: ignore
@@ -142,7 +142,7 @@ def read_arrow_batches_from_odbc(
         parameters_array = ffi.new("ArrowOdbcParameter *[]", len(parameters))
         parameters_len = len(parameters)
         # Must be kept alive. Within Rust code we only allocate an additional
-        # indicator the string payload is just referenced. 
+        # indicator the string payload is just referenced.
         encoded_parameters = [_to_bytes_and_len(p) for p in parameters]
 
     for p_index in range(0, parameters_len):
@@ -172,4 +172,3 @@ def read_arrow_batches_from_odbc(
         return None
     else:
         return BatchReader(reader)
-

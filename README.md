@@ -23,10 +23,12 @@ This package has been designed to be easily deployable, so it provides a prebuil
 from arrow_odbc import read_arrow_batches_from_odbc
 
 connection_string="Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;"
-query = f"SELECT * FROM MyTable"
 
 reader = read_arrow_batches_from_odbc(
-    query=query, batch_size=1000, connection_string=connection_string
+    query=f"SELECT * FROM MyTable WHERE a=?",
+    connection_string=connection_string,
+    batch_size=1000,
+    parameters=["I'm a positional query parameter"],
 )
 
 for batch in reader:
