@@ -1,5 +1,5 @@
 from typing import List, Optional, Tuple
-from cffi.api import FFI
+from cffi.api import FFI # type: ignore
 
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
 from pyarrow import RecordBatch, Schema, Array  # type: ignore
@@ -86,7 +86,7 @@ def read_arrow_batches_from_odbc(
     connection_string: str,
     user: Optional[str] = None,
     password: Optional[str] = None,
-    parameters: List[str] = None,
+    parameters: Optional[List[Optional[str]]] = None,
 ) -> Optional[BatchReader]:
     """
     Execute the query and read the result as an iterator over Arrow batches.
@@ -102,8 +102,11 @@ def read_arrow_batches_from_odbc(
     :param password: Allows for specifying the password seperatly from the connection string if it
         is not already part of it. The value will eventually be escaped and attached to the
         connection string as `PWD`.
-    :param parameters: Positional parameters passed to the queries as string. Using this instead of
-        literals helps you avoid SQL injections.
+    :param parameters: ODBC allows you to use a question mark as placeholder marker (``?``) for
+        positional parameters. This argument takes a list of parameters those number must match the
+        number of placholders in the SQL statement. Using this instead of literals helps you avoid
+        SQL injections or may otherwise simplify your code. Currently all parameters are passed as
+        VARCHAR strings. You can use `None` to pass `NULL`.
     :return: In case the query does not produce a result set (e.g. in case of an INSERT statement),
         ``None`` is returned. Should the statement return a result set a ``BatchReader`` is
         returned, which implements the iterator protocol and iterates over individual arrow batches.
