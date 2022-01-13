@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.14
+
+- Support for positional query parameters
+- Updated dependencies
+
 ## 0.1.13
 
 - Improved error messages.
