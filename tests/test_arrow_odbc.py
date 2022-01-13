@@ -283,6 +283,30 @@ def test_query_with_string_parameter():
         next(it)
 
 
+def test_query_with_none_parameter():
+    """
+    Use a string parameter in a where clause and verify that the result is
+    filtered accordingly
+    """
+    table = "QueryWithNoneParameter"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(
+        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (column_a CHAR(1), column_b INTEGER);"'
+    )
+    rows = "column_a,column_b\nA,1\nB,2\nC,3\nD,4\n"
+    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+
+    query = f"SELECT column_b FROM {table} WHERE column_a=?;"
+
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=10, connection_string=MSSQL, parameters=[None]
+    )
+    it = iter(reader)
+
+    with raises(StopIteration):
+        next(it)
+
+
 def test_iris():
     """
     Validate usage works like in the readme
