@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.15
+
+- Updated dependencies to Rust crates
+
 ## 0.1.14
 
 - Support for positional query parameters
