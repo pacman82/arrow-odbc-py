@@ -1,8 +1,12 @@
 # Changelog
 
+## 0.1.16
+
+- Updated Rust dependencies
+
 ## 0.1.15
 
-- Updated dependencies to Rust crates
+- Updated Rust dependencies
 
 ## 0.1.14
 
