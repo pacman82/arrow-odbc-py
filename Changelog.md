@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.17
+
+- Updated Rust dependencies
+  
 ## 0.1.16
 
 - Updated Rust dependencies
