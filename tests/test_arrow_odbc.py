@@ -326,3 +326,21 @@ def test_iris():
 
     for batch in reader:
         df = batch.to_pydict()
+
+
+def test_allocation_erros():
+    """
+    Avoids unrecoverable allocation errors, if querying an image column
+    """
+    table = "Image"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(
+        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (my_image Image)"'
+    )
+
+    query = f"SELECT * FROM {table}"
+
+    with raises(Error, match="Column buffer is too large to be allocated."):
+        read_arrow_batches_from_odbc(
+            query=query, batch_size=1000, connection_string=MSSQL
+        )

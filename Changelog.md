@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.19
+
+- Raise exception in case buffer alloction fails instead of panicing.
+
 ## 0.1.18
 
 - Updated Rust dependencies
