@@ -332,7 +332,7 @@ def test_allocation_erros():
     """
     Avoids unrecoverable allocation errors, if querying an image column
     """
-    table = "Image"
+    table = "AllocationError"
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
     os.system(
         f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (my_image Image)"'
@@ -344,3 +344,21 @@ def test_allocation_erros():
         read_arrow_batches_from_odbc(
             query=query, batch_size=1000, connection_string=MSSQL
         )
+
+
+def test_image():
+    """
+    Avoids error allocating image column with using casts.
+    """
+    table = "Image"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(
+        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (my_image Image)"'
+    )
+
+    query = f"SELECT CAST(my_image as VARBINARY(2048)) FROM {table}"
+
+    
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=1000, connection_string=MSSQL
+    )
