@@ -14,5 +14,5 @@ name = "native"
 crate-type = ["cdylib"]
 
 [dependencies]
-arrow-odbc = "0.10.0"
+arrow-odbc = "0.11.0"
 lazy_static = "1.4.0"

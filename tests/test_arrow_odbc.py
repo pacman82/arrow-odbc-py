@@ -334,9 +334,7 @@ def test_allocation_erros():
     """
     table = "AllocationError"
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(
-        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (my_image Image)"'
-    )
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (my_image Image)"')
 
     query = f"SELECT * FROM {table}"
 
@@ -348,17 +346,42 @@ def test_allocation_erros():
 
 def test_image():
     """
-    Avoids error allocating image column with using casts.
+    Avoids error allocating image column bu using casts.
     """
     table = "Image"
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(
-        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (my_image Image)"'
-    )
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (my_image Image)"')
 
     query = f"SELECT CAST(my_image as VARBINARY(2048)) FROM {table}"
 
-    
     reader = read_arrow_batches_from_odbc(
         query=query, batch_size=1000, connection_string=MSSQL
     )
+
+
+def test_support_varchar_max():
+    """
+    Support fetching values from a VARCHAR(max) column, by specifying an upper
+    bound for the values in it.
+    """
+    # Given
+    table = "SupportVarcharMax"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a VARCHAR(max))"')
+    rows = "a\nHello World!\n"
+    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+
+    query = f"SELECT (a) FROM {table}"
+
+    # When
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=1000, connection_string=MSSQL, max_text_size=1024
+    )
+    it = iter(reader)
+    batch = next(it)
+
+    # Then
+    actual = batch.to_pydict()
+    expected = {"a": ["Hello World!"]}
+
+    assert expected == actual

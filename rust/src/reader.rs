@@ -14,7 +14,7 @@ use arrow_odbc::{
         record_batch::RecordBatchReader,
     },
     odbc_api::{CursorImpl, StatementConnection},
-    OdbcReader,
+    OdbcReader, BufferAllocationOptions,
 };
 
 use crate::{try_, ArrowOdbcError, OdbcConnection, parameter::ArrowOdbcParameter};
@@ -37,6 +37,8 @@ pub struct ArrowOdbcReader(OdbcReader<CursorImpl<StatementConnection<'static>>>)
 /// * `query_len` describes the len of `query_buf` in bytes.
 /// * `reader_out` in case of success this will point to an instance of `ArrowOdbcReader`.
 ///   Ownership is transferred to the caller.
+/// * `max_text_size` optional upper bound for the size of text columns. Use `0` to indicate that no
+///   uppper bound applies.
 /// * `parameters` must contain only valid pointers. This function takes ownership of all of them
 ///   independent if the function succeeds or not. Yet it does not take ownership of the array
 ///   itself.
@@ -48,6 +50,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     batch_size: usize,
     parameters: *const *mut ArrowOdbcParameter,
     parameters_len: usize,
+    max_text_size: usize,
     reader_out: *mut *mut ArrowOdbcReader,
 ) -> *mut ArrowOdbcError {
     let query = slice::from_raw_parts(query_buf, query_len);
@@ -64,9 +67,22 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
             .collect()
     };
 
+    let max_text_size = if max_text_size == 0 {
+        None
+    } else {
+        Some(max_text_size)
+    };
+
+    let max_binary_size = None;
+
+    let buffer_allocation_options = BufferAllocationOptions {
+        max_text_size,
+        max_binary_size,
+    };
+
     let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
     if let Some(cursor) = maybe_cursor {
-        let reader = try_!(OdbcReader::new(cursor, batch_size));
+        let reader = try_!(OdbcReader::with(cursor, batch_size, None, buffer_allocation_options));
         *reader_out = Box::into_raw(Box::new(ArrowOdbcReader(reader)))
     } else {
         *reader_out = null_mut()
