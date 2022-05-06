@@ -51,6 +51,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     parameters: *const *mut ArrowOdbcParameter,
     parameters_len: usize,
     max_text_size: usize,
+    max_binary_size: usize,
     reader_out: *mut *mut ArrowOdbcReader,
 ) -> *mut ArrowOdbcError {
     let query = slice::from_raw_parts(query_buf, query_len);
@@ -73,7 +74,11 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
         Some(max_text_size)
     };
 
-    let max_binary_size = None;
+    let max_binary_size = if max_binary_size == 0 {
+        None
+    } else {
+        Some(max_binary_size)
+    };
 
     let buffer_allocation_options = BufferAllocationOptions {
         max_text_size,

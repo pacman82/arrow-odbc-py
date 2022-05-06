@@ -88,6 +88,7 @@ struct ArrowOdbcError *arrow_odbc_reader_make(struct OdbcConnection *connection,
                                               struct ArrowOdbcParameter *const *parameters,
                                               uintptr_t parameters_len,
                                               uintptr_t max_text_size,
+                                              uintptr_t max_binary_size,
                                               struct ArrowOdbcReader **reader_out);
 
 /**

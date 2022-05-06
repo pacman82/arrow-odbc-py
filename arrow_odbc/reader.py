@@ -88,6 +88,7 @@ def read_arrow_batches_from_odbc(
     password: Optional[str] = None,
     parameters: Optional[List[Optional[str]]] = None,
     max_text_size: Optional[int] = None,
+    max_binary_size: Optional[int] = None,
 ) -> Optional[BatchReader]:
     """
     Execute the query and read the result as an iterator over Arrow batches.
@@ -120,6 +121,14 @@ def read_arrow_batches_from_odbc(
         this is the size in bytes and the datasource is assumed to utilize an UTF-8 encoding.
         ``None`` means no upper limit is set and the maximum element size, reported by ODBC is used
         to determine buffer sizes.
+    :param max_binary_size: An upper limit for the size of buffers bound to variadic binary columns
+        of the data source. This limit does not (directly) apply to the size of the created arrow
+        buffers, but rather applies to the buffers used for the data in transit. Use this option if
+        you have e.g. VARBINARY(MAX) fields in your database schema. In such a case without an upper
+        limit, the ODBC driver of your data source is asked for the maximum size of an element, and
+        is likely to answer with either 0 or a value which is way larger than any actual entry in
+        the column. If you can not adapt your database schema, this limit might be what you are
+        looking for. This is the maximum size in bytes of the binary column.
     :return: In case the query does not produce a result set (e.g. in case of an INSERT statement),
         ``None`` is returned. Should the statement return a result set a ``BatchReader`` is
         returned, which implements the iterator protocol and iterates over individual arrow batches.
@@ -161,6 +170,9 @@ def read_arrow_batches_from_odbc(
     if max_text_size is None:
         max_text_size = 0
 
+    if max_binary_size is None:
+        max_binary_size = 0
+
     for p_index in range(0, parameters_len):
         (p_bytes, p_len) = encoded_parameters[p_index]
         parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(p_bytes, p_len)
@@ -176,6 +188,7 @@ def read_arrow_batches_from_odbc(
         parameters_array,
         parameters_len,
         max_text_size,
+        max_binary_size,
         reader_out,
     )
 

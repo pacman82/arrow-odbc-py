@@ -241,7 +241,7 @@ def test_query_umlaut():
     assert expected == actual
 
 
-def test_query_varchar_max():
+def test_query_zero_sized_column():
     """
     Query a string those UTF-8 representation is larger in bytes than in
     characters.
@@ -385,3 +385,29 @@ def test_support_varchar_max():
     expected = {"a": ["Hello World!"]}
 
     assert expected == actual
+
+
+def test_support_varbinary_max():
+    """
+    Support fetching values from a VARBINARY(max) column, by specifying an upper
+    bound for the values in it.
+    """
+    # Given
+    table = "SupportVarcharMax"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a VARBINARY(max))"')
+
+    query = f"SELECT (a) FROM {table}"
+
+    # When
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=1000, connection_string=MSSQL, max_binary_size=1024
+    )
+    it = iter(reader)
+
+    # Then
+    # Implicitly we assert that we could allocate a buffer to hold values for the columns. Better
+    # assertion is to check for an inserted value, but inserting binaries is hard with the current
+    # test setup.
+    with raises(StopIteration):
+        next(it)

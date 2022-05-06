@@ -1,8 +1,12 @@
 # Changelog
 
+## 0.1.20
+
+- Support specifying an upper limit for text and binary columns. This allows to circumvent allocation and or zero sized column errors.
+
 ## 0.1.19
 
-- Raise exception in case buffer alloction fails instead of panicing.
+- Raise exception in case buffer allocation fails instead of panicing.
 
 ## 0.1.18
 
