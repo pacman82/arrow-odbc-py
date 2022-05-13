@@ -73,13 +73,19 @@ const char *arrow_odbc_error_message(const struct ArrowOdbcError *error);
  *   afterwards.
  * * `query_buf` must point to a valid utf-8 string
  * * `query_len` describes the len of `query_buf` in bytes.
- * * `reader_out` in case of success this will point to an instance of `ArrowOdbcReader`.
- *   Ownership is transferred to the caller.
- * * `max_text_size` optional upper bound for the size of text columns. Use `0` to indicate that no
- *   uppper bound applies.
  * * `parameters` must contain only valid pointers. This function takes ownership of all of them
  *   independent if the function succeeds or not. Yet it does not take ownership of the array
  *   itself.
+ * * `parameters_len` number of elements in parameters.
+ * * `max_text_size` optional upper bound for the size of text columns. Use `0` to indicate that no
+ *   uppper bound applies.
+ * * `max_binary_size` optional upper bound for the size of binary columns. Use `0` to indicate
+ *   that no uppper bound applies.
+ * * `fallibale_allocations`: `TRUE` if allocations should return an error, `FALSE` if it is fine
+ *   to abort the process. Enabling might have a performance overhead, so it might be desirable to
+ *   disable it, if you know there is enough memory available.
+ * * `reader_out` in case of success this will point to an instance of `ArrowOdbcReader`.
+ *   Ownership is transferred to the caller.
  */
 struct ArrowOdbcError *arrow_odbc_reader_make(struct OdbcConnection *connection,
                                               const uint8_t *query_buf,
@@ -89,6 +95,7 @@ struct ArrowOdbcError *arrow_odbc_reader_make(struct OdbcConnection *connection,
                                               uintptr_t parameters_len,
                                               uintptr_t max_text_size,
                                               uintptr_t max_binary_size,
+                                              bool fallibale_allocations,
                                               struct ArrowOdbcReader **reader_out);
 
 /**

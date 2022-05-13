@@ -340,7 +340,10 @@ def test_allocation_erros():
 
     with raises(Error, match="Column buffer is too large to be allocated."):
         read_arrow_batches_from_odbc(
-            query=query, batch_size=1000, connection_string=MSSQL
+            query=query,
+            batch_size=1000,
+            connection_string=MSSQL,
+            falliable_allocations=True,
         )
 
 
@@ -355,7 +358,9 @@ def test_image():
     query = f"SELECT CAST(my_image as VARBINARY(2048)) FROM {table}"
 
     reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=1000, connection_string=MSSQL
+        query=query,
+        batch_size=1000,
+        connection_string=MSSQL,
     )
 
 

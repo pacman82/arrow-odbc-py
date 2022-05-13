@@ -89,6 +89,7 @@ def read_arrow_batches_from_odbc(
     parameters: Optional[List[Optional[str]]] = None,
     max_text_size: Optional[int] = None,
     max_binary_size: Optional[int] = None,
+    falliable_allocations: bool = True,
 ) -> Optional[BatchReader]:
     """
     Execute the query and read the result as an iterator over Arrow batches.
@@ -129,6 +130,12 @@ def read_arrow_batches_from_odbc(
         is likely to answer with either 0 or a value which is way larger than any actual entry in
         the column. If you can not adapt your database schema, this limit might be what you are
         looking for. This is the maximum size in bytes of the binary column.
+    :param falliable_allocations: If ``True`` an recoverable error is raised in case there is not
+        enough memory to allocate the buffers. This option may incurr a performance penalty which
+        scales with the batch size parameter (but not with the amount of actual data in the source).
+        Most use case do not deal with new database schemas on a regulare basis and can safely set
+        this to ``False``. Default is ``True`` though safety first. In case an allocation error
+        occurs and this is ``False`` the process aborts.
     :return: In case the query does not produce a result set (e.g. in case of an INSERT statement),
         ``None`` is returned. Should the statement return a result set a ``BatchReader`` is
         returned, which implements the iterator protocol and iterates over individual arrow batches.
@@ -155,6 +162,13 @@ def read_arrow_batches_from_odbc(
     )
     # See if we connected successfully and return an error if not
     raise_on_error(error)
+
+    # Connecting to the database has been successful. Note that connection_out does not truly take
+    # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
+    # connection would not be closed and its associated resources would not be freed.
+    # However, this is fine since everything from here on out until we call arrow_odbc_reader_make
+    # is infalliable. arrow_odbc_reader_make will truly take ownership of the connection. Even if it
+    # should fail, it will be closed correctly.
 
     if parameters is None:
         parameters_array = FFI.NULL
@@ -189,6 +203,7 @@ def read_arrow_batches_from_odbc(
         parameters_len,
         max_text_size,
         max_binary_size,
+        falliable_allocations,
         reader_out,
     )
 
