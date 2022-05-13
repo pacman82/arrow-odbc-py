@@ -133,9 +133,9 @@ def read_arrow_batches_from_odbc(
     :param falliable_allocations: If ``True`` an recoverable error is raised in case there is not
         enough memory to allocate the buffers. This option may incurr a performance penalty which
         scales with the batch size parameter (but not with the amount of actual data in the source).
-        Most use case do not deal with new database schemas on a regulare basis and can safely set
-        this to ``False``. Default is ``True`` though safety first. In case an allocation error
-        occurs and this is ``False`` the process aborts.
+        In case you can test your query against the schema you can safely set this to ``False``. The
+        required memory will not depend on the amount of data in the data source. Default is
+        ``True`` though, safety first.
     :return: In case the query does not produce a result set (e.g. in case of an INSERT statement),
         ``None`` is returned. Should the statement return a result set a ``BatchReader`` is
         returned, which implements the iterator protocol and iterates over individual arrow batches.

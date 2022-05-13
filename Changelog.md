@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.21
+
+- Add paramater `falliable_allocations` to give users the option to opt out of falliable allocations, and potential performance overhead.
+
 ## 0.1.20
 
 - Support specifying an upper limit for text and binary columns. This allows to circumvent allocation and or zero sized column errors.
