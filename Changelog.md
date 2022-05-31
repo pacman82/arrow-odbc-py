@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.22
+
+- Updated rust dependencies
+
 ## 0.1.21
 
 - Add paramater `falliable_allocations` to give users the option to opt out of falliable allocations, and potential performance overhead.
