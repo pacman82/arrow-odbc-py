@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.23
+
+- Updated rust dependencies
+
 ## 0.1.22
 
 - Updated rust dependencies
