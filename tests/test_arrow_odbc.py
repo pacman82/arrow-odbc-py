@@ -1,12 +1,14 @@
 import os
 
 import pyarrow as pa
+import pyarrow.csv as csv
 
 from subprocess import run
 
 from pytest import raises
 
 from arrow_odbc import read_arrow_batches_from_odbc, Error
+from arrow_odbc.writer import insert_into_table
 
 MSSQL = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;"
 
@@ -416,3 +418,15 @@ def test_support_varbinary_max():
     # test setup.
     with raises(StopIteration):
         next(it)
+
+def test_insert_batches():
+    """
+    Insert data into database
+    """
+    # Given
+    table = "InsertBatches"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(50)"')
+
+    reader = csv.read_csv("tests/iris.csv")
+    insert_into_table(connection_string=MSSQL)

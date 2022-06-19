@@ -2,21 +2,12 @@ from typing import List, Optional, Tuple
 from cffi.api import FFI  # type: ignore
 
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
-from pyarrow import RecordBatch, Schema, Array  # type: ignore
+from pyarrow import RecordBatch, Schema, Array
+
+from arrow_odbc.connect import to_bytes_and_len, connect_to_database  # type: ignore
 
 from ._native import ffi, lib  # type: ignore
 from .error import raise_on_error
-
-
-def _to_bytes_and_len(value: Optional[str]) -> Tuple[bytes, int]:
-    if value is None:
-        value_bytes = FFI.NULL
-        value_len = 0
-    else:
-        value_bytes = value.encode("utf-8")
-        value_len = len(value)
-
-    return (value_bytes, value_len)
 
 
 class BatchReader:
@@ -140,28 +131,9 @@ def read_arrow_batches_from_odbc(
         ``None`` is returned. Should the statement return a result set a ``BatchReader`` is
         returned, which implements the iterator protocol and iterates over individual arrow batches.
     """
-
     query_bytes = query.encode("utf-8")
 
-    connection_string_bytes = connection_string.encode("utf-8")
-
-    (user_bytes, user_len) = _to_bytes_and_len(user)
-    (password_bytes, password_len) = _to_bytes_and_len(password)
-
-    connection_out = ffi.new("OdbcConnection **")
-
-    # Open connection to ODBC Data Source
-    error = lib.arrow_odbc_connect_with_connection_string(
-        connection_string_bytes,
-        len(connection_string_bytes),
-        user_bytes,
-        user_len,
-        password_bytes,
-        password_len,
-        connection_out,
-    )
-    # See if we connected successfully and return an error if not
-    raise_on_error(error)
+    connection_out = connect_to_database(connection_string, user, password)
 
     # Connecting to the database has been successful. Note that connection_out does not truly take
     # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
@@ -179,7 +151,7 @@ def read_arrow_batches_from_odbc(
         parameters_len = len(parameters)
         # Must be kept alive. Within Rust code we only allocate an additional
         # indicator the string payload is just referenced.
-        encoded_parameters = [_to_bytes_and_len(p) for p in parameters]
+        encoded_parameters = [to_bytes_and_len(p) for p in parameters]
 
     if max_text_size is None:
         max_text_size = 0
