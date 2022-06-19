@@ -132,3 +132,16 @@ struct ArrowOdbcError *arrow_odbc_reader_schema(struct ArrowOdbcReader *reader, 
  */
 struct ArrowOdbcParameter *arrow_odbc_parameter_string_make(const uint8_t *char_buf,
                                                             uintptr_t char_len);
+
+/**
+ * Consumes the batches of an Arrow ODBC reader and inserts them into a table
+ *
+ * Takes ownership of connection even in case of an error.
+ *
+ * # Safety
+ *
+ * * `connection` must point to a valid OdbcConnection. This function takes ownership of the
+ *   connection, even in case of an error. So The connection must not be freed explicitly
+ *   afterwards.
+ */
+struct ArrowOdbcError *arrow_odbc_insert_into_table(struct OdbcConnection *connection);
