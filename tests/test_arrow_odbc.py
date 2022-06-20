@@ -419,6 +419,17 @@ def test_support_varbinary_max():
     with raises(StopIteration):
         next(it)
 
+def test_insert_should_raise_on_invalid_connection_string():
+    """
+    Insert should raise on invalid connection string
+    """
+    # Given
+    invalid_connection_string = "FOO"
+
+    # When / Then
+    with raises(Error, match="Data source name not found"):
+        insert_into_table(connection_string=invalid_connection_string)
+
 def test_insert_batches():
     """
     Insert data into database
@@ -426,7 +437,7 @@ def test_insert_batches():
     # Given
     table = "InsertBatches"
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(50)"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(50))"')
 
     reader = csv.read_csv("tests/iris.csv")
     insert_into_table(connection_string=MSSQL)
