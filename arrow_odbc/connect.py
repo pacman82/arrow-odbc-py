@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 from cffi.api import FFI  # type: ignore
 
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
@@ -18,7 +18,7 @@ def to_bytes_and_len(value: Optional[str]) -> Tuple[bytes, int]:
     return (value_bytes, value_len)
 
 
-def connect_to_database(connection_string, user, password):
+def connect_to_database(connection_string, user, password) -> Any:
 
     connection_string_bytes = connection_string.encode("utf-8")
 
@@ -39,4 +39,5 @@ def connect_to_database(connection_string, user, password):
     )
     # See if we connected successfully and return an error if not
     raise_on_error(error)
-    return connection_out
+    # Dereference output pointer. This gives us an `OdbcConnection *`
+    return connection_out[0]

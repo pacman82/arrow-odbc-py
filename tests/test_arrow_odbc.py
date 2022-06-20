@@ -427,8 +427,9 @@ def test_insert_should_raise_on_invalid_connection_string():
     invalid_connection_string = "FOO"
 
     # When / Then
+    reader = csv.read_csv("tests/iris.csv")
     with raises(Error, match="Data source name not found"):
-        insert_into_table(connection_string=invalid_connection_string)
+        insert_into_table(connection_string=invalid_connection_string, table="MyTable", reader=reader)
 
 def test_insert_batches():
     """
@@ -440,4 +441,4 @@ def test_insert_batches():
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(50))"')
 
     reader = csv.read_csv("tests/iris.csv")
-    insert_into_table(connection_string=MSSQL)
+    insert_into_table(connection_string=MSSQL, table=table, reader=reader)

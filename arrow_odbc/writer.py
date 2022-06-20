@@ -1,10 +1,18 @@
 from typing import Optional
+
+from pyarrow import RecordBatchReader
+
 from arrow_odbc.connect import connect_to_database
 
 from ._native import ffi, lib  # type: ignore
 
+
 def insert_into_table(
-    connection_string: str, user: Optional[str] = None, password: Optional[str] = None
+    reader: RecordBatchReader,
+    table: str,
+    connection_string: str,
+    user: Optional[str] = None,
+    password: Optional[str] = None,
 ):
     """
     Consume the batches in the reader and insert them into a table on the database.
@@ -18,8 +26,9 @@ def insert_into_table(
         is not already part of it. The value will eventually be escaped and attached to the
         connection string as `PWD`.
     """
-    connection_out = connect_to_database(connection_string, user, password)
-    connection = connection_out[0]
+    table_bytes = table.encode("utf-8")
+
+    connection = connect_to_database(connection_string, user, password)
 
     # Connecting to the database has been successful. Note that connection_out does not truly take
     # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the

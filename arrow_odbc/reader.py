@@ -133,7 +133,7 @@ def read_arrow_batches_from_odbc(
     """
     query_bytes = query.encode("utf-8")
 
-    connection_out = connect_to_database(connection_string, user, password)
+    connection = connect_to_database(connection_string, user, password)
 
     # Connecting to the database has been successful. Note that connection_out does not truly take
     # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
@@ -165,7 +165,6 @@ def read_arrow_batches_from_odbc(
 
     reader_out = ffi.new("ArrowOdbcReader **")
 
-    connection = connection_out[0]
     error = lib.arrow_odbc_reader_make(
         connection,
         query_bytes,
