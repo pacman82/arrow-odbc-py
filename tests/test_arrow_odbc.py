@@ -425,11 +425,15 @@ def test_insert_should_raise_on_invalid_connection_string():
     """
     # Given
     invalid_connection_string = "FOO"
+    schema = pa.schema([('a', pa.int64())])
+    def iter_record_batches():
+        for i in range(2):
+            yield pa.RecordBatch.from_arrays([pa.array([1, 2, 3])], schema=schema)
+    reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
 
     # When / Then
-    reader = csv.read_csv("tests/iris.csv")
     with raises(Error, match="Data source name not found"):
-        insert_into_table(connection_string=invalid_connection_string, table="MyTable", reader=reader)
+        insert_into_table(connection_string=invalid_connection_string, chunk_size=20, table="MyTable", reader=reader)
 
 def test_insert_batches():
     """
@@ -438,7 +442,12 @@ def test_insert_batches():
     # Given
     table = "InsertBatches"
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(50))"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a BIGINT)"')
+    schema = pa.schema([('a', pa.int64())])
+    def iter_record_batches():
+        for i in range(2):
+            yield pa.RecordBatch.from_arrays([pa.array([1, 2, 3])], schema=schema)
+    reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
 
-    reader = csv.read_csv("tests/iris.csv")
-    insert_into_table(connection_string=MSSQL, table=table, reader=reader)
+    # When
+    insert_into_table(connection_string=MSSQL, chunk_size=20, table=table, reader=reader)

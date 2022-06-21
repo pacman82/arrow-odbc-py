@@ -100,7 +100,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     } else {
         *reader_out = null_mut()
     }
-    null_mut()
+    null_mut() // Ok(())
 }
 
 /// Frees the resources associated with an ArrowOdbcReader
