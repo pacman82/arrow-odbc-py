@@ -20,6 +20,12 @@ typedef struct ArrowOdbcParameter ArrowOdbcParameter;
 typedef struct ArrowOdbcReader ArrowOdbcReader;
 
 /**
+ * Opaque type holding all the state associated with an ODBC writer implementation in Rust. This
+ * type also has ownership of the ODBC Connection handle.
+ */
+typedef struct ArrowOdbcWriter ArrowOdbcWriter;
+
+/**
  * Opaque type to transport connection to an ODBC Datasource over language boundry
  */
 typedef struct OdbcConnection OdbcConnection;
@@ -134,7 +140,16 @@ struct ArrowOdbcParameter *arrow_odbc_parameter_string_make(const uint8_t *char_
                                                             uintptr_t char_len);
 
 /**
- * Consumes the batches of an Arrow ODBC reader and inserts them into a table
+ * Frees the resources associated with an ArrowOdbcWriter
+ *
+ * # Safety
+ *
+ * `writer` must point to a valid ArrowOdbcReader.
+ */
+void arrow_odbc_writer_free(struct ArrowOdbcWriter *writer);
+
+/**
+ * Creates an Arrow ODBC writer instance.
  *
  * Takes ownership of connection even in case of an error.
  *
@@ -143,5 +158,15 @@ struct ArrowOdbcParameter *arrow_odbc_parameter_string_make(const uint8_t *char_
  * * `connection` must point to a valid OdbcConnection. This function takes ownership of the
  *   connection, even in case of an error. So The connection must not be freed explicitly
  *   afterwards.
+ * * `table_buf` must point to a valid utf-8 string
+ * * `table_len` describes the len of `table_buf` in bytes.
+ * * `schema` pointer to an arrow schema.
+ * * `writer_out` in case of success this will point to an instance of `ArrowOdbcWriter`. Ownership
+ *   is transferred to the caller.
  */
-struct ArrowOdbcError *arrow_odbc_insert_into_table(struct OdbcConnection *connection);
+struct ArrowOdbcError *arrow_odbc_writer_make(struct OdbcConnection *connection,
+                                              const uint8_t *table_buf,
+                                              uintptr_t table_len,
+                                              uintptr_t chunk_size,
+                                              const void *schema,
+                                              struct ArrowOdbcWriter **writer_out);

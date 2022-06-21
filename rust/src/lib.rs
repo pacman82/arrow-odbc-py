@@ -14,7 +14,9 @@ pub use error::{arrow_odbc_error_free, arrow_odbc_error_message, ArrowOdbcError}
 pub use reader::{
     arrow_odbc_reader_free, arrow_odbc_reader_make, arrow_odbc_reader_next, ArrowOdbcReader
 };
-pub use writer::arrow_odbc_insert_into_table; 
+pub use writer::{
+    arrow_odbc_writer_free, arrow_odbc_writer_make, ArrowOdbcWriter
+};
 
 lazy_static! {
     static ref ENV: Environment = Environment::new().unwrap();
