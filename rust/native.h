@@ -67,6 +67,16 @@ void arrow_odbc_error_free(struct ArrowOdbcError *error);
 const char *arrow_odbc_error_message(const struct ArrowOdbcError *error);
 
 /**
+ * # Safety
+ *
+ * `char_buf` may be `NULL`, but if it is not, it must contain a valid utf-8 sequence not shorter
+ * than `char_len`. This function does not take ownership of the parameter. The parameter must at
+ * least be valid until the call make reader is finished.
+ */
+struct ArrowOdbcParameter *arrow_odbc_parameter_string_make(const uint8_t *char_buf,
+                                                            uintptr_t char_len);
+
+/**
  * Creates an Arrow ODBC reader instance.
  *
  * Takes ownership of connection even in case of an error. `reader_out` is assigned a NULL pointer
@@ -130,16 +140,6 @@ struct ArrowOdbcError *arrow_odbc_reader_next(struct ArrowOdbcReader *reader,
 struct ArrowOdbcError *arrow_odbc_reader_schema(struct ArrowOdbcReader *reader, void *out_schema);
 
 /**
- * # Safety
- *
- * `char_buf` may be `NULL`, but if it is not, it must contain a valid utf-8 sequence not shorter
- * than `char_len`. This function does not take ownership of the parameter. The parameter must at
- * least be valid until the call make reader is finished.
- */
-struct ArrowOdbcParameter *arrow_odbc_parameter_string_make(const uint8_t *char_buf,
-                                                            uintptr_t char_len);
-
-/**
  * Frees the resources associated with an ArrowOdbcWriter
  *
  * # Safety
@@ -170,3 +170,12 @@ struct ArrowOdbcError *arrow_odbc_writer_make(struct OdbcConnection *connection,
                                               uintptr_t chunk_size,
                                               const void *schema,
                                               struct ArrowOdbcWriter **writer_out);
+
+/**
+ * # Safety
+ *
+ * * `writer` must be valid non-null writer, allocated by [`arrow_odbc_writer_make`].
+ * * `batch` must be a valid pointer to an arrow batch
+ */
+struct ArrowOdbcError *arrow_odbc_writer_write_batch(struct ArrowOdbcWriter *writer,
+                                                     const void *batch);

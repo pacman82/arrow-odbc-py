@@ -59,3 +59,15 @@ pub unsafe extern "C" fn arrow_odbc_writer_make(
 
     null_mut() // Ok(())
 }
+
+/// # Safety
+///
+/// * `writer` must be valid non-null writer, allocated by [`arrow_odbc_writer_make`].
+/// * `batch` must be a valid pointer to an arrow batch
+#[no_mangle]
+pub unsafe extern "C" fn arrow_odbc_writer_write_batch(
+    mut writer: NonNull<ArrowOdbcWriter>,
+    batch: *const c_void,
+) -> *mut ArrowOdbcError {
+    null_mut() // Ok(())
+}
