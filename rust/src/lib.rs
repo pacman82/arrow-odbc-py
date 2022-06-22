@@ -1,8 +1,8 @@
 //! Defines C bindings for `arrow-odbc` to enable using it from Python.
 
 mod error;
-mod reader;
 mod parameter;
+mod reader;
 mod writer;
 
 use std::{borrow::Cow, ptr::null_mut, slice, str};
@@ -12,10 +12,10 @@ use lazy_static::lazy_static;
 
 pub use error::{arrow_odbc_error_free, arrow_odbc_error_message, ArrowOdbcError};
 pub use reader::{
-    arrow_odbc_reader_free, arrow_odbc_reader_make, arrow_odbc_reader_next, ArrowOdbcReader
+    arrow_odbc_reader_free, arrow_odbc_reader_make, arrow_odbc_reader_next, ArrowOdbcReader,
 };
 pub use writer::{
-    arrow_odbc_writer_free, arrow_odbc_writer_make, ArrowOdbcWriter
+    arrow_odbc_writer_free, arrow_odbc_writer_make, arrow_odbc_writer_write_batch, ArrowOdbcWriter,
 };
 
 lazy_static! {

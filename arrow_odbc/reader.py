@@ -135,7 +135,7 @@ def read_arrow_batches_from_odbc(
 
     connection = connect_to_database(connection_string, user, password)
 
-    # Connecting to the database has been successful. Note that connection_out does not truly take
+    # Connecting to the database has been successful. Note that connection does not truly take
     # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
     # connection would not be closed and its associated resources would not be freed.
     # However, this is fine since everything from here on out until we call arrow_odbc_reader_make
