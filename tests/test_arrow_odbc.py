@@ -3,7 +3,7 @@ import os
 import pyarrow as pa
 import pyarrow.csv as csv
 
-from subprocess import run
+from subprocess import run, check_output
 
 from pytest import raises
 
@@ -419,21 +419,30 @@ def test_support_varbinary_max():
     with raises(StopIteration):
         next(it)
 
+
 def test_insert_should_raise_on_invalid_connection_string():
     """
     Insert should raise on invalid connection string
     """
     # Given
     invalid_connection_string = "FOO"
-    schema = pa.schema([('a', pa.int64())])
+    schema = pa.schema([("a", pa.int64())])
+
     def iter_record_batches():
         for i in range(2):
             yield pa.RecordBatch.from_arrays([pa.array([1, 2, 3])], schema=schema)
+
     reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
 
     # When / Then
     with raises(Error, match="Data source name not found"):
-        insert_into_table(connection_string=invalid_connection_string, chunk_size=20, table="MyTable", reader=reader)
+        insert_into_table(
+            connection_string=invalid_connection_string,
+            chunk_size=20,
+            table="MyTable",
+            reader=reader,
+        )
+
 
 def test_insert_batches():
     """
@@ -442,12 +451,24 @@ def test_insert_batches():
     # Given
     table = "InsertBatches"
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a BIGINT)"')
-    schema = pa.schema([('a', pa.int64())])
+    os.system(
+        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (id int IDENTITY(1,1), a BIGINT)"'
+    )
+    schema = pa.schema([("a", pa.int64())])
+
     def iter_record_batches():
         for i in range(2):
             yield pa.RecordBatch.from_arrays([pa.array([1, 2, 3])], schema=schema)
+
     reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
 
     # When
-    insert_into_table(connection_string=MSSQL, chunk_size=20, table=table, reader=reader)
+    insert_into_table(
+        connection_string=MSSQL, chunk_size=20, table=table, reader=reader
+    )
+
+    # Then
+    actual = check_output(
+        ["odbcsv", "fetch", "-c", MSSQL, "-q", f"SELECT a FROM {table} ORDER BY id"]
+    )
+    assert "a\n1\n2\n3\n1\n2\n3\n" == actual.decode("utf8")

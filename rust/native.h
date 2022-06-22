@@ -178,5 +178,12 @@ struct ArrowOdbcError *arrow_odbc_writer_make(struct OdbcConnection *connection,
  * * `batch` must be a valid pointer to an arrow batch
  */
 struct ArrowOdbcError *arrow_odbc_writer_write_batch(struct ArrowOdbcWriter *writer,
-                                                     const void *array_ptr,
-                                                     const void *schema_ptr);
+                                                     void *array_ptr,
+                                                     void *schema_ptr);
+
+/**
+ * # Safety
+ *
+ * * `writer` must be valid non-null writer, allocated by [`arrow_odbc_writer_make`].
+ */
+struct ArrowOdbcError *arrow_odbc_writer_flush(struct ArrowOdbcWriter *writer);
