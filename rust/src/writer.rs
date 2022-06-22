@@ -4,7 +4,7 @@ use std::{
     slice, str,
 };
 
-use arrow_odbc::{odbc_api::StatementConnection, OdbcWriter, arrow::{ffi::FFI_ArrowSchema, datatypes::Schema}};
+use arrow_odbc::{odbc_api::StatementConnection, OdbcWriter, arrow::{ffi::{FFI_ArrowSchema, FFI_ArrowArray, ArrowArray}, datatypes::Schema, record_batch::RecordBatch, array::StructArray}};
 
 use crate::{ArrowOdbcError, OdbcConnection, try_};
 
@@ -67,7 +67,16 @@ pub unsafe extern "C" fn arrow_odbc_writer_make(
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_writer_write_batch(
     mut writer: NonNull<ArrowOdbcWriter>,
-    batch: *const c_void,
+    array_ptr: *mut c_void,
+    schema_ptr: *mut c_void,
 ) -> *mut ArrowOdbcError {
+    // Dereference batch
+    let ffi_array_ptr = array_ptr as * mut FFI_ArrowArray;
+    let ffi_schema_ptr = schema_ptr as * mut FFI_ArrowSchema;
+    let arrow_array = ArrowArray::try_from_raw(ffi_array_ptr, ffi_schema_ptr);
+
+    // Dereference writer
+    let writer = &mut writer.as_mut().0;
+
     null_mut() // Ok(())
 }
