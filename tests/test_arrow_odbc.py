@@ -121,10 +121,8 @@ def test_schema():
         query=query, batch_size=100, connection_string=MSSQL
     )
 
-    actual = reader.schema()
-
     expected = pa.schema([("a", pa.int32()), ("b", pa.string())])
-    assert expected == actual
+    assert expected == reader.schema
 
 
 def test_timestamp_us():

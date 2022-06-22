@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0
+
+- Support for inserting record batches into a database table
+- `BatchReader` now exposes `schema` as an attribute rather than a function.
+
 ## 0.1.23
 
 - Updated rust dependencies
