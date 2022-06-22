@@ -4,9 +4,18 @@ use std::{
     slice, str,
 };
 
-use arrow_odbc::{odbc_api::StatementConnection, OdbcWriter, arrow::{ffi::{FFI_ArrowSchema, FFI_ArrowArray, ArrowArray}, datatypes::Schema, record_batch::RecordBatch, array::StructArray}};
+use arrow_odbc::{
+    arrow::{
+        array::StructArray,
+        datatypes::Schema,
+        ffi::{ArrowArray, ArrowArrayRef, FFI_ArrowArray, FFI_ArrowSchema},
+        record_batch::RecordBatch,
+    },
+    odbc_api::StatementConnection,
+    OdbcWriter,
+};
 
-use crate::{ArrowOdbcError, OdbcConnection, try_};
+use crate::{try_, ArrowOdbcError, OdbcConnection};
 
 /// Opaque type holding all the state associated with an ODBC writer implementation in Rust. This
 /// type also has ownership of the ODBC Connection handle.
@@ -51,10 +60,12 @@ pub unsafe extern "C" fn arrow_odbc_writer_make(
     let table = slice::from_raw_parts(table_buf, table_len);
     let table = str::from_utf8(table).unwrap();
 
-    let schema = schema as * const FFI_ArrowSchema;
+    let schema = schema as *const FFI_ArrowSchema;
     let schema: Schema = try_!((&*schema).try_into());
 
-    let writer = try_!(OdbcWriter::from_connection(connection, &schema, table, chunk_size));
+    let writer = try_!(OdbcWriter::from_connection(
+        connection, &schema, table, chunk_size
+    ));
     *writer_out = Box::into_raw(Box::new(ArrowOdbcWriter(writer)));
 
     null_mut() // Ok(())
@@ -71,12 +82,30 @@ pub unsafe extern "C" fn arrow_odbc_writer_write_batch(
     schema_ptr: *mut c_void,
 ) -> *mut ArrowOdbcError {
     // Dereference batch
-    let ffi_array_ptr = array_ptr as * mut FFI_ArrowArray;
-    let ffi_schema_ptr = schema_ptr as * mut FFI_ArrowSchema;
-    let arrow_array = ArrowArray::try_from_raw(ffi_array_ptr, ffi_schema_ptr);
+    let ffi_array_ptr = array_ptr as *mut FFI_ArrowArray;
+    let ffi_schema_ptr = schema_ptr as *mut FFI_ArrowSchema;
+    let arrow_array = try_!(ArrowArray::try_from_raw(ffi_array_ptr, ffi_schema_ptr));
+    let array_data = try_!(arrow_array.to_data());
+    let struct_array = StructArray::from(array_data);
+    let record_batch = RecordBatch::from(&struct_array);
 
     // Dereference writer
     let writer = &mut writer.as_mut().0;
 
+    try_!(writer.write_batch(&record_batch));
     null_mut() // Ok(())
+}
+
+/// # Safety
+///
+/// * `writer` must be valid non-null writer, allocated by [`arrow_odbc_writer_make`].
+#[no_mangle]
+pub unsafe extern "C" fn arrow_odbc_writer_flush(
+    mut writer: NonNull<ArrowOdbcWriter>,
+) -> *mut ArrowOdbcError {
+    // Dereference writer
+    let writer = &mut writer.as_mut().0;
+
+    try_!(writer.flush());
+    null_mut()
 }

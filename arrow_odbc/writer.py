@@ -39,9 +39,15 @@ class BatchWriter:
 
             # Export the Array to the C Data structures.
             batch._export_to_c(c_array_ptr)
-            batch._export_to_c(c_schema_ptr)
+            batch.schema._export_to_c(c_schema_ptr)
 
             lib.arrow_odbc_writer_write_batch(self.handle, c_array, c_schema)
+
+    def flush(self):
+        """
+        Inserts the remaining rows of the last chunk to the database.
+        """
+        lib.arrow_odbc_writer_flush(self.handle)
 
 def insert_into_table(
     reader: Any,
@@ -64,8 +70,6 @@ def insert_into_table(
         connection string as `PWD`.
     """
     table_bytes = table.encode("utf-8")
-
-    # See: <https://arrow.apache.org/docs/python/integration/python_r.html>
 
     # Allocate structures where we will export the Array data and the Array schema. They will be
     # released when we exit the with block.
@@ -93,3 +97,4 @@ def insert_into_table(
     # Write all batches in reader
     for batch in reader:
         writer.write_batch(batch)
+    writer.flush()
