@@ -19,6 +19,8 @@ Users looking for more features than just bulk fetching data from ODBC data sour
 
 ## Usage
 
+### Query
+
 ```python
 from arrow_odbc import read_arrow_batches_from_odbc
 
@@ -37,6 +39,29 @@ for batch in reader:
     # Process arrow batches
     df = batch.to_pandas()
     # ...
+```
+
+### Insert
+
+```python
+from arrow_odbc import insert_into_table
+
+
+schema = pa.schema([("a", pa.int64())])
+def iter_record_batches():
+    for i in range(2):
+        yield pa.RecordBatch.from_arrays([pa.array([1, 2, 3])], schema=schema)
+reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
+
+
+insert_into_table(
+    connection_string="Driver={ODBC Driver 17 for SQL Server};Server=localhost;",
+    user="SA",
+    password="My@Test@Password",
+    chunk_size=1000,
+    table="MyTable",
+    reader=reader,
+)
 ```
 
 ## Installation
