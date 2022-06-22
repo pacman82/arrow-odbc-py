@@ -25,9 +25,13 @@ class BatchReader:
         # We take owners of the corresponding reader written in Rust and keep it alive until `self`
         # is deleted
         self.handle = handle
-        # Use this member to cache the schema, since it is constant for all
-        # batches. This member is set the first time `schema()` is called.
-        self.schema_ = None
+        # Expose schema as attribute
+        # https://github.com/apache/arrow/blob/5ead37593472c42f61c76396dde7dcb8954bde70/python/pyarrow/tests/test_cffi.py
+        schema_out = arrow_ffi.new("struct ArrowSchema *")
+        error = lib.arrow_odbc_reader_schema(self.handle, schema_out)
+        raise_on_error(error)
+        ptr_schema = int(ffi.cast("uintptr_t", schema_out))
+        self.schema = Schema._import_from_c(ptr_schema)
 
     def __del__(self):
         # Free the resources associated with this handle.
@@ -56,19 +60,6 @@ class BatchReader:
             schema_ptr = int(ffi.cast("uintptr_t", schema))
             struct_array = Array._import_from_c(array_ptr, schema_ptr)
             return RecordBatch.from_struct_array(struct_array)
-
-    def schema(self):
-        """
-        The arrow schema of the batches returned by this reader.
-        """
-        if self.schema_ is None:
-            # https://github.com/apache/arrow/blob/5ead37593472c42f61c76396dde7dcb8954bde70/python/pyarrow/tests/test_cffi.py
-            schema_out = arrow_ffi.new("struct ArrowSchema *")
-            error = lib.arrow_odbc_reader_schema(self.handle, schema_out)
-            raise_on_error(error)
-            ptr_schema = int(ffi.cast("uintptr_t", schema_out))
-            self.schema_ = Schema._import_from_c(ptr_schema)
-        return self.schema_
 
 
 def read_arrow_batches_from_odbc(
