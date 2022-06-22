@@ -30,14 +30,18 @@ class BatchWriter:
         time they are full, the data is send to the database. To make sure all
         the data is is send ``flush`` must be called.
         """
-        with arrow_ffi.new("struct ArrowArray*") as c_array:
-            # Get the references to the C Data structures.
+        with arrow_ffi.new("struct ArrowArray*") as c_array, \
+            arrow_ffi.new("struct ArrowSchema*") as c_schema:
+            
+            # Get the references to the C Data structures
             c_array_ptr = int(arrow_ffi.cast("uintptr_t", c_array))
+            c_schema_ptr = int(arrow_ffi.cast("uintptr_t", c_schema))
 
             # Export the Array to the C Data structures.
             batch._export_to_c(c_array_ptr)
+            batch._export_to_c(c_schema_ptr)
 
-            lib.arrow_odbc_writer_write_batch(self.handle, c_array)
+            lib.arrow_odbc_writer_write_batch(self.handle, c_array, c_schema)
 
 def insert_into_table(
     reader: Any,
@@ -65,8 +69,7 @@ def insert_into_table(
 
     # Allocate structures where we will export the Array data and the Array schema. They will be
     # released when we exit the with block.
-    with arrow_ffi.new("struct ArrowArray*") as c_array, \
-        arrow_ffi.new("struct ArrowSchema*") as c_schema:
+    with arrow_ffi.new("struct ArrowSchema*") as c_schema:
         # Get the references to the C Data structures.
         c_schema_ptr = int(arrow_ffi.cast("uintptr_t", c_schema))
 
