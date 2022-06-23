@@ -5,9 +5,11 @@
 
 Fill Apache Arrow arrays from ODBC data sources. This crate is build on top of the [`pyarrow`](https://pypi.org/project/arrow/) Python package and [`arrow-odbc`](https://crates.io/crates/arrow-odbc) Rust crate and enables you to read the data of an ODBC data source as sequence of Apache Arrow record batches.
 
+This package can also be used to insert data in Arrow record batches to database tables.
+
 This package has been designed to be easily deployable, so it provides a prebuild many linux wheel which is independent of the specific version of your Python interpreter and the specific Arrow Version you want to use. It will dynamically link against the ODBC driver manager provided by your system.
 
-Users looking for more features than just bulk fetching data from ODBC data sources in Python should also take a look at [`turbodbc`](https://github.com/blue-yonder/turbodbc) which has a helpful community and seen a lot of battle testing. This Python package is more narrow in Scope (which is a fancy way of saying it has less features), as it is only concerned with bulk fetching Arrow Arrays. `turbodbc` may be harder to install using `pip` though, due to it's reliance on C++ API and external dependencies like `boost`.
+Users looking for more features than just bulk fetching/inserting data from/into ODBC data sources in Python should also take a look at [`turbodbc`](https://github.com/blue-yonder/turbodbc) which has a helpful community and seen a lot of battle testing. This Python package is more narrow in Scope (which is a fancy way of saying it has less features), as it is only concerned with bulk fetching Arrow Arrays. `turbodbc` may be harder to install using `pip` though, due to it's reliance on C++ API and external dependencies like `boost`.
 
 ## About Arrow
 
@@ -46,13 +48,14 @@ for batch in reader:
 ```python
 from arrow_odbc import insert_into_table
 
-
+# Arrow Field name must match column name of database table.
 schema = pa.schema([("a", pa.int64())])
 def iter_record_batches():
     for i in range(2):
         yield pa.RecordBatch.from_arrays([pa.array([1, 2, 3])], schema=schema)
+# Reader must be ablet to iterate over record batches, exposing a `schema` attribute.
+# RecordBatchReader implements this protocol.
 reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
-
 
 insert_into_table(
     connection_string="Driver={ODBC Driver 17 for SQL Server};Server=localhost;",
@@ -104,7 +107,7 @@ pip install arrow-odbc
 
 `arrow-odbc` utilizes `cffi` and the Arrow C-Interface to glue Rust and Python code together. Therefore the wheel does not need to be build against the precise version either of Python or Arrow.
 
-## Matching of ODBC to Arrow types
+## Matching of ODBC to Arrow types then querying
 
 | ODBC               | Arrow                |
 | ------------------ | -------------------- |
@@ -128,3 +131,31 @@ pip install arrow-odbc
 | Varbinary          | Binary               |
 | Binary             | FixedSizedBinary     |
 | All others         | Utf8                 |
+
+## Matching of Arrow to ODBC types then inserting
+
+| Arrow              | ODBC           |
+| ------------------ | -------------- |
+| Utf8               | VarChar        |
+| Decimal(p, s = 0)  | VarChar(p + 1) |
+| Decimal(p, s != 0) | VarChar(p + 2) |
+| Int8               | TinyInt        |
+| Int16              | SmallInt       |
+| Int32              | Integer        |
+| Int64              | BigInt         |
+| Float16            | Real           |
+| Float32            | Real           |
+| Float64            | Double         |
+| Timestamp s        | Timestamp(7)   |
+| Timestamp ms       | Timestamp(7)   |
+| Timestamp us       | Timestamp(7)   |
+| Timestamp ns       | Timestamp(7)   |
+| Date32             | Date           |
+| Date64             | Date           |
+| Time32 s           | Time           |
+| Time32 ms          | VarChar(12)    |
+| Time64 us          | VarChar(15)    |
+| Time64 ns          | VarChar(16)    |
+| Binary             | Varbinary      |
+| FixedBinary(l)     | Varbinary(l)   |
+| All others         | Unsupported    |

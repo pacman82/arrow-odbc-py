@@ -60,6 +60,13 @@ def insert_into_table(
     """
     Consume the batches in the reader and insert them into a table on the database.
 
+    :param reader: Reader is used to iterate over record batches. It must expose a `schema`
+        attribute, referencing an Arrow schema. Each field in the schema must correspond to a
+        column in the table with identical name.
+    :param chunk_size: Number of records to insert in each roundtrip to the database. Independent of
+        batch size (i.e. number of rows in an individual record batch).
+    :param table: Name of a database table to insert into. Used to generate the insert statement for
+        the bulk writer.
     :param connection_string: ODBC Connection string used to connect to the data source. To find a
         connection string for your data source try https://www.connectionstrings.com/.
     :param user: Allows for specifying the user seperatly from the connection string if it is not
