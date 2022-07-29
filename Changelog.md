@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- Updated Rust dependencies
+
 ## 0.2.0
 
 - Support for inserting record batches into a database table
@@ -7,11 +11,11 @@
 
 ## 0.1.23
 
-- Updated rust dependencies
+- Updated Rust dependencies
 
 ## 0.1.22
 
-- Updated rust dependencies
+- Updated Rust dependencies
 
 ## 0.1.21
 
