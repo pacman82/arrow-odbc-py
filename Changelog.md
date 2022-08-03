@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+- Support for inserting `Decimal256`
+
 ## 0.2.1
 
 - Updated Rust dependencies
