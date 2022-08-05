@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "arrow-odbc"
 description="Read the data of an ODBC data source as sequence of Apache Arrow record batches."
 readme = "README.md"
-version = "0.2.2"
+version = "0.2.3"
 
 [project.optional-dependencies]
 test = ["pytest < 7.0.0"]
