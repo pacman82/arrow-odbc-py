@@ -7,6 +7,7 @@ use std::{
     sync::Arc,
 };
 
+use arrow::ffi::ArrowArray;
 use arrow_odbc::{
     arrow::{
         array::{Array, StructArray},
@@ -14,10 +15,10 @@ use arrow_odbc::{
         record_batch::RecordBatchReader,
     },
     odbc_api::{CursorImpl, StatementConnection},
-    OdbcReader, BufferAllocationOptions,
+    BufferAllocationOptions, OdbcReader,
 };
 
-use crate::{try_, ArrowOdbcError, OdbcConnection, parameter::ArrowOdbcParameter};
+use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, OdbcConnection};
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
 /// type also has ownership of the ODBC Connection handle.
@@ -95,7 +96,12 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
 
     let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
     if let Some(cursor) = maybe_cursor {
-        let reader = try_!(OdbcReader::with(cursor, batch_size, None, buffer_allocation_options));
+        let reader = try_!(OdbcReader::with(
+            cursor,
+            batch_size,
+            None,
+            buffer_allocation_options
+        ));
         *reader_out = Box::into_raw(Box::new(ArrowOdbcReader(reader)))
     } else {
         *reader_out = null_mut()
@@ -133,8 +139,9 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
 
         let batch = try_!(result);
         let struct_array: StructArray = batch.into();
+        let arrow_array = try_!(ArrowArray::try_new(struct_array.data().clone()));
 
-        let (ffi_array_ptr, ffi_schema_ptr) = try_!(struct_array.to_raw());
+        let (ffi_array_ptr, ffi_schema_ptr) = ArrowArray::into_raw(arrow_array);
 
         // In order to avoid memory leaks we must convert both pointers returned by the  `to_raw`
         // method. So we must back to `Arc` again, so they are freed at the end of this function
