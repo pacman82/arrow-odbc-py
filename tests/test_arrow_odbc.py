@@ -1,7 +1,10 @@
+import gc
 import os
 
 import pyarrow as pa
 import pyarrow.csv as csv
+
+import pytest
 
 from subprocess import run, check_output
 
@@ -349,7 +352,7 @@ def test_allocation_erros():
 
 def test_image():
     """
-    Avoids error allocating image column bu using casts.
+    Avoids error allocating image column by using casts.
     """
     table = "Image"
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
@@ -470,3 +473,26 @@ def test_insert_batches():
         ["odbcsv", "fetch", "-c", MSSQL, "-q", f"SELECT a FROM {table} ORDER BY id"]
     )
     assert "a\n1\n2\n3\n1\n2\n3\n" == actual.decode("utf8")
+
+
+@pytest.mark.slow
+def test_should_not_leak_memory_for_each_batch():
+    """
+    Read a bunch of arrow batches and see if total memory usage went over a
+    threshold after running GC.
+    """
+    # Given
+    table = "ShouldNotLeakMemoryForEachBatch"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(
+        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(20) )"'
+    )
+    os.system(f'odbcsv insert -c "{MSSQL}" -i ./tests/iris.csv {table}')
+
+    # When, create an individual batch for each row
+    reader = read_arrow_batches_from_odbc(
+        query=f"SELECT * FROM {table}", batch_size=1, connection_string=MSSQL
+    )
+
+    for batch in reader:
+        _batch = batch
