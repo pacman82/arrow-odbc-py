@@ -495,4 +495,4 @@ def test_should_not_leak_memory_for_each_batch():
     )
 
     for batch in reader:
-        _batch = batch
+        del batch
