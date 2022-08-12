@@ -143,7 +143,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
 
         let (ffi_array_ptr, ffi_schema_ptr) = ArrowArray::into_raw(arrow_array);
 
-        // In order to avoid memory leaks we must convert both pointers returned by the  `to_raw`
+        // In order to avoid memory leaks we must convert both pointers returned by the `into_raw`
         // method. So we must back to `Arc` again, so they are freed at the end of this function
         // call in order to avoid memory leaks. Furthermore it is the callers responsibility to
         // provide us with the FFI_Arrow* structures to fill, and the caller maintains ownership
