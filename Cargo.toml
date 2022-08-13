@@ -1,9 +1,24 @@
-# Having a top level Cargo.toml apart from the one in the `rust` subdirectory
-# usually makes for a smoother local development experience. As tooling like
-# rust-analyzer might look for a top-level `Cargo.toml`.
+[package]
+name = "arrow-odbc-py"
+version = "0.1.0"
+edition = "2021"
 
-[workspace]
-members = ['rust']
+# This is only published as part of a python wheel, not as a stand alone crate.
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# Name needs to be identical to python package name
+name = "arrow_odbc"
+crate-type = ["cdylib"]
+
+[dependencies]
+arrow-odbc = "0.19.0"
+# arrow would be included indirectly using arrow-odbc, but we need to explicitly specify the ffi
+# feature.
+arrow = { version = "20.0.0", default-features = false, features = ["ffi"] }
+lazy_static = "1.4.0"
 
 [profile.release]
 # Panics should only be caused by logic errors and are considered bugs
