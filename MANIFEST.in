@@ -1,7 +1,0 @@
-# Rust sources
-include Cargo.toml
-include Cargo.lock
-include rust/Cargo.toml
-include rust/Cargo.lock
-include rust/native.h
-recursive-include rust/src *.rs
