@@ -47,19 +47,5 @@ jobs:
           python -m venv venv
           source venv/bin/activate
           python -m pip install --upgrade pip
-          # Editable installation stopped working for reasons not yet understood by me.
-          ## pip install -e .[test]
-          ## pytest -vv
-          # We build a wheel instead and copy the tests into a fresh directory
-          python -m pip install build
-          python -m build --wheel
-          python -m pip install dist/arrow_odbc-*.whl
-          # Now that the wheel has been created in dist, lets prepare a test directory
-          mkdir /tmp/arrow-odbc-wheel-test
-          cp conftest.py tests/* /tmp/arrow-odbc-wheel-test/
-          cd /tmp/arrow-odbc-wheel-test
-          # run tests
-          pip install pytest
+          pip install -e .[test]
           pytest -vv
-
-
