@@ -6,7 +6,7 @@ from pyarrow import RecordBatch, Schema, Array
 
 from arrow_odbc.connect import to_bytes_and_len, connect_to_database  # type: ignore
 
-from ._native import ffi, lib  # type: ignore
+from .arrow_odbc import ffi, lib  # type: ignore
 from .error import raise_on_error
 
 
