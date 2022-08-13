@@ -3,7 +3,7 @@ from typing import Optional, Any
 from pyarrow.cffi import ffi as arrow_ffi
 from arrow_odbc.connect import connect_to_database
 
-from ._native import ffi, lib  # type: ignore
+from .arrow_odbc import ffi, lib  # type: ignore
 
 class BatchWriter:
     """
