@@ -1,21 +1,28 @@
 [build-system]
-requires = ["setuptools", "wheel", "cffi"]
-build-backend = "setuptools.build_meta"
+requires = ["cffi", "maturin>=0.13,<0.14"]
+build-backend = "maturin"
 
 [project]
-name = "arrow-odbc"
+name = "arrow-odbc-py"
 authors = [{name = "Markus Klein"}]
 description="Read the data of an ODBC data source as sequence of Apache Arrow record batches."
 readme = "README.md"
 version = "0.2.4"
-dependencies = ['pyarrow', 'milksnake']
+dependencies = ["cffi", "pyarrow"]
 
 [project.license]
 file = "LICENSE"
 
 [project.optional-dependencies]
-test = ["pytest < 7.0.0"]
+test = ["pytest < 8.0.0"]
 
 [project.urls]
 repository = "https://github.com/pacman82/arrow-odbc-py"
 changelog = "https://github.com/pacman82/arrow-odbc-py/blob/main/Changelog.md"
+
+[tool.maturin]
+# Bindings type
+bindings = "cffi"
+
+[package.metadata.maturin]
+python-source = "python"
