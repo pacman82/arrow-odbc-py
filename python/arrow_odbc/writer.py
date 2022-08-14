@@ -5,6 +5,7 @@ from arrow_odbc.connect import connect_to_database
 
 from .arrow_odbc import ffi, lib  # type: ignore
 
+
 class BatchWriter:
     """
     Writes arrow batches to a database table.
@@ -30,9 +31,10 @@ class BatchWriter:
         time they are full, the data is send to the database. To make sure all
         the data is is send ``flush`` must be called.
         """
-        with arrow_ffi.new("struct ArrowArray*") as c_array, \
-            arrow_ffi.new("struct ArrowSchema*") as c_schema:
-            
+        with arrow_ffi.new("struct ArrowArray*") as c_array, arrow_ffi.new(
+            "struct ArrowSchema*"
+        ) as c_schema:
+
             # Get the references to the C Data structures
             c_array_ptr = int(arrow_ffi.cast("uintptr_t", c_array))
             c_schema_ptr = int(arrow_ffi.cast("uintptr_t", c_schema))
@@ -48,6 +50,7 @@ class BatchWriter:
         Inserts the remaining rows of the last chunk to the database.
         """
         lib.arrow_odbc_writer_flush(self.handle)
+
 
 def insert_into_table(
     reader: Any,
