@@ -24,9 +24,9 @@ do
 
     # Instead we unzip the wheel edit the dist info and rename it ourselfs, so we can upload it to PyPi
 
-    # f looks like e.g. /wheelhouse/arrow_odbc-0.1.8-py2.py3-none-linux_x86_64.whl
+    # f looks like e.g. /wheelhouse/arrow_odbc-0.1.8-py3-none-linux_x86_64.whl
     # trunk e.g. /wheelhouse/arrow_odbc-0.1.8
-    trunk=${f%-py2.py3-none-linux_x86_64.whl}
+    trunk=${f%-py3-none-linux_x86_64.whl}
     # E.g. 0.1.8
     ver=${trunk#*-}
 
