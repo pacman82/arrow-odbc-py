@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.5
+
+- `BatchWriter` is now "public" in top level scope.
+- Test release pipeline using `maturin` instead of `setuptools` with `milksnake`.
+- Fix: Non-linux wheels are no longer tagged to support Python 2
+
 ## 0.2.4
 
 - Update Rust dependencies

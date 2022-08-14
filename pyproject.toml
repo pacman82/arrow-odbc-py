@@ -7,7 +7,7 @@ name = "arrow-odbc"
 authors = [{name = "Markus Klein"}]
 description="Read the data of an ODBC data source as sequence of Apache Arrow record batches."
 readme = "README.md"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = ["cffi", "pyarrow"]
 
 [project.license]
@@ -23,6 +23,3 @@ changelog = "https://github.com/pacman82/arrow-odbc-py/blob/main/Changelog.md"
 [tool.maturin]
 # Bindings type
 bindings = "cffi"
-
-[package.metadata.maturin]
-python-source = "python"
