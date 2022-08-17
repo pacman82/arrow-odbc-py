@@ -9,10 +9,20 @@ build:
   os: "ubuntu-20.04"
   tools:
     python: "3.10"
-    rust: "1.62"
+    # Rust 1.61 is not recent enough to build the latest arrow
+    # rust: "1.61"
+  apt_packages:
+    # We link against unixodbc during building the wheel
+    - unixodbc-dev
+  jobs:
+    post_system_dependencies:
+      # Since the version in `tools` is not recent enough, we install Rust here manually
+      - asdf install rust latest # Install the latest rust version
+      - asdf global rust latest # Add cargo to $PATH so the build can find it
 
 python:
   install:
+    # We need a addionatal python dependencies for building the documentation. I.e. The Sphinx Theme
     - requirements: doc/requirements.txt
     - method: pip
       path: .
