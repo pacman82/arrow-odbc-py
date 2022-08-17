@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.6
+
+- Docs are now available on <http://arrow-odbc.readthedocs.org>
+
 ## 0.2.5
 
 - `BatchWriter` is now "public" in top level scope.
