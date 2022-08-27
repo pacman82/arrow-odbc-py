@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0
+
+- Use narrow strings on non-windows platforms. Assumes Sytem locale with UTF-8.
+
 ## 0.2.6
 
 - Docs are now available on <http://arrow-odbc.readthedocs.org>
