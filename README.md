@@ -48,24 +48,21 @@ for batch in reader:
 
 ```python
 from arrow_odbc import insert_into_table
+import pyarrow as pa
+import pandas
 
-# Arrow Field name must match column name of database table.
-schema = pa.schema([("a", pa.int64())])
-def iter_record_batches():
-    for i in range(2):
-        yield pa.RecordBatch.from_arrays([pa.array([1, 2, 3])], schema=schema)
-# Reader must be ablet to iterate over record batches, exposing a `schema` attribute.
-# RecordBatchReader implements this protocol.
-reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
 
-insert_into_table(
-    connection_string="Driver={ODBC Driver 17 for SQL Server};Server=localhost;",
-    user="SA",
-    password="My@Test@Password",
-    chunk_size=1000,
-    table="MyTable",
-    reader=reader,
-)
+def dataframe_to_table(df):
+    table = pa.Table.from_pandas(df)
+    reader = pa.RecordBatchReader.from_batches(table.schema, table.to_batches())
+    insert_into_table(
+        connection_string=connection_string,
+        user="SA",
+        password="My@Test@Password",
+        chunk_size=1000,
+        table="MyTable",
+        reader=reader,
+    )
 ```
 
 ## Installation
