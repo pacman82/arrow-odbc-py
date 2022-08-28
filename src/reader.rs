@@ -1,6 +1,6 @@
 use std::{
     ffi::c_void,
-    mem::swap,
+    ptr::swap,
     os::raw::c_int,
     ptr::{null_mut, NonNull},
     slice, str,
@@ -151,11 +151,11 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
 
         let mut arc_schema = Arc::from_raw(ffi_schema_ptr);
         let source_schema = Arc::get_mut(&mut arc_schema).unwrap();
-        swap(&mut *schema, source_schema);
+        swap(schema, source_schema);
 
         let mut arc_array = Arc::from_raw(ffi_array_ptr);
         let source_array = Arc::get_mut(&mut arc_array).unwrap();
-        swap(&mut *array, source_array);
+        swap(array, source_array);
 
         *has_next_out = 1;
     } else {
