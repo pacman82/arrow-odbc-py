@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+- Update Rust dependencies
+
 ## 0.3.0
 
 - Use narrow strings on non-windows platforms. Assumes Sytem locale with UTF-8.
