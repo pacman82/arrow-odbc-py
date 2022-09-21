@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.3
+
+- Update Rust dependencies
+
 ## 0.3.2
 
 - Disabled arrow default features again for leaner build. They had been enabled to workaround an upstream bug, there the `ffi` feature has not been self reliant. This update uses a smaller workaround and only enables the `ipc` feature in addition to `ffi`.
