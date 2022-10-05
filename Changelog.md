@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.4
+
+- Update Rust dependencies
+
 ## 0.3.3
 
 - Update Rust dependencies
