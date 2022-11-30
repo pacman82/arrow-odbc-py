@@ -14,10 +14,10 @@ name = "arrow_odbc"
 crate-type = ["cdylib"]
 
 [dependencies]
-arrow-odbc = "0.22.0"
+arrow-odbc = "0.25.0"
 # arrow would be included indirectly using arrow-odbc, but we need to explicitly specify the ffi
 # feature.
-arrow = { version = "24.0.0", default-features = false, features = ["ffi"] }
+arrow = { version = "28.0.0", default-features = false, features = ["ffi"] }
 lazy_static = "1.4.0"
 
 [profile.release]

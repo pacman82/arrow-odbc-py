@@ -107,55 +107,57 @@ pip install arrow-odbc
 
 ## Matching of ODBC to Arrow types then querying
 
-| ODBC               | Arrow                |
-| ------------------ | -------------------- |
-| Numeric(p <= 38)   | Decimal              |
-| Decimal(p <= 38)   | Decimal              |
-| Integer            | Int32                |
-| SmallInt           | Int16                |
-| Real               | Float32              |
-| Float(p <=24)      | Float32              |
-| Double             | Float64              |
-| Float(p > 24)      | Float64              |
-| Date               | Date32               |
-| LongVarbinary      | Binary               |
-| Timestamp(p = 0)   | TimestampSecond      |
-| Timestamp(p: 1..3) | TimestampMilliSecond |
-| Timestamp(p: 4..6) | TimestampMicroSecond |
-| Timestamp(p >= 7 ) | TimestampNanoSecond  |
-| BigInt             | Int64                |
-| TinyInt            | Int8                 |
-| Bit                | Boolean              |
-| Varbinary          | Binary               |
-| Binary             | FixedSizedBinary     |
-| All others         | Utf8                 |
+| ODBC                     | Arrow                |
+| ------------------------ | -------------------- |
+| Numeric(p <= 38)         | Decimal128           |
+| Decimal(p <= 38, s >= 0) | Decimal128           |
+| Integer                  | Int32                |
+| SmallInt                 | Int16                |
+| Real                     | Float32              |
+| Float(p <=24)            | Float32              |
+| Double                   | Float64              |
+| Float(p > 24)            | Float64              |
+| Date                     | Date32               |
+| LongVarbinary            | Binary               |
+| Timestamp(p = 0)         | TimestampSecond      |
+| Timestamp(p: 1..3)       | TimestampMilliSecond |
+| Timestamp(p: 4..6)       | TimestampMicroSecond |
+| Timestamp(p >= 7 )       | TimestampNanoSecond  |
+| BigInt                   | Int64                |
+| TinyInt                  | Int8                 |
+| Bit                      | Boolean              |
+| Varbinary                | Binary               |
+| Binary                   | FixedSizedBinary     |
+| All others               | Utf8                 |
 
 ## Matching of Arrow to ODBC types then inserting
 
-| Arrow                 | ODBC           |
-| ------------------    | -------------- |
-| Utf8                  | VarChar        |
-| Decimal128(p, s = 0)  | VarChar(p + 1) |
-| Decimal128(p, s != 0) | VarChar(p + 2) |
-| Decimal256(p, s = 0)  | VarChar(p + 1) |
-| Decimal256(p, s != 0) | VarChar(p + 2) |
-| Int8                  | TinyInt        |
-| Int16                 | SmallInt       |
-| Int32                 | Integer        |
-| Int64                 | BigInt         |
-| Float16               | Real           |
-| Float32               | Real           |
-| Float64               | Double         |
-| Timestamp s           | Timestamp(7)   |
-| Timestamp ms          | Timestamp(7)   |
-| Timestamp us          | Timestamp(7)   |
-| Timestamp ns          | Timestamp(7)   |
-| Date32                | Date           |
-| Date64                | Date           |
-| Time32 s              | Time           |
-| Time32 ms             | VarChar(12)    |
-| Time64 us             | VarChar(15)    |
-| Time64 ns             | VarChar(16)    |
-| Binary                | Varbinary      |
-| FixedBinary(l)        | Varbinary(l)   |
-| All others            | Unsupported    |
+| Arrow                 | ODBC               |
+| --------------------- | ------------------ |
+| Utf8                  | VarChar            |
+| Decimal128(p, s = 0)  | VarChar(p + 1)     |
+| Decimal128(p, s != 0) | VarChar(p + 2)     |
+| Decimal128(p, s < 0)  | VarChar(p - s + 1) |
+| Decimal256(p, s = 0)  | VarChar(p + 1)     |
+| Decimal256(p, s != 0) | VarChar(p + 2)     |
+| Decimal256(p, s < 0)  | VarChar(p - s + 1) |
+| Int8                  | TinyInt            |
+| Int16                 | SmallInt           |
+| Int32                 | Integer            |
+| Int64                 | BigInt             |
+| Float16               | Real               |
+| Float32               | Real               |
+| Float64               | Double             |
+| Timestamp s           | Timestamp(7)       |
+| Timestamp ms          | Timestamp(7)       |
+| Timestamp us          | Timestamp(7)       |
+| Timestamp ns          | Timestamp(7)       |
+| Date32                | Date               |
+| Date64                | Date               |
+| Time32 s              | Time               |
+| Time32 ms             | VarChar(12)        |
+| Time64 us             | VarChar(15)        |
+| Time64 ns             | VarChar(16)        |
+| Binary                | Varbinary          |
+| FixedBinary(l)        | Varbinary(l)       |
+| All others            | Unsupported        |
