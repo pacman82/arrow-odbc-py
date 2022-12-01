@@ -116,7 +116,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
 /// `reader` must point to a valid ArrowOdbcReader.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_free(reader: NonNull<ArrowOdbcReader>) {
-    Box::from_raw(reader.as_ptr());
+    drop(Box::from_raw(reader.as_ptr()));
 }
 
 /// # Safety
