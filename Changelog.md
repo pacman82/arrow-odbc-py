@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.6
+
+- Rerelease due to failed build of windows wheel.
+- Update Rust dependencies
+
 ## 0.3.5
 
 - Update Rust dependencies
