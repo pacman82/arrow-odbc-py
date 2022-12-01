@@ -26,7 +26,7 @@ impl ArrowOdbcError {
 /// Error must be a valid non null pointer to an Error.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_error_free(error: NonNull<ArrowOdbcError>) {
-    Box::from_raw(error.as_ptr());
+    drop(Box::from_raw(error.as_ptr()));
 }
 
 /// A zero terminated string describing the error

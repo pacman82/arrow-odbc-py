@@ -28,7 +28,7 @@ pub struct ArrowOdbcWriter(OdbcWriter<StatementConnection<'static>>);
 /// `writer` must point to a valid ArrowOdbcReader.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_writer_free(writer: NonNull<ArrowOdbcWriter>) {
-    Box::from_raw(writer.as_ptr());
+    drop(Box::from_raw(writer.as_ptr()));
 }
 
 /// Creates an Arrow ODBC writer instance.
