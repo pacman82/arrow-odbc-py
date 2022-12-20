@@ -19,6 +19,9 @@ arrow-odbc = "0.25.0"
 # feature.
 arrow = { version = "28.0.0", default-features = false, features = ["ffi"] }
 lazy_static = "1.4.0"
+# We only depend indirectly on log, but we include it directly here to disable logging at compile
+# time.
+log = { version = "0.4.17", features = ["release_max_level_off"] }
 
 [profile.release]
 # Panics should only be caused by logic errors and are considered bugs

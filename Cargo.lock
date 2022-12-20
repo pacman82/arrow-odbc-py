@@ -148,6 +148,7 @@ dependencies = [
  "arrow",
  "arrow-odbc",
  "lazy_static",
+ "log",
 ]
 
 [[package]]
