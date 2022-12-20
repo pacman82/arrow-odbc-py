@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.7
+
+- Updated Rust dependencies
+- Better error message in case the ODBC driver emits more than 32767 diagnostic records then fetching data.
+
 ## 0.3.6
 
 - Rerelease due to failed build of windows wheel.
