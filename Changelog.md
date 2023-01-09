@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.8
+
+- Fix: Be resilient against ineterior `Nul`s in error messages.
+
 ## 0.3.7
 
 - Updated Rust dependencies
