@@ -1,4 +1,4 @@
-use std::{ffi::CString, fmt::Display, os::raw::c_char, ptr::NonNull};
+use std::{ffi::CString, fmt::Display, os::{raw::c_char}, ptr::NonNull};
 
 /// Handle to an error emmitted by arrow odbc
 pub struct ArrowOdbcError {
@@ -7,9 +7,14 @@ pub struct ArrowOdbcError {
 
 impl ArrowOdbcError {
     pub fn new(source: impl Display) -> ArrowOdbcError {
-        let bytes = source.to_string();
+        let mut raw_string = source.to_string();
+        // Check the raw error message for interior `Nul`s. We can not put them in a CString, since
+        // CString use `Nul` to represent their end. In case the error contains interior nuls, just
+        // display the error message up to this point.
+        let truncated_len = raw_string.find('\0').unwrap_or(raw_string.len());
+        raw_string.truncate(truncated_len);
         // Terminating Nul will be appended by `new`.
-        let message = CString::new(bytes).unwrap();
+        let message = CString::new(raw_string).unwrap();
         ArrowOdbcError { message }
     }
 
@@ -51,4 +56,19 @@ macro_rules! try_ {
             }
         }
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ArrowOdbcError;
+
+
+    #[test]
+    fn should_truncate_strings_with_interior_nul() {
+        let message = "Hello\0World!";
+
+        let error = ArrowOdbcError::new(message);
+
+        assert_eq!("Hello", error.message.into_string().unwrap())
+    }
 }
