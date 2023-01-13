@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.9
+
+- Updated Rust dependencies
+  - This includes an update to `odbc-api 0.54.0`. This avoids escalating into an error if a query emits at least 32767 warnings.
+
 ## 0.3.8
 
 - Fix: Be resilient against ineterior `Nul`s in error messages.
