@@ -4,11 +4,11 @@ use std::{
     slice, str,
 };
 
+use arrow::ffi::{ArrowArray, ArrowArrayRef, FFI_ArrowArray, FFI_ArrowSchema};
 use arrow_odbc::{
     arrow::{
         array::StructArray,
         datatypes::Schema,
-        ffi::{ArrowArray, ArrowArrayRef, FFI_ArrowArray, FFI_ArrowSchema},
         record_batch::RecordBatch,
     },
     odbc_api::StatementConnection,

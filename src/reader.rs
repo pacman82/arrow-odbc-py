@@ -7,11 +7,10 @@ use std::{
     sync::Arc,
 };
 
-use arrow::ffi::ArrowArray;
+use arrow::ffi::{ArrowArray, FFI_ArrowArray, FFI_ArrowSchema};
 use arrow_odbc::{
     arrow::{
         array::{Array, StructArray},
-        ffi::{FFI_ArrowArray, FFI_ArrowSchema},
         record_batch::RecordBatchReader,
     },
     odbc_api::{CursorImpl, StatementConnection},

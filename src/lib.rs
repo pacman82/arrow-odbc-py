@@ -70,5 +70,5 @@ unsafe fn append_attribute(
     let bytes = slice::from_raw_parts(ptr, len);
     let text = str::from_utf8(bytes).unwrap();
     let escaped = escape_attribute_value(text);
-    *connection_string = format!("{}{}={};", connection_string, attribute_name, escaped).into()
+    *connection_string = format!("{connection_string}{attribute_name}={escaped};").into()
 }
