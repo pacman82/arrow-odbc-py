@@ -7,7 +7,7 @@ mod writer;
 
 use std::{borrow::Cow, ptr::null_mut, slice, str};
 
-use arrow_odbc::odbc_api::{escape_attribute_value, Connection, Environment, ConnectionOptions};
+use arrow_odbc::odbc_api::{escape_attribute_value, Connection, ConnectionOptions, Environment};
 use lazy_static::lazy_static;
 
 pub use error::{arrow_odbc_error_free, arrow_odbc_error_message, ArrowOdbcError};
@@ -41,6 +41,7 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
     user_len: usize,
     password: *const u8,
     password_len: usize,
+    login_timeout_sec_ptr: *const u32,
     connection_out: *mut *mut OdbcConnection,
 ) -> *mut ArrowOdbcError {
     let connection_string = slice::from_raw_parts(connection_string_buf, connection_string_len);
@@ -49,7 +50,16 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
     append_attribute("UID", &mut connection_string, user, user_len);
     append_attribute("PWD", &mut connection_string, password, password_len);
 
-    let connection = try_!(ENV.connect_with_connection_string(&connection_string, ConnectionOptions::default()));
+    let login_timeout_sec = if login_timeout_sec_ptr.is_null() {
+        None
+    } else {
+        Some(*login_timeout_sec_ptr)
+    };
+
+    let connection = try_!(ENV.connect_with_connection_string(
+        &connection_string,
+        ConnectionOptions { login_timeout_sec }
+    ));
 
     *connection_out = Box::into_raw(Box::new(OdbcConnection(connection)));
     null_mut()

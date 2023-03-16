@@ -72,6 +72,7 @@ def read_arrow_batches_from_odbc(
     max_text_size: Optional[int] = None,
     max_binary_size: Optional[int] = None,
     falliable_allocations: bool = True,
+    login_timeout_sec: Optional[int] = None,
 ) -> Optional[BatchReader]:
     """
     Execute the query and read the result as an iterator over Arrow batches.
@@ -123,13 +124,18 @@ def read_arrow_batches_from_odbc(
         In case you can test your query against the schema you can safely set this to ``False``. The
         required memory will not depend on the amount of data in the data source. Default is
         ``True`` though, safety first.
+    :param login_timeout_sec: Number of seconds to wait for a login request to complete before
+        returning to the application. The default is driver-dependent. If ``0``, the timeout is
+        disabled and a connection attempt will wait indefinitely. If the specified timeout exceeds
+        the maximum login timeout in the data source, the driver substitutes that value and uses
+        that instead.
     :return: In case the query does not produce a result set (e.g. in case of an INSERT statement),
         ``None`` is returned. Should the statement return a result set a ``BatchReader`` is
         returned, which implements the iterator protocol and iterates over individual arrow batches.
     """
     query_bytes = query.encode("utf-8")
 
-    connection = connect_to_database(connection_string, user, password)
+    connection = connect_to_database(connection_string, user, password, login_timeout_sec)
 
     # Connecting to the database has been successful. Note that connection does not truly take
     # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the

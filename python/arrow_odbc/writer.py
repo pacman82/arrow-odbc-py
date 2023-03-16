@@ -59,6 +59,7 @@ def insert_into_table(
     connection_string: str,
     user: Optional[str] = None,
     password: Optional[str] = None,
+    login_timeout_sec: Optional[int] = None,
 ):
     """
     Consume the batches in the reader and insert them into a table on the database.
@@ -78,6 +79,11 @@ def insert_into_table(
     :param password: Allows for specifying the password seperatly from the connection string if it
         is not already part of it. The value will eventually be escaped and attached to the
         connection string as `PWD`.
+    :param login_timeout_sec: Number of seconds to wait for a login request to complete before
+        returning to the application. The default is driver-dependent. If ``0``, the timeout is
+        disabled and a connection attempt will wait indefinitely. If the specified timeout exceeds
+        the maximum login timeout in the data source, the driver substitutes that value and uses
+        that instead.
     """
     table_bytes = table.encode("utf-8")
 
@@ -90,7 +96,7 @@ def insert_into_table(
         # Export the schema to the C Data structures.
         reader.schema._export_to_c(c_schema_ptr)
 
-        connection = connect_to_database(connection_string, user, password)
+        connection = connect_to_database(connection_string, user, password, login_timeout_sec)
 
         # Connecting to the database has been successful. Note that connection does not truly take
         # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
