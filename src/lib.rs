@@ -7,7 +7,7 @@ mod writer;
 
 use std::{borrow::Cow, ptr::null_mut, slice, str};
 
-use arrow_odbc::odbc_api::{escape_attribute_value, Connection, Environment};
+use arrow_odbc::odbc_api::{escape_attribute_value, Connection, Environment, ConnectionOptions};
 use lazy_static::lazy_static;
 
 pub use error::{arrow_odbc_error_free, arrow_odbc_error_message, ArrowOdbcError};
@@ -49,7 +49,7 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
     append_attribute("UID", &mut connection_string, user, user_len);
     append_attribute("PWD", &mut connection_string, password, password_len);
 
-    let connection = try_!(ENV.connect_with_connection_string(&connection_string));
+    let connection = try_!(ENV.connect_with_connection_string(&connection_string, ConnectionOptions::default()));
 
     *connection_out = Box::into_raw(Box::new(OdbcConnection(connection)));
     null_mut()
