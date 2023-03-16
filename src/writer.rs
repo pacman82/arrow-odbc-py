@@ -1,6 +1,6 @@
 use std::{
     ffi::c_void,
-    ptr::{null_mut, NonNull},
+    ptr::{null_mut, NonNull, self},
     slice, str,
 };
 
@@ -81,10 +81,13 @@ pub unsafe extern "C" fn arrow_odbc_writer_write_batch(
     array_ptr: *mut c_void,
     schema_ptr: *mut c_void,
 ) -> *mut ArrowOdbcError {
+    let array_ptr = array_ptr as *mut FFI_ArrowArray;
+    let schema_ptr = schema_ptr as *mut FFI_ArrowSchema;
+    let array = ptr::replace(array_ptr, FFI_ArrowArray::empty());
+    let schema = ptr::replace(schema_ptr, FFI_ArrowSchema::empty());
+
     // Dereference batch
-    let ffi_array_ptr = array_ptr as *mut FFI_ArrowArray;
-    let ffi_schema_ptr = schema_ptr as *mut FFI_ArrowSchema;
-    let arrow_array = try_!(ArrowArray::try_from_raw(ffi_array_ptr, ffi_schema_ptr));
+    let arrow_array = ArrowArray::new(array, schema);
     let array_data = try_!(arrow_array.to_data());
     let struct_array = StructArray::from(array_data);
     let record_batch = RecordBatch::from(&struct_array);
