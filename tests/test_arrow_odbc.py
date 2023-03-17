@@ -176,7 +176,7 @@ def test_specify_user_and_password_separatly():
         user=user,
         password=password,
     )
-    
+
     it = iter(reader)
     _result = next(it)
     with raises(StopIteration):

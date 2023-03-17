@@ -135,7 +135,9 @@ def read_arrow_batches_from_odbc(
     """
     query_bytes = query.encode("utf-8")
 
-    connection = connect_to_database(connection_string, user, password, login_timeout_sec)
+    connection = connect_to_database(
+        connection_string, user, password, login_timeout_sec
+    )
 
     # Connecting to the database has been successful. Note that connection does not truly take
     # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the

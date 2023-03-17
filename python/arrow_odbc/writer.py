@@ -96,7 +96,9 @@ def insert_into_table(
         # Export the schema to the C Data structures.
         reader.schema._export_to_c(c_schema_ptr)
 
-        connection = connect_to_database(connection_string, user, password, login_timeout_sec)
+        connection = connect_to_database(
+            connection_string, user, password, login_timeout_sec
+        )
 
         # Connecting to the database has been successful. Note that connection does not truly take
         # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the

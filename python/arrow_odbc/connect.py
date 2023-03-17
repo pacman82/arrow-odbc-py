@@ -18,7 +18,12 @@ def to_bytes_and_len(value: Optional[str]) -> Tuple[bytes, int]:
     return (value_bytes, value_len)
 
 
-def connect_to_database(connection_string: str, user: Optional[str], password: Optional[str], login_timeout_sec: Optional[int]) -> Any:
+def connect_to_database(
+    connection_string: str,
+    user: Optional[str],
+    password: Optional[str],
+    login_timeout_sec: Optional[int],
+) -> Any:
 
     connection_string_bytes = connection_string.encode("utf-8")
 
