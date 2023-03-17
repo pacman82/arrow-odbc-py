@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.11
+
+- Fix manylinux wheel build
+
 ## 0.3.10
 
 - Support for explicit login timeout in seconds via the `login_timeout_sec` parameter in both `read_arrow_batches_from_odbc` and `insert_into_table`.
