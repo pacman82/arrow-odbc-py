@@ -470,6 +470,39 @@ def test_insert_batches():
     assert "a\n1\n2\n3\n1\n2\n3\n" == actual.decode("utf8")
 
 
+def test_insert_from_parquet():
+    """
+    Insert data into database from a parquet file
+    """
+    # Given
+    table = "InsertFromParquet"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(
+        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(20) )"'
+    )
+
+    # When
+    import pyarrow.parquet as pq
+
+    arrow_table = pq.read_table("./tests/iris.parquet")
+    schema = arrow_table.schema
+    batches = arrow_table.to_batches(100)
+    reader = pa.RecordBatchReader.from_batches(schema, batches)
+    insert_into_table(
+        reader=reader,
+        chunk_size=100,
+        table=table,
+        connection_string=MSSQL,
+    )
+
+    # Then
+    after_roundtrip = read_arrow_batches_from_odbc(
+        query=f"SELECT * FROM {table}", batch_size=1000, connection_string=MSSQL
+    )
+    assert after_roundtrip.schema == schema
+    assert len(next(after_roundtrip)) == 150
+
+
 @pytest.mark.slow
 def test_should_not_leak_memory_for_each_batch():
     """
