@@ -503,6 +503,38 @@ def test_insert_from_parquet():
     assert len(next(after_roundtrip)) == 150
 
 
+# Currently skipped because it would crash the entire test suite. This bug needs fixing though!
+@pytest.mark.skip
+def test_insert_large_string():
+    """
+    Insert an arrow table whose schema contains a "large string".
+    """
+    # Given
+    table = "InsertLargeString"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(
+        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a Varchar(50))"'
+    )
+    schema = pa.schema([("a", pa.large_string())])
+
+    def iter_record_batches():
+        # The string value is not actually large, just the schema information allows it to be
+        yield pa.RecordBatch.from_arrays([pa.array(["Hello"])], schema=schema)
+
+    reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
+
+    # When
+    insert_into_table(
+        connection_string=MSSQL, chunk_size=20, table=table, reader=reader
+    )
+
+    # Then
+    actual = check_output(
+        ["odbcsv", "fetch", "-c", MSSQL, "-q", f"SELECT a FROM {table} ORDER BY id"]
+    )
+    assert "a\nHello\n" == actual.decode("utf8")
+
+
 @pytest.mark.slow
 def test_should_not_leak_memory_for_each_batch():
     """
