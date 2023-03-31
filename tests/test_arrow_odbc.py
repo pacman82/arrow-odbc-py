@@ -16,7 +16,7 @@ from arrow_odbc.writer import insert_into_table
 MSSQL = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;"
 
 
-def test_should_report_error_on_invalid_connection_string():
+def test_should_report_error_on_invalid_connection_string_reading():
     """
     We want to forward the original ODBC errors to the end user. Of course foo
     is not a valid connection string. Therefore we want to see the creation of
@@ -425,8 +425,7 @@ def test_insert_should_raise_on_invalid_connection_string():
     schema = pa.schema([("a", pa.int64())])
 
     def iter_record_batches():
-        for i in range(2):
-            yield pa.RecordBatch.from_arrays([pa.array([1, 2, 3])], schema=schema)
+        yield pa.RecordBatch.from_arrays([pa.array([1, 2, 3])], schema=schema)
 
     reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
 
@@ -434,6 +433,28 @@ def test_insert_should_raise_on_invalid_connection_string():
     with raises(Error, match="Data source name not found"):
         insert_into_table(
             connection_string=invalid_connection_string,
+            chunk_size=20,
+            table="MyTable",
+            reader=reader,
+        )
+
+
+def test_insert_should_raise_on_unsupported_column_type():
+    """
+    Insert should raise on unsupported column type
+    """
+    # Given
+    schema = pa.schema([("a", pa.large_utf8())])
+
+    def iter_record_batches():
+            yield pa.RecordBatch.from_arrays([pa.array(["Hello"])], schema=schema)
+
+    reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
+
+    # When / Then
+    with raises(Error, match="The arrow data type LargeUtf8 is not supported for insertion."):
+        insert_into_table(
+            connection_string=MSSQL,
             chunk_size=20,
             table="MyTable",
             reader=reader,
@@ -503,7 +524,7 @@ def test_insert_from_parquet():
     assert len(next(after_roundtrip)) == 150
 
 
-# Currently skipped because it would crash the entire test suite. This bug needs fixing though!
+# Currently skipped because it is not supported
 @pytest.mark.skip
 def test_insert_large_string():
     """

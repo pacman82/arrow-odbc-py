@@ -4,6 +4,7 @@ from pyarrow.cffi import ffi as arrow_ffi
 from arrow_odbc.connect import connect_to_database
 
 from .arrow_odbc import ffi, lib  # type: ignore
+from .error import raise_on_error
 
 
 class BatchWriter:
@@ -43,13 +44,15 @@ class BatchWriter:
             batch._export_to_c(c_array_ptr)
             batch.schema._export_to_c(c_schema_ptr)
 
-            lib.arrow_odbc_writer_write_batch(self.handle, c_array, c_schema)
+            error = lib.arrow_odbc_writer_write_batch(self.handle, c_array, c_schema)
+            raise_on_error(error)
 
     def flush(self):
         """
         Inserts the remaining rows of the last chunk to the database.
         """
-        lib.arrow_odbc_writer_flush(self.handle)
+        error = lib.arrow_odbc_writer_flush(self.handle)
+        raise_on_error(error)
 
 
 def insert_into_table(
@@ -107,9 +110,10 @@ def insert_into_table(
         # connection will be closed.
 
         writer_out = ffi.new("ArrowOdbcWriter **")
-        lib.arrow_odbc_writer_make(
+        error = lib.arrow_odbc_writer_make(
             connection, table_bytes, len(table_bytes), chunk_size, c_schema, writer_out
         )
+        raise_on_error(error)
         writer = BatchWriter(writer_out[0])
 
     # Write all batches in reader
