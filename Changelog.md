@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.3.12
+
+- Fix: If an error occurrs during inintalizing the writer it is now correctly translated into a python exception interrupting the control flow befor accessing an invalid writer object. Before this fix an error would have caused an invalid memory access violation.
+
 ## 0.3.11
 
 - Fix manylinux wheel build
