@@ -444,15 +444,15 @@ def test_insert_should_raise_on_unsupported_column_type():
     Insert should raise on unsupported column type
     """
     # Given
-    schema = pa.schema([("a", pa.large_utf8())])
+    schema = pa.schema([("a", pa.dictionary(pa.int32(), pa.int32()))])
 
     def iter_record_batches():
-            yield pa.RecordBatch.from_arrays([pa.array(["Hello"])], schema=schema)
+            yield pa.RecordBatch.from_arrays([pa.array([(1,1)])], schema=schema)
 
     reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
 
     # When / Then
-    with raises(Error, match="The arrow data type LargeUtf8 is not supported for insertion."):
+    with raises(Error, match="The arrow data type Dictionary\(Int32, Int32\) is not supported for insertion."):
         insert_into_table(
             connection_string=MSSQL,
             chunk_size=20,
@@ -524,8 +524,6 @@ def test_insert_from_parquet():
     assert len(next(after_roundtrip)) == 150
 
 
-# Currently skipped because it is not supported
-@pytest.mark.skip
 def test_insert_large_string():
     """
     Insert an arrow table whose schema contains a "large string".
@@ -551,7 +549,7 @@ def test_insert_large_string():
 
     # Then
     actual = check_output(
-        ["odbcsv", "fetch", "-c", MSSQL, "-q", f"SELECT a FROM {table} ORDER BY id"]
+        ["odbcsv", "fetch", "-c", MSSQL, "-q", f"SELECT a FROM {table}"]
     )
     assert "a\nHello\n" == actual.decode("utf8")
 
