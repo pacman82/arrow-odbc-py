@@ -1,4 +1,4 @@
-use std::{ffi::CString, fmt::Display, os::{raw::c_char}, ptr::NonNull};
+use std::{ffi::CString, fmt::Display, os::raw::c_char, ptr::NonNull};
 
 /// Handle to an error emmitted by arrow odbc
 pub struct ArrowOdbcError {
@@ -61,7 +61,6 @@ macro_rules! try_ {
 #[cfg(test)]
 mod tests {
     use super::ArrowOdbcError;
-
 
     #[test]
     fn should_truncate_strings_with_interior_nul() {

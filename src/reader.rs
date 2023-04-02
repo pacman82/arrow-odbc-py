@@ -1,13 +1,12 @@
 use std::{
     ffi::c_void,
-    ptr::swap,
+    mem::swap,
     os::raw::c_int,
     ptr::{null_mut, NonNull},
     slice, str,
-    sync::Arc,
 };
 
-use arrow::ffi::{ArrowArray, FFI_ArrowArray, FFI_ArrowSchema};
+use arrow::ffi::{ArrowArray, ArrowArrayRef, FFI_ArrowArray, FFI_ArrowSchema};
 use arrow_odbc::{
     arrow::{
         array::{Array, StructArray},
@@ -121,7 +120,10 @@ pub unsafe extern "C" fn arrow_odbc_reader_free(reader: NonNull<ArrowOdbcReader>
 /// # Safety
 ///
 /// * `reader` must be valid non-null reader, allocated by [`arrow_odbc_reader_make`].
-/// * `array_out` and `schema_out` must both point to valid pointers, which themselves may be null.
+/// * `array` and `schema` must both point to valid, but unitialized memory. The memory must be
+///   allocated in the python code, so it can also be deallocated there and the python part can take
+///   ownership of the whole thing.
+/// * In case an error is returned `array` and `schema` remain unchanged.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_next(
     mut reader: NonNull<ArrowOdbcReader>,
@@ -133,28 +135,26 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
     let array = array as *mut FFI_ArrowArray;
 
     if let Some(result) = reader.as_mut().0.next() {
-        *array = FFI_ArrowArray::empty();
-        *schema = FFI_ArrowSchema::empty();
-
+        // In case of an error fail early, before we change the output paramters.
         let batch = try_!(result);
         let struct_array: StructArray = batch.into();
         let arrow_array = try_!(ArrowArray::try_new(struct_array.data().clone()));
 
-        let (ffi_array_ptr, ffi_schema_ptr) = ArrowArray::into_raw(arrow_array);
+        // Create two empty instances, so array and schema now point to valid instances.
+        *array = FFI_ArrowArray::empty();
+        *schema = FFI_ArrowSchema::empty();
+        // Now that the instances are valid it safe to use them as references rather than pointers
+        // (references must always be valid)
+        let array = &mut *array;
+        let schema = &mut *schema;
 
-        // In order to avoid memory leaks we must convert both pointers returned by the `into_raw`
-        // method. So we must back to `Arc` again, so they are freed at the end of this function
-        // call in order to avoid memory leaks. Furthermore it is the callers responsibility to
-        // provide us with the FFI_Arrow* structures to fill, and the caller maintains ownership
-        // over them.
+        let array_data = arrow_array.to_data().unwrap();
 
-        let mut arc_schema = Arc::from_raw(ffi_schema_ptr);
-        let source_schema = Arc::get_mut(&mut arc_schema).unwrap();
-        swap(schema, source_schema);
+        let mut ffi_array = FFI_ArrowArray::new(&array_data);
+        let mut ffi_schema = FFI_ArrowSchema::try_from(array_data.data_type()).unwrap();
 
-        let mut arc_array = Arc::from_raw(ffi_array_ptr);
-        let source_array = Arc::get_mut(&mut arc_array).unwrap();
-        swap(array, source_array);
+        swap(array, &mut ffi_array);
+        swap(schema, &mut ffi_schema);
 
         *has_next_out = 1;
     } else {

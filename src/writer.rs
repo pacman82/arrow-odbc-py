@@ -1,16 +1,12 @@
 use std::{
     ffi::c_void,
-    ptr::{null_mut, NonNull, self},
+    ptr::{self, null_mut, NonNull},
     slice, str,
 };
 
 use arrow::ffi::{ArrowArray, ArrowArrayRef, FFI_ArrowArray, FFI_ArrowSchema};
 use arrow_odbc::{
-    arrow::{
-        array::StructArray,
-        datatypes::Schema,
-        record_batch::RecordBatch,
-    },
+    arrow::{array::StructArray, datatypes::Schema, record_batch::RecordBatch},
     odbc_api::StatementConnection,
     OdbcWriter,
 };

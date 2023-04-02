@@ -558,7 +558,8 @@ def test_insert_large_string():
 def test_should_not_leak_memory_for_each_batch():
     """
     Read a bunch of arrow batches and see if total memory usage went over a
-    threshold after running GC.
+    threshold after running GC. Currently I let this run manually and see if
+    the process takes more memory over time as an assertion.
     """
     # Given
     table = "ShouldNotLeakMemoryForEachBatch"
@@ -568,10 +569,11 @@ def test_should_not_leak_memory_for_each_batch():
     )
     os.system(f'odbcsv insert -c "{MSSQL}" -i ./tests/iris.csv {table}')
 
-    # When, create an individual batch for each row
-    reader = read_arrow_batches_from_odbc(
-        query=f"SELECT * FROM {table}", batch_size=1, connection_string=MSSQL
-    )
+    for _ in range(1):
+        # When, create an individual batch for each row
+        reader = read_arrow_batches_from_odbc(
+            query=f"SELECT * FROM {table}", batch_size=1, connection_string=MSSQL
+        )
 
-    for batch in reader:
-        del batch
+        for batch in reader:
+            del batch
