@@ -69,7 +69,7 @@ def insert_into_table(
 
     :param reader: Reader is used to iterate over record batches. It must expose a `schema`
         attribute, referencing an Arrow schema. Each field in the schema must correspond to a
-        column in the table with identical name.
+        column in the table with identical name. The iterator must yield individual arrow tables
     :param chunk_size: Number of records to insert in each roundtrip to the database. Independent of
         batch size (i.e. number of rows in an individual record batch).
     :param table: Name of a database table to insert into. Used to generate the insert statement for
