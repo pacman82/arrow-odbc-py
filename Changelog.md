@@ -1,5 +1,9 @@
 # Changelog
 
+## Next
+
+- Update Rust dependencies
+
 ## 0.3.13
 
 - Support for inserting large binary strings
