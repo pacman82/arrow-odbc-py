@@ -11,8 +11,12 @@ from subprocess import run, check_output
 
 from pytest import raises
 
-from arrow_odbc import read_arrow_batches_from_odbc, Error
-from arrow_odbc.writer import insert_into_table, from_table_to_db
+from arrow_odbc import (
+    insert_into_table,
+    from_table_to_db,
+    read_arrow_batches_from_odbc,
+    Error,
+)
 
 MSSQL = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;"
 
