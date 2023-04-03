@@ -1,8 +1,9 @@
 # Changelog
 
-## Next
+## 0.3.14
 
 - Update Rust dependencies
+- Add `from_table_to_db` to better support insertion directly from an arrow header rather than a record batch reader.
 
 ## 0.3.13
 
