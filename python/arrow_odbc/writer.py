@@ -1,5 +1,6 @@
 from typing import Optional, Any
 
+from pyarrow import RecordBatchReader
 from pyarrow.cffi import ffi as arrow_ffi
 from arrow_odbc.connect import connect_to_database
 
@@ -35,7 +36,6 @@ class BatchWriter:
         with arrow_ffi.new("struct ArrowArray*") as c_array, arrow_ffi.new(
             "struct ArrowSchema*"
         ) as c_schema:
-
             # Get the references to the C Data structures
             c_array_ptr = int(arrow_ffi.cast("uintptr_t", c_array))
             c_schema_ptr = int(arrow_ffi.cast("uintptr_t", c_schema))
@@ -120,3 +120,55 @@ def insert_into_table(
     for batch in reader:
         writer.write_batch(batch)
     writer.flush()
+
+
+def from_table_to_db(
+    source: Any,
+    target: str,
+    connection_string: str,
+    chunk_size: int = 1000,
+    user: Optional[str] = None,
+    password: Optional[str] = None,
+    login_timeout_sec: Optional[int] = None,
+):
+    """
+    Reads an arrow table and inserts its contents into a relational table on the database.
+
+    :param source: PyArrow table with content to be inserted into the target table on the database.
+        Each column of the table must correspond to a column in the target table with identical
+        name.
+    :param target: Name of the database table to insert into.
+    :param connection_string: ODBC Connection string used to connect to the data source. To find a
+        connection string for your data source try https://www.connectionstrings.com/.
+    :param chunk_size: Number of records to insert in each roundtrip to the database. The number
+        will be automatically reduced to the number of rows, if the table is small, in order to save
+        memory.
+    :param user: Allows for specifying the user seperatly from the connection string if it is not
+        already part of it. The value will eventually be escaped and attached to the connection
+        string as `UID`.
+    :param password: Allows for specifying the password seperatly from the connection string if it
+        is not already part of it. The value will eventually be escaped and attached to the
+        connection string as `PWD`.
+    :param login_timeout_sec: Number of seconds to wait for a login request to complete before
+        returning to the application. The default is driver-dependent. If ``0``, the timeout is
+        disabled and a connection attempt will wait indefinitely. If the specified timeout exceeds
+        the maximum login timeout in the data source, the driver substitutes that value and uses
+        that instead.
+    """
+    # There is no need for chunk size to exceed the maximum amount of rows in the table
+    chunk_size = min(chunk_size, source.num_rows)
+    # We implemement this in terms of the functionality to insert a batches from a record batch
+    # reader, so first we convert our table into a record batch reader.
+    schema = source.schema
+    batches = source.to_batches(chunk_size)
+    reader = RecordBatchReader.from_batches(schema, batches)
+    # Now we can insert from the reader
+    insert_into_table(
+        reader,
+        chunk_size=chunk_size,
+        table=target,
+        connection_string=connection_string,
+        user=user,
+        password=password,
+        login_timeout_sec=login_timeout_sec,
+    )

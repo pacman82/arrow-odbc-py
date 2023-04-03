@@ -8,4 +8,5 @@ __all__ = [
     "Error",
     "BatchWriter",
     "insert_into_table",
+    "from_table_to_db",
 ]

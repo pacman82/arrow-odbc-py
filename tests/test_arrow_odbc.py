@@ -3,6 +3,7 @@ import os
 
 import pyarrow as pa
 import pyarrow.csv as csv
+import pyarrow.parquet as pq
 
 import pytest
 
@@ -11,7 +12,7 @@ from subprocess import run, check_output
 from pytest import raises
 
 from arrow_odbc import read_arrow_batches_from_odbc, Error
-from arrow_odbc.writer import insert_into_table
+from arrow_odbc.writer import insert_into_table, from_table_to_db
 
 MSSQL = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;"
 
@@ -447,12 +448,15 @@ def test_insert_should_raise_on_unsupported_column_type():
     schema = pa.schema([("a", pa.dictionary(pa.int32(), pa.int32()))])
 
     def iter_record_batches():
-            yield pa.RecordBatch.from_arrays([pa.array([(1,1)])], schema=schema)
+        yield pa.RecordBatch.from_arrays([pa.array([(1, 1)])], schema=schema)
 
     reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
 
     # When / Then
-    with raises(Error, match="The arrow data type Dictionary\(Int32, Int32\) is not supported for insertion."):
+    with raises(
+        Error,
+        match="The arrow data type Dictionary\(Int32, Int32\) is not supported for insertion.",
+    ):
         insert_into_table(
             connection_string=MSSQL,
             chunk_size=20,
@@ -503,24 +507,14 @@ def test_insert_from_parquet():
     )
 
     # When
-    import pyarrow.parquet as pq
-
     arrow_table = pq.read_table("./tests/iris.parquet")
-    schema = arrow_table.schema
-    batches = arrow_table.to_batches(100)
-    reader = pa.RecordBatchReader.from_batches(schema, batches)
-    insert_into_table(
-        reader=reader,
-        chunk_size=100,
-        table=table,
-        connection_string=MSSQL,
-    )
+    from_table_to_db(source=arrow_table, target=table, connection_string=MSSQL)
 
     # Then
     after_roundtrip = read_arrow_batches_from_odbc(
         query=f"SELECT * FROM {table}", batch_size=1000, connection_string=MSSQL
     )
-    assert after_roundtrip.schema == schema
+    assert after_roundtrip.schema == arrow_table.schema
     assert len(next(after_roundtrip)) == 150
 
 
@@ -531,9 +525,7 @@ def test_insert_large_string():
     # Given
     table = "InsertLargeString"
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(
-        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a Varchar(50))"'
-    )
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a Varchar(50))"')
     schema = pa.schema([("a", pa.large_string())])
 
     def iter_record_batches():
