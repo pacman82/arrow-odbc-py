@@ -12,6 +12,24 @@ from .arrow_odbc import ffi, lib  # type: ignore
 from .error import raise_on_error
 
 
+def _schema_from_handle(handle) -> Schema:
+    """
+    Take a handle to an ArrowOdbcReader and return the associated pyarrow schema
+    """
+    if handle == ffi.NULL:
+        # The query ran successfully, but did not produce a result
+        return pa.schema([])
+    else:
+        # Expose schema as attribute
+        # https://github.com/apache/arrow/blob/5ead37593472c42f61c76396dde7dcb8954bde70/python/pyarrow/tests/test_cffi.py
+        with arrow_ffi.new("struct ArrowSchema *") as schema_out:
+            error = lib.arrow_odbc_reader_schema(handle, schema_out)
+
+            raise_on_error(error)
+            ptr_schema = int(ffi.cast("uintptr_t", schema_out))
+            return Schema._import_from_c(ptr_schema)
+
+
 class BatchReader:
     """
     Iterates over Arrow batches from an ODBC data source
@@ -34,19 +52,9 @@ class BatchReader:
         # handle == NULL and an empty schema.
         self.handle = handle
 
-        if self.handle == ffi.NULL:
-            # The query ran successfully, but did not produce a result
-            self.schema = pa.schema([])
-        else:
-            # Expose schema as attribute
-            # https://github.com/apache/arrow/blob/5ead37593472c42f61c76396dde7dcb8954bde70/python/pyarrow/tests/test_cffi.py
-            schema_out = arrow_ffi.new("struct ArrowSchema *")
-            error = lib.arrow_odbc_reader_schema(self.handle, schema_out)
-            # If this raises `__del__` will be invoked and free the handle, so we do not leak
-            # resources here.
-            raise_on_error(error)
-            ptr_schema = int(ffi.cast("uintptr_t", schema_out))
-            self.schema = Schema._import_from_c(ptr_schema)
+        # If this raises `__del__` will be invoked and free the handle, so we do not leak
+        # resources here.
+        self.schema = _schema_from_handle(self.handle)
 
     def __del__(self):
         if self.handle != ffi.NULL:
@@ -80,6 +88,72 @@ class BatchReader:
             schema_ptr = int(ffi.cast("uintptr_t", schema))
             struct_array = Array._import_from_c(array_ptr, schema_ptr)
             return RecordBatch.from_struct_array(struct_array)
+
+    def more_results(
+        self,
+        batch_size: int,
+        max_text_size: Optional[int] = None,
+        max_binary_size: Optional[int] = None,
+        falliable_allocations: bool = True,
+    ) -> bool:
+        """
+        Move the reader to the next result set returned by the data source.
+
+        A datasource may return multiple results if multiple SQL statements are executed in a single
+        query or a stored procedure is called. This method closes the current cursor and moves it to
+        the next result set.
+
+        :param batch_size: The maximum number rows within each batch. Batch size can be individually
+            choosen for each result set.
+        :param max_text_size: An upper limit for the size of buffers bound to variadic text columns
+            of the data source. This limit does not (directly) apply to the size of the created
+            arrow buffers, but rather applies to the buffers used for the data in transit. Use this
+            option if you have e.g. VARCHAR(MAX) fields the next batch.
+        :param max_binary_size: An upper limit for the size of buffers bound to variadic binary
+            columns of the data source. This limit does not (directly) apply to the size of the
+            created arrow buffers, but rather applies to the buffers used for the data in transit.
+            Use this option if you have e.g. VARBINARY(MAX) fields in your next batch.
+        :param falliable_allocations: If ``True`` an recoverable error is raised in case there is
+            not enough memory to allocate the buffers. This option may incurr a performance penalty
+            which scales with the batch size parameter (but not with the amount of actual data in
+            the source). In case you can test your query against the schema you can safely set this
+            to ``False``. The required memory will not depend on the amount of data in the data
+            source. Default is ``True`` though, safety first.
+        :return: ``True`` in case there is another result set. ``False`` in case that the last
+            result set has been processed.
+        """
+        if self.handle == ffi.NULL:
+            # Last result set has already been processed
+            return False
+
+        if max_text_size is None:
+            max_text_size = 0
+        if max_binary_size is None:
+            max_binary_size = 0
+
+        reader_out = ffi.new("ArrowOdbcReader **")
+
+        error = lib.arrow_odbc_reader_more_results(
+            self.handle,
+            reader_out,
+            batch_size,
+            max_text_size,
+            max_binary_size,
+            falliable_allocations,
+        )
+
+        # We passed ownership of handle to more_results. We must do this before raising, since
+        # self.handle is otherwise invalid.
+        self.handle = reader_out[0]
+
+        # See if we managed to execute the query successfully and return an
+        # error if not
+        raise_on_error(error)
+
+        # Every result set can have its own schema, so we must update our member
+        self.schema = _schema_from_handle(self.handle)
+
+        return self.handle != FFI.NULL
 
 
 def read_arrow_batches_from_odbc(

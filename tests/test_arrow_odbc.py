@@ -69,6 +69,42 @@ def test_no_result_set():
         next(iter(reader))
 
 
+def test_multiple_result_sets():
+    """
+    Calling `more_results` should allow to consume the next result set
+    """
+    # This statement produces two result sets
+    query = f"SELECT 1 AS a; SELECT 2 AS b;"
+
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+    # Process first result
+    schema = pa.schema([pa.field("a", pa.int32(), nullable=False)])
+    expected = pa.RecordBatch.from_pydict({"a": [1]}, schema)
+    assert expected == next(iter(reader))
+    with raises(StopIteration):
+        next(iter(reader))
+
+    has_more_results = reader.more_results(batch_size=100)
+    assert has_more_results
+
+    # Process second result
+    schema = pa.schema([pa.field("b", pa.int32(), nullable=False)])
+    assert reader.schema == schema
+    expected = pa.RecordBatch.from_pydict({"b": [2]}, schema)
+    assert expected == next(iter(reader))
+    with raises(StopIteration):
+        next(iter(reader))
+
+    # No third result
+    has_more_results = reader.more_results(batch_size=100)
+    assert not has_more_results
+    assert reader.schema == pa.schema([])
+    with raises(StopIteration):
+        next(iter(reader))
+
+
 def test_empty_table():
     """
     Should return an empty iterator querying an empty table.

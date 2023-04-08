@@ -12,7 +12,7 @@ use arrow_odbc::{
         array::{Array, StructArray},
         record_batch::RecordBatchReader,
     },
-    odbc_api::{CursorImpl, StatementConnection},
+    odbc_api::{Cursor, CursorImpl, StatementConnection},
     BufferAllocationOptions, OdbcReader,
 };
 
@@ -160,6 +160,63 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
     } else {
         *has_next_out = 0;
     }
+    null_mut()
+}
+
+/// # Safety
+///
+/// * `reader_in` must point to a valid non-null reader, allocated by [`arrow_odbc_reader_make`].
+///   This function takes ownership of reader_in and will free the associated resources, even in
+///   case of error. After the function call `reader_in` is invalid and must not be dereferenced.
+/// * `reader_out` In case another result set exists, `reader_out` will point to a valid instance of
+///   [`ArrowOdbcReader`]. Otherwise, it will point to `NULL`.
+#[no_mangle]
+pub unsafe extern "C" fn arrow_odbc_reader_more_results(
+    reader_in: NonNull<ArrowOdbcReader>,
+    reader_out: *mut *mut ArrowOdbcReader,
+    batch_size: usize,
+    max_text_size: usize,
+    max_binary_size: usize,
+    fallibale_allocations: bool,
+) -> *mut ArrowOdbcError {
+    // In case we return early, we want the caller to know that reader_out is invalid.
+    *reader_out = null_mut();
+
+    // Dereference reader and take ownership of it.
+    let reader = Box::from_raw(reader_in.as_ptr()).0;
+
+    // Move cursor to the next result set.
+    let cursor = try_!(reader.into_cursor());
+    let next = try_!(cursor.more_results());
+
+    if let Some(cursor) = next {
+        // There is another result set. Let us create an new reader
+        let max_text_size = if max_text_size == 0 {
+            None
+        } else {
+            Some(max_text_size)
+        };
+        let max_binary_size = if max_binary_size == 0 {
+            None
+        } else {
+            Some(max_binary_size)
+        };
+        let buffer_allocation_options = BufferAllocationOptions {
+            max_text_size,
+            max_binary_size,
+            fallibale_allocations,
+        };
+
+        let reader = try_!(OdbcReader::with(
+            cursor,
+            batch_size,
+            None,
+            buffer_allocation_options
+        ));
+        let reader = ArrowOdbcReader(reader);
+        *reader_out = Box::into_raw(Box::new(reader));
+    }
+
     null_mut()
 }
 
