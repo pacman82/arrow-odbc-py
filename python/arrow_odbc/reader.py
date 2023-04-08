@@ -1,3 +1,5 @@
+import pyarrow as pa
+
 from typing import List, Optional, Tuple
 from cffi.api import FFI  # type: ignore
 
@@ -23,19 +25,33 @@ class BatchReader:
         """
 
         # We take owners of the corresponding reader written in Rust and keep it alive until `self`
-        # is deleted
+        # is deleted.
+        #
+        # The introduction of `more_results` made it necessary to also be able to represent already
+        # consumed or empty cursors. In Python the user can always keep a reference to a
+        # BatchReader alive and we have no way to force him/her to release it in case we move past
+        # the last result set. Therfore we mutate this instance and represent these states with
+        # handle == NULL and an empty schema.
         self.handle = handle
-        # Expose schema as attribute
-        # https://github.com/apache/arrow/blob/5ead37593472c42f61c76396dde7dcb8954bde70/python/pyarrow/tests/test_cffi.py
-        schema_out = arrow_ffi.new("struct ArrowSchema *")
-        error = lib.arrow_odbc_reader_schema(self.handle, schema_out)
-        raise_on_error(error)
-        ptr_schema = int(ffi.cast("uintptr_t", schema_out))
-        self.schema = Schema._import_from_c(ptr_schema)
+
+        if self.handle == ffi.NULL:
+            # The query ran successfully, but did not produce a result
+            self.schema = pa.schema([])
+        else:
+            # Expose schema as attribute
+            # https://github.com/apache/arrow/blob/5ead37593472c42f61c76396dde7dcb8954bde70/python/pyarrow/tests/test_cffi.py
+            schema_out = arrow_ffi.new("struct ArrowSchema *")
+            error = lib.arrow_odbc_reader_schema(self.handle, schema_out)
+            # If this raises `__del__` will be invoked and free the handle, so we do not leak
+            # resources here.
+            raise_on_error(error)
+            ptr_schema = int(ffi.cast("uintptr_t", schema_out))
+            self.schema = Schema._import_from_c(ptr_schema)
 
     def __del__(self):
-        # Free the resources associated with this handle.
-        lib.arrow_odbc_reader_free(self.handle)
+        if self.handle != ffi.NULL:
+            # Free the resources associated with this handle.
+            lib.arrow_odbc_reader_free(self.handle)
 
     def __iter__(self):
         # Implement iterable protocol so reader can be used in for loops.
@@ -43,6 +59,10 @@ class BatchReader:
 
     def __next__(self) -> RecordBatch:
         # Implment iterator protocol
+
+        # In case this represents a non-cursor behave as iterating over an empty set of batches
+        if self.handle == ffi.NULL:
+            raise StopIteration()
 
         # In case of an error this is going to be a non null handle to the error
         array = arrow_ffi.new("struct ArrowArray *")
@@ -187,8 +207,4 @@ def read_arrow_batches_from_odbc(
     raise_on_error(error)
 
     reader = reader_out[0]
-    if reader == ffi.NULL:
-        # The query ran successfully but did not produce a result set
-        return None
-    else:
-        return BatchReader(reader)
+    return BatchReader(reader)
