@@ -15,69 +15,11 @@ class BatchWriter:
 
     def __init__(
         self,
-        schema: Any,
-        chunk_size: int,
-        table: str,
-        connection_string: str,
-        user: Optional[str] = None,
-        password: Optional[str] = None,
-        login_timeout_sec: Optional[int] = None,
+        handle,
     ):
-        """
-        :param schema: Arrow schema. This schema is required to allocate the buffers u
-        :param chunk_size: Number of records to insert in each roundtrip to the database.
-            Independent of batch size (i.e. number of rows in an individual record batch).
-        :param table: Name of a database table to insert into. Used to generate the insert statement
-            for the bulk writer.
-        :param connection_string: ODBC Connection string used to connect to the data source. To find
-            a connection string for your data source try https://www.connectionstrings.com/.
-        :param user: Allows for specifying the user seperatly from the connection string if it is
-            not already part of it. The value will eventually be escaped and attached to the
-            connection string as `UID`.
-        :param password: Allows for specifying the password seperatly from the connection string if
-            it is not already part of it. The value will eventually be escaped and attached to the
-            connection string as `PWD`.
-        :param login_timeout_sec: Number of seconds to wait for a login request to complete before
-            returning to the application. The default is driver-dependent. If ``0``, the timeout is
-            disabled and a connection attempt will wait indefinitely. If the specified timeout
-            exceeds the maximum login timeout in the data source, the driver substitutes that value
-            and uses that instead.
-        """
-        table_bytes = table.encode("utf-8")
-
-        # Allocate structures where we will export the Array data and the Array schema. They will be
-        # released when we exit the with block.
-        with arrow_ffi.new("struct ArrowSchema*") as c_schema:
-            # Get the references to the C Data structures.
-            c_schema_ptr = int(arrow_ffi.cast("uintptr_t", c_schema))
-
-            # Export the schema to the C Data structures.
-            schema._export_to_c(c_schema_ptr)
-
-            connection = connect_to_database(
-                connection_string, user, password, login_timeout_sec
-            )
-
-            # Connecting to the database has been successful. Note that connection does not truly take
-            # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
-            # connection would not be closed and its associated resources would not be freed. However
-            # `arrow_odbc_writer_make` will take ownership of connection. Even if it should fail the
-            # connection will be closed.
-
-            writer_out = ffi.new("ArrowOdbcWriter **")
-            error = lib.arrow_odbc_writer_make(
-                connection,
-                table_bytes,
-                len(table_bytes),
-                chunk_size,
-                c_schema,
-                writer_out,
-            )
-            raise_on_error(error)
-
         # We take ownership of the corresponding writer written in Rust and keep it alive until
         # `self` is deleted
-        self.handle = writer_out[0]
+        self.handle = handle
 
     def __del__(self):
         # Free the resources associated with this handle.
@@ -144,15 +86,39 @@ def insert_into_table(
         the maximum login timeout in the data source, the driver substitutes that value and uses
         that instead.
     """
-    writer = BatchWriter(
-        schema=reader.schema,
-        chunk_size=chunk_size,
-        table=table,
-        connection_string=connection_string,
-        user=user,
-        password=password,
-        login_timeout_sec=login_timeout_sec,
-    )
+    table_bytes = table.encode("utf-8")
+
+    # Allocate structures where we will export the Array data and the Array schema. They will be
+    # released when we exit the with block.
+    with arrow_ffi.new("struct ArrowSchema*") as c_schema:
+        # Get the references to the C Data structures.
+        c_schema_ptr = int(arrow_ffi.cast("uintptr_t", c_schema))
+
+        # Export the schema to the C Data structures.
+        reader.schema._export_to_c(c_schema_ptr)
+
+        connection = connect_to_database(
+            connection_string, user, password, login_timeout_sec
+        )
+
+        # Connecting to the database has been successful. Note that connection does not truly take
+        # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
+        # connection would not be closed and its associated resources would not be freed. However
+        # `arrow_odbc_writer_make` will take ownership of connection. Even if it should fail the
+        # connection will be closed.
+
+        writer_out = ffi.new("ArrowOdbcWriter **")
+        error = lib.arrow_odbc_writer_make(
+            connection,
+            table_bytes,
+            len(table_bytes),
+            chunk_size,
+            c_schema,
+            writer_out,
+        )
+        raise_on_error(error)
+
+    writer = BatchWriter(handle=writer_out[0])
 
     # Write all batches in reader
     for batch in reader:
