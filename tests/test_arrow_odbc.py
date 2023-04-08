@@ -50,9 +50,9 @@ def test_should_report_error_on_invalid_query():
         )
 
 
-def test_insert_statement():
+def test_no_result_set():
     """
-    BatchReader should be `None` if statement does not produce a result set.
+    BatchReader should be be empty if no result set can be produced
     """
     table = "EmptyResult"
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
@@ -60,13 +60,13 @@ def test_insert_statement():
 
     # This statement does not produce a result set
     query = f"INSERT INTO {table} (a) VALUES (42);"
-
-    assert (
-        read_arrow_batches_from_odbc(
-            query=query, batch_size=100, connection_string=MSSQL
-        )
-        is None
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
     )
+
+    assert reader.schema == pa.schema([])
+    with raises(StopIteration):
+        next(iter(reader))
 
 
 def test_empty_table():

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0
+
+- Breaking change: `read_arrow_batches_from_odbc` now also returns a batch reader, even if the SQL statement did not produce a result set. The resulting reader will be empty, i.e. iterating over batches stops immediatly. The assaciated schema attribute will contain no columns.
+
 ## 0.3.14
 
 - Update Rust dependencies
