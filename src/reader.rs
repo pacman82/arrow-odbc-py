@@ -6,7 +6,10 @@ use std::{
     slice, str,
 };
 
-use arrow::ffi::{ArrowArray, ArrowArrayRef, FFI_ArrowArray, FFI_ArrowSchema};
+use arrow::{
+    error::ArrowError,
+    ffi::{ArrowArray, ArrowArrayRef, FFI_ArrowArray, FFI_ArrowSchema},
+};
 use arrow_odbc::{
     arrow::{
         array::{Array, StructArray},
@@ -20,7 +23,41 @@ use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, OdbcConnection}
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
 /// type also has ownership of the ODBC Connection handle.
-pub struct ArrowOdbcReader(OdbcReader<CursorImpl<StatementConnection<'static>>>);
+pub struct ArrowOdbcReader(
+    /// In case the `OdbcReader` instance is destroyed e.g. due to the last result set of the cursor
+    /// being consumed, we still must return an empty schema. In Python we have no way of consuming
+    /// `self`, if there is a state transition of the cursor. Therefore we always implement the
+    /// reader protocol. `None` makes internal states with do no longer hold a cursor representable.
+    /// This would be interpreted as a reader over an empty result set with no batches and and empty
+    /// schema.
+    Option<OdbcReader<CursorImpl<StatementConnection<'static>>>>,
+);
+
+impl ArrowOdbcReader {
+    fn next_batch(&mut self) -> Result<Option<(FFI_ArrowArray, FFI_ArrowSchema)>, ArrowError> {
+        let maybe_batch = self.0.as_mut().and_then(OdbcReader::next).transpose()?;
+        if let Some(batch) = maybe_batch {
+            let struct_array: StructArray = batch.into();
+            let arrow_array = ArrowArray::try_new(struct_array.data().clone())?;
+            let array_data = arrow_array.to_data().unwrap();
+
+            let ffi_array = FFI_ArrowArray::new(&array_data);
+            let ffi_schema = FFI_ArrowSchema::try_from(array_data.data_type()).unwrap();
+            Ok(Some((ffi_array, ffi_schema)))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Schema of the batches emmitted by the reader
+    fn schema(&self) -> Result<FFI_ArrowSchema, ArrowError> {
+        if let Some(reader) = &self.0 {
+            reader.schema().as_ref().try_into()
+        } else {
+            Ok(FFI_ArrowSchema::empty())
+        }
+    }
+}
 
 /// Creates an Arrow ODBC reader instance.
 ///
@@ -100,7 +137,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
             None,
             buffer_allocation_options
         ));
-        *reader_out = Box::into_raw(Box::new(ArrowOdbcReader(reader)))
+        *reader_out = Box::into_raw(Box::new(ArrowOdbcReader(Some(reader))))
     } else {
         *reader_out = null_mut()
     }
@@ -134,12 +171,9 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
     let schema = schema as *mut FFI_ArrowSchema;
     let array = array as *mut FFI_ArrowArray;
 
-    if let Some(result) = reader.as_mut().0.next() {
-        // In case of an error fail early, before we change the output paramters.
-        let batch = try_!(result);
-        let struct_array: StructArray = batch.into();
-        let arrow_array = try_!(ArrowArray::try_new(struct_array.data().clone()));
+    let maybe_batch = try_!(reader.as_mut().next_batch());
 
+    if let Some((mut ffi_array, mut ffi_schema)) = maybe_batch {
         // Create two empty instances, so array and schema now point to valid instances.
         *array = FFI_ArrowArray::empty();
         *schema = FFI_ArrowSchema::empty();
@@ -147,11 +181,6 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
         // (references must always be valid)
         let array = &mut *array;
         let schema = &mut *schema;
-
-        let array_data = arrow_array.to_data().unwrap();
-
-        let mut ffi_array = FFI_ArrowArray::new(&array_data);
-        let mut ffi_schema = FFI_ArrowSchema::try_from(array_data.data_type()).unwrap();
 
         swap(array, &mut ffi_array);
         swap(schema, &mut ffi_schema);
@@ -171,10 +200,6 @@ pub unsafe extern "C" fn arrow_odbc_reader_schema(
 ) -> *mut ArrowOdbcError {
     let out_schema: *mut FFI_ArrowSchema = out_schema as *mut FFI_ArrowSchema;
 
-    let reader = &mut reader.as_mut().0;
-    let schema_ref = reader.schema();
-    let schema = &*schema_ref;
-    let schema_ffi = try_!(schema.try_into());
-    *out_schema = schema_ffi;
+    *out_schema = try_!(reader.as_mut().schema());
     null_mut()
 }
