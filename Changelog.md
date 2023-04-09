@@ -2,7 +2,8 @@
 
 ## 1.0.0
 
-- Breaking change: `read_arrow_batches_from_odbc` now also returns a batch reader, even if the SQL statement did not produce a result set. The resulting reader will be empty, i.e. iterating over batches stops immediatly. The assaciated schema attribute will contain no columns.
+- Breaking change: `read_arrow_batches_from_odbc` now also returns a batch reader instead of `None`, even if the SQL statement did not produce a result set. The resulting reader will be empty, i.e. iterating over batches stops immediatly. The assaciated schema attribute will contain no columns.
+- Support for querying stored procedures returning multiple result sets is added. Call `more_results` on the reader to advance to the next result set.
 
 ## 0.3.14
 
