@@ -69,7 +69,7 @@ def test_no_result_set():
         next(iter(reader))
 
 
-def test_multiple_result_sets():
+def test_skip_to_second_result_set():
     """
     Calling `more_results` should allow to consume the next result set
     """
@@ -79,15 +79,9 @@ def test_multiple_result_sets():
     reader = read_arrow_batches_from_odbc(
         query=query, batch_size=100, connection_string=MSSQL
     )
-    # Process first result
-    schema = pa.schema([pa.field("a", pa.int32(), nullable=False)])
-    expected = pa.RecordBatch.from_pydict({"a": [1]}, schema)
-    assert expected == next(iter(reader))
-    with raises(StopIteration):
-        next(iter(reader))
 
-    has_more_results = reader.more_results(batch_size=100)
-    assert has_more_results
+    # Skip to second result set
+    reader.more_results(batch_size=100)
 
     # Process second result
     schema = pa.schema([pa.field("b", pa.int32(), nullable=False)])
@@ -97,9 +91,38 @@ def test_multiple_result_sets():
     with raises(StopIteration):
         next(iter(reader))
 
-    # No third result
-    has_more_results = reader.more_results(batch_size=100)
-    assert not has_more_results
+
+def test_more_results_return_should_indicate_if_there_is_a_result_set():
+    """
+    Calling `more_results` should return a boolean indicating wether there is another result set or
+    not to be extracted
+    """
+    # This statement produces two result sets
+    query = f"SELECT 1 AS a; SELECT 2 AS b;"
+
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+    
+    assert reader.more_results(batch_size=100)
+    assert not reader.more_results(batch_size=100)
+
+
+def test_advancing_past_last_result_set_leaves_empty_reader():
+    """
+    Moving past the last result set, leaves a reader returning a schema with no columns and no
+    batches.
+    """
+    # This statement produces one result
+    query = f"SELECT 1 AS a;"
+
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+    # Move to a second result set, which does not exist
+    reader.more_results(batch_size=100)
+
+    # Assert schema and batches are empty
     assert reader.schema == pa.schema([])
     with raises(StopIteration):
         next(iter(reader))
