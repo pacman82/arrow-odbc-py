@@ -97,6 +97,35 @@ class BatchReader:
         query or a stored procedure is called. This method closes the current cursor and moves it to
         the next result set. You may move to the next result set without extracting the current one.
 
+        Example:
+
+        .. code-block:: python
+
+            from arrow_odbc import read_arrow_batches_from_odbc
+
+            connection_string="Driver={ODBC Driver 17 for SQL Server};Server=localhost;"
+            reader = read_arrow_batches_from_odbc(
+                query=f"SELECT * FROM MyTable; SELECT * FROM OtherTable;",
+                connection_string=connection_string,
+                batch_size=1000,
+                user="SA",
+                password="My@Test@Password",
+            )
+
+            # Process first result
+            for batch in reader:
+                # Process arrow batches
+                df = batch.to_pandas()
+                # ...
+
+            reader.more_results()
+            
+            # Process second result
+            for batch in reader:
+                # Process arrow batches
+                df = batch.to_pandas()
+                # ...
+
         :param batch_size: The maximum number rows within each batch. Batch size can be individually
             choosen for each result set.
         :param max_text_size: An upper limit for the size of buffers bound to variadic text columns
