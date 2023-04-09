@@ -70,23 +70,8 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
             .collect()
     };
 
-    let max_text_size = if max_text_size == 0 {
-        None
-    } else {
-        Some(max_text_size)
-    };
-
-    let max_binary_size = if max_binary_size == 0 {
-        None
-    } else {
-        Some(max_binary_size)
-    };
-
-    let buffer_allocation_options = BufferAllocationOptions {
-        max_text_size,
-        max_binary_size,
-        fallibale_allocations,
-    };
+    let buffer_allocation_options =
+        alloc_opts_from_c_args(max_text_size, max_binary_size, fallibale_allocations);
 
     let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
     if let Some(cursor) = maybe_cursor {
@@ -179,21 +164,8 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
     // Dereference reader and take ownership of it.
     let reader = Box::from_raw(reader_in.as_ptr());
 
-    let max_text_size = if max_text_size == 0 {
-        None
-    } else {
-        Some(max_text_size)
-    };
-    let max_binary_size = if max_binary_size == 0 {
-        None
-    } else {
-        Some(max_binary_size)
-    };
-    let buffer_allocation_options = BufferAllocationOptions {
-        max_text_size,
-        max_binary_size,
-        fallibale_allocations,
-    };
+    let buffer_allocation_options =
+        alloc_opts_from_c_args(max_text_size, max_binary_size, fallibale_allocations);
 
     // Move cursor to the next result set.
     let next = try_!(reader.more_results(batch_size, buffer_allocation_options));
@@ -216,4 +188,26 @@ pub unsafe extern "C" fn arrow_odbc_reader_schema(
     let schema_ffi = try_!(reader.as_ref().schema());
     *out_schema = schema_ffi;
     null_mut()
+}
+
+fn alloc_opts_from_c_args(
+    max_text_size: usize,
+    max_binary_size: usize,
+    fallibale_allocations: bool,
+) -> BufferAllocationOptions {
+    let max_text_size = if max_text_size == 0 {
+        None
+    } else {
+        Some(max_text_size)
+    };
+    let max_binary_size = if max_binary_size == 0 {
+        None
+    } else {
+        Some(max_binary_size)
+    };
+    BufferAllocationOptions {
+        max_text_size,
+        max_binary_size,
+        fallibale_allocations,
+    }
 }
