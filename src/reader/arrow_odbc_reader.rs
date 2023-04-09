@@ -47,27 +47,26 @@ impl ArrowOdbcReader {
     }
 
     pub fn more_results(
-        self,
+        &mut self,
         batch_size: usize,
         buffer_allocation_options: BufferAllocationOptions,
-    ) -> Result<Option<Self>, ArrowOdbcError> {
+    ) -> Result<bool, ArrowOdbcError> {
         // None in case this reader has already moved past the last result set.
         if self.0.is_none() {
-            return Ok(None);
+            return Ok(false);
         }
-        let inner = self.0.unwrap();
+        let inner = self.0.take().unwrap();
         let cursor = inner.into_cursor()?;
-        let next = if let Some(cursor) = cursor.more_results()? {
+        if let Some(cursor) = cursor.more_results()? {
             // There is another result set. Let us create a new reader
-            Some(ArrowOdbcReader::new(
+            self.0 = Some(OdbcReader::with(
                 cursor,
                 batch_size,
+                None,
                 buffer_allocation_options,
-            )?)
-        } else {
-            None
+            )?);
         };
-        Ok(next)
+        Ok(self.0.is_some())
     }
 
     pub fn schema(&self) -> Result<FFI_ArrowSchema, ArrowOdbcError> {
