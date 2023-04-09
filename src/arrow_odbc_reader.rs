@@ -1,6 +1,10 @@
-use arrow::{error::ArrowError, record_batch::{RecordBatch, RecordBatchReader}, datatypes::SchemaRef};
+use crate::error::ArrowOdbcError;
+use arrow::{
+    record_batch::{RecordBatch, RecordBatchReader},
+    ffi::FFI_ArrowSchema,
+};
 use arrow_odbc::{
-    odbc_api::{CursorImpl, StatementConnection, self},
+    odbc_api::{Cursor, CursorImpl, StatementConnection},
     BufferAllocationOptions, OdbcReader,
 };
 
@@ -19,17 +23,34 @@ impl ArrowOdbcReader {
         Ok(Self(reader))
     }
 
-    pub fn next_batch(&mut self) -> Result<Option<RecordBatch>, ArrowError> {
-        self.0.next().transpose()
+    pub fn next_batch(&mut self) -> Result<Option<RecordBatch>, ArrowOdbcError> {
+        let next = self.0.next().transpose()?;
+        Ok(next)
     }
 
-    pub fn into_cursor(
+    pub fn more_results(
         self,
-    ) -> Result<CursorImpl<StatementConnection<'static>>, odbc_api::Error> {
-        self.0.into_cursor()
+        batch_size: usize,
+        buffer_allocation_options: BufferAllocationOptions,
+    ) -> Result<Option<Self>, ArrowOdbcError> {
+        let cursor = self.0.into_cursor()?;
+        let next = if let Some(cursor) = cursor.more_results()? {
+            // There is another result set. Let us create a new reader
+            Some(ArrowOdbcReader::new(
+                cursor,
+                batch_size,
+                buffer_allocation_options,
+            )?)
+        } else {
+            None
+        };
+        Ok(next)
     }
 
-    pub fn schema(&self) -> SchemaRef {
-        self.0.schema()
+    pub fn schema(&self) -> Result<FFI_ArrowSchema, ArrowOdbcError> {
+        let schema_ref = self.0.schema();
+        let schema = &*schema_ref;
+        let schema_ffi = schema.try_into()?;
+        Ok(schema_ffi)
     }
 }

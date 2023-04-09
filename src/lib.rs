@@ -1,9 +1,9 @@
 //! Defines C bindings for `arrow-odbc` to enable using it from Python.
 
+mod arrow_odbc_reader;
 mod error;
 mod parameter;
 mod reader_ffi;
-mod arrow_odbc_reader;
 mod writer;
 
 use std::{borrow::Cow, ptr::null_mut, slice, str};

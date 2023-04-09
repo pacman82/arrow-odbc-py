@@ -24,6 +24,15 @@ impl ArrowOdbcError {
     }
 }
 
+impl<T> From<T> for ArrowOdbcError
+where
+    T: Display,
+{
+    fn from(source: T) -> ArrowOdbcError {
+        ArrowOdbcError::new(source)
+    }
+}
+
 /// Deallocates the resources associated with an error.
 ///
 /// # Safety
@@ -52,7 +61,8 @@ macro_rules! try_ {
             Ok(value) => value,
             Err(error) => {
                 // Early return in case of error
-                return ArrowOdbcError::new(error).into_raw();
+                let error = Into::<ArrowOdbcError>::into(error);
+                return error.into_raw();
             }
         }
     };

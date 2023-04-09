@@ -9,7 +9,6 @@ use std::{
 use arrow::ffi::{ArrowArray, ArrowArrayRef, FFI_ArrowArray, FFI_ArrowSchema};
 use arrow_odbc::{
     arrow::array::{Array, StructArray},
-    odbc_api::Cursor,
     BufferAllocationOptions,
 };
 
@@ -178,33 +177,26 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
     // Dereference reader and take ownership of it.
     let reader = Box::from_raw(reader_in.as_ptr());
 
+    let max_text_size = if max_text_size == 0 {
+        None
+    } else {
+        Some(max_text_size)
+    };
+    let max_binary_size = if max_binary_size == 0 {
+        None
+    } else {
+        Some(max_binary_size)
+    };
+    let buffer_allocation_options = BufferAllocationOptions {
+        max_text_size,
+        max_binary_size,
+        fallibale_allocations,
+    };
+
     // Move cursor to the next result set.
-    let cursor = try_!(reader.into_cursor());
-    let next = try_!(cursor.more_results());
+    let next = try_!(reader.more_results(batch_size, buffer_allocation_options));
 
-    if let Some(cursor) = next {
-        // There is another result set. Let us create an new reader
-        let max_text_size = if max_text_size == 0 {
-            None
-        } else {
-            Some(max_text_size)
-        };
-        let max_binary_size = if max_binary_size == 0 {
-            None
-        } else {
-            Some(max_binary_size)
-        };
-        let buffer_allocation_options = BufferAllocationOptions {
-            max_text_size,
-            max_binary_size,
-            fallibale_allocations,
-        };
-
-        let reader = try_!(ArrowOdbcReader::new(
-            cursor,
-            batch_size,
-            buffer_allocation_options
-        ));
+    if let Some(reader) = next {
         *reader_out = Box::into_raw(Box::new(reader));
     }
 
@@ -217,11 +209,9 @@ pub unsafe extern "C" fn arrow_odbc_reader_schema(
     reader: NonNull<ArrowOdbcReader>,
     out_schema: *mut c_void,
 ) -> *mut ArrowOdbcError {
-    let out_schema: *mut FFI_ArrowSchema = out_schema as *mut FFI_ArrowSchema;
+    let out_schema = out_schema as *mut FFI_ArrowSchema;
 
-    let schema_ref = reader.as_ref().schema();
-    let schema = &*schema_ref;
-    let schema_ffi = try_!(schema.try_into());
+    let schema_ffi = try_!(reader.as_ref().schema());
     *out_schema = schema_ffi;
     null_mut()
 }
