@@ -8,19 +8,14 @@ use std::{
 
 use arrow::ffi::{ArrowArray, ArrowArrayRef, FFI_ArrowArray, FFI_ArrowSchema};
 use arrow_odbc::{
-    arrow::{
-        array::{Array, StructArray},
-        record_batch::RecordBatchReader,
-    },
-    odbc_api::{Cursor, CursorImpl, StatementConnection},
-    BufferAllocationOptions, OdbcReader,
+    arrow::array::{Array, StructArray},
+    odbc_api::Cursor,
+    BufferAllocationOptions,
 };
 
 use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, OdbcConnection};
 
-/// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
-/// type also has ownership of the ODBC Connection handle.
-pub struct ArrowOdbcReader(OdbcReader<CursorImpl<StatementConnection<'static>>>);
+pub use crate::arrow_odbc_reader::ArrowOdbcReader;
 
 /// Creates an Arrow ODBC reader instance.
 ///
@@ -94,13 +89,12 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
 
     let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
     if let Some(cursor) = maybe_cursor {
-        let reader = try_!(OdbcReader::with(
+        let reader = try_!(ArrowOdbcReader::new(
             cursor,
             batch_size,
-            None,
             buffer_allocation_options
         ));
-        *reader_out = Box::into_raw(Box::new(ArrowOdbcReader(reader)))
+        *reader_out = Box::into_raw(Box::new(reader))
     } else {
         *reader_out = null_mut()
     }
@@ -134,9 +128,8 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
     let schema = schema as *mut FFI_ArrowSchema;
     let array = array as *mut FFI_ArrowArray;
 
-    if let Some(result) = reader.as_mut().0.next() {
+    if let Some(batch) = try_!(reader.as_mut().next_batch()) {
         // In case of an error fail early, before we change the output paramters.
-        let batch = try_!(result);
         let struct_array: StructArray = batch.into();
         let arrow_array = try_!(ArrowArray::try_new(struct_array.data().clone()));
 
@@ -183,7 +176,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
     *reader_out = null_mut();
 
     // Dereference reader and take ownership of it.
-    let reader = Box::from_raw(reader_in.as_ptr()).0;
+    let reader = Box::from_raw(reader_in.as_ptr());
 
     // Move cursor to the next result set.
     let cursor = try_!(reader.into_cursor());
@@ -207,13 +200,11 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
             fallibale_allocations,
         };
 
-        let reader = try_!(OdbcReader::with(
+        let reader = try_!(ArrowOdbcReader::new(
             cursor,
             batch_size,
-            None,
             buffer_allocation_options
         ));
-        let reader = ArrowOdbcReader(reader);
         *reader_out = Box::into_raw(Box::new(reader));
     }
 
@@ -223,13 +214,12 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
 /// Retrieve the associated schema from a reader.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_schema(
-    mut reader: NonNull<ArrowOdbcReader>,
+    reader: NonNull<ArrowOdbcReader>,
     out_schema: *mut c_void,
 ) -> *mut ArrowOdbcError {
     let out_schema: *mut FFI_ArrowSchema = out_schema as *mut FFI_ArrowSchema;
 
-    let reader = &mut reader.as_mut().0;
-    let schema_ref = reader.schema();
+    let schema_ref = reader.as_ref().schema();
     let schema = &*schema_ref;
     let schema_ffi = try_!(schema.try_into());
     *out_schema = schema_ffi;
