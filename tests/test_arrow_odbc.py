@@ -518,7 +518,7 @@ def test_insert_should_raise_on_unsupported_column_type():
     # When / Then
     with raises(
         Error,
-        match="The arrow data type Dictionary\(Int32, Int32\) is not supported for insertion.",
+        match=r"The arrow data type Dictionary\(Int32, Int32\) is not supported for insertion.",
     ):
         insert_into_table(
             connection_string=MSSQL,
