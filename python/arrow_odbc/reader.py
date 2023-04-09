@@ -101,7 +101,7 @@ class BatchReader:
 
         A datasource may return multiple results if multiple SQL statements are executed in a single
         query or a stored procedure is called. This method closes the current cursor and moves it to
-        the next result set.
+        the next result set. You may move to the next result set without extracting the current one.
 
         :param batch_size: The maximum number rows within each batch. Batch size can be individually
             choosen for each result set.
