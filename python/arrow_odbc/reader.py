@@ -16,18 +16,13 @@ def _schema_from_handle(handle) -> Schema:
     """
     Take a handle to an ArrowOdbcReader and return the associated pyarrow schema
     """
-    if handle == ffi.NULL:
-        # The query ran successfully, but did not produce a result
-        return pa.schema([])
-    else:
-        # Expose schema as attribute
-        # https://github.com/apache/arrow/blob/5ead37593472c42f61c76396dde7dcb8954bde70/python/pyarrow/tests/test_cffi.py
-        with arrow_ffi.new("struct ArrowSchema *") as schema_out:
-            error = lib.arrow_odbc_reader_schema(handle, schema_out)
-
-            raise_on_error(error)
-            ptr_schema = int(ffi.cast("uintptr_t", schema_out))
-            return Schema._import_from_c(ptr_schema)
+    # Expose schema as attribute
+    # https://github.com/apache/arrow/blob/5ead37593472c42f61c76396dde7dcb8954bde70/python/pyarrow/tests/test_cffi.py
+    with arrow_ffi.new("struct ArrowSchema *") as schema_out:
+        error = lib.arrow_odbc_reader_schema(handle, schema_out)
+        raise_on_error(error)
+        ptr_schema = int(ffi.cast("uintptr_t", schema_out))
+        return Schema._import_from_c(ptr_schema)
 
 
 class BatchReader:
@@ -57,9 +52,8 @@ class BatchReader:
         self.schema = _schema_from_handle(self.handle)
 
     def __del__(self):
-        if self.handle != ffi.NULL:
-            # Free the resources associated with this handle.
-            lib.arrow_odbc_reader_free(self.handle)
+        # Free the resources associated with this handle.
+        lib.arrow_odbc_reader_free(self.handle)
 
     def __iter__(self):
         # Implement iterable protocol so reader can be used in for loops.
@@ -122,38 +116,31 @@ class BatchReader:
         :return: ``True`` in case there is another result set. ``False`` in case that the last
             result set has been processed.
         """
-        if self.handle == ffi.NULL:
-            # Last result set has already been processed
-            return False
-
         if max_text_size is None:
             max_text_size = 0
         if max_binary_size is None:
             max_binary_size = 0
 
-        reader_out = ffi.new("ArrowOdbcReader **")
+        with ffi.new("bool *") as has_more_results_c:
 
-        error = lib.arrow_odbc_reader_more_results(
-            self.handle,
-            reader_out,
-            batch_size,
-            max_text_size,
-            max_binary_size,
-            falliable_allocations,
-        )
+            error = lib.arrow_odbc_reader_more_results(
+                self.handle,
+                has_more_results_c,
+                batch_size,
+                max_text_size,
+                max_binary_size,
+                falliable_allocations,
+            )
+            # See if we managed to execute the query successfully and return an
+            # error if not
+            raise_on_error(error)
 
-        # We passed ownership of handle to more_results. We must do this before raising, since
-        # self.handle is otherwise invalid.
-        self.handle = reader_out[0]
-
-        # See if we managed to execute the query successfully and return an
-        # error if not
-        raise_on_error(error)
+            has_more_results = has_more_results_c[0] != 0
 
         # Every result set can have its own schema, so we must update our member
         self.schema = _schema_from_handle(self.handle)
 
-        return self.handle != FFI.NULL
+        return has_more_results
 
 
 def read_arrow_batches_from_odbc(

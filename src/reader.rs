@@ -135,36 +135,21 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
 
 /// # Safety
 ///
-/// * `reader_in` must point to a valid non-null reader, allocated by [`arrow_odbc_reader_make`].
-///   This function takes ownership of reader_in and will free the associated resources, even in
-///   case of error. After the function call `reader_in` is invalid and must not be dereferenced.
-/// * `reader_out` In case another result set exists, `reader_out` will point to a valid instance of
-///   [`ArrowOdbcReader`]. Otherwise, it will point to `NULL`.
+/// * `reader` must point to a valid non-null reader, allocated by [`arrow_odbc_reader_make`].
+/// * `has_more_results` must point to a valid boolean.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_more_results(
-    reader_in: NonNull<ArrowOdbcReader>,
-    reader_out: *mut *mut ArrowOdbcReader,
+    mut reader: NonNull<ArrowOdbcReader>,
+    has_more_results: *mut bool,
     batch_size: usize,
     max_text_size: usize,
     max_binary_size: usize,
     fallibale_allocations: bool,
 ) -> *mut ArrowOdbcError {
-    // In case we return early, we want the caller to know that reader_out is invalid.
-    *reader_out = null_mut();
-
-    // Dereference reader and take ownership of it.
-    let reader = Box::from_raw(reader_in.as_ptr());
-
     let buffer_allocation_options =
         alloc_opts_from_c_args(max_text_size, max_binary_size, fallibale_allocations);
-
     // Move cursor to the next result set.
-    let next = try_!(reader.more_results(batch_size, buffer_allocation_options));
-
-    if let Some(reader) = next {
-        *reader_out = Box::into_raw(Box::new(reader));
-    }
-
+    *has_more_results = try_!(reader.as_mut().more_results(batch_size, buffer_allocation_options));
     null_mut()
 }
 
