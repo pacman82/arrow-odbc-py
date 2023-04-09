@@ -24,6 +24,10 @@ impl ArrowOdbcReader {
         Ok(Self(Some(reader)))
     }
 
+    pub fn empty() -> Self {
+        Self(None)
+    }
+
     pub fn next_batch(
         &mut self,
     ) -> Result<Option<(FFI_ArrowArray, FFI_ArrowSchema)>, ArrowOdbcError> {

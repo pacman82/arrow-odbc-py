@@ -71,16 +71,16 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
         alloc_opts_from_c_args(max_text_size, max_binary_size, fallibale_allocations);
 
     let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
-    if let Some(cursor) = maybe_cursor {
-        let reader = try_!(ArrowOdbcReader::new(
+    let reader = if let Some(cursor) = maybe_cursor {
+        try_!(ArrowOdbcReader::new(
             cursor,
             batch_size,
             buffer_allocation_options
-        ));
-        *reader_out = Box::into_raw(Box::new(reader))
+        ))
     } else {
-        *reader_out = null_mut()
-    }
+        ArrowOdbcReader::empty()
+    };
+    *reader_out = Box::into_raw(Box::new(reader));
     null_mut() // Ok(())
 }
 
