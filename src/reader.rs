@@ -8,11 +8,8 @@ use std::{
     slice, str,
 };
 
-use arrow::ffi::{ArrowArray, ArrowArrayRef, FFI_ArrowArray, FFI_ArrowSchema};
-use arrow_odbc::{
-    arrow::array::{Array, StructArray},
-    BufferAllocationOptions,
-};
+use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema};
+use arrow_odbc::BufferAllocationOptions;
 
 use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, OdbcConnection};
 
@@ -114,11 +111,10 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
     let schema = schema as *mut FFI_ArrowSchema;
     let array = array as *mut FFI_ArrowArray;
 
-    if let Some(batch) = try_!(reader.as_mut().next_batch()) {
-        // In case of an error fail early, before we change the output paramters.
-        let struct_array: StructArray = batch.into();
-        let arrow_array = try_!(ArrowArray::try_new(struct_array.data().clone()));
+    // In case of an error fail early, before we change the output paramters.
+    let batch = try_!(reader.as_mut().next_batch());
 
+    if let Some((mut ffi_array, mut ffi_schema)) = batch {
         // Create two empty instances, so array and schema now point to valid instances.
         *array = FFI_ArrowArray::empty();
         *schema = FFI_ArrowSchema::empty();
@@ -126,11 +122,6 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
         // (references must always be valid)
         let array = &mut *array;
         let schema = &mut *schema;
-
-        let array_data = arrow_array.to_data().unwrap();
-
-        let mut ffi_array = FFI_ArrowArray::new(&array_data);
-        let mut ffi_schema = FFI_ArrowSchema::try_from(array_data.data_type()).unwrap();
 
         swap(array, &mut ffi_array);
         swap(schema, &mut ffi_schema);

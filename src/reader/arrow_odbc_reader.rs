@@ -1,7 +1,8 @@
 use crate::error::ArrowOdbcError;
 use arrow::{
-    record_batch::{RecordBatch, RecordBatchReader},
-    ffi::FFI_ArrowSchema,
+    array::{Array, StructArray},
+    ffi::{ArrowArray, ArrowArrayRef, FFI_ArrowArray, FFI_ArrowSchema},
+    record_batch::RecordBatchReader,
 };
 use arrow_odbc::{
     odbc_api::{Cursor, CursorImpl, StatementConnection},
@@ -23,8 +24,21 @@ impl ArrowOdbcReader {
         Ok(Self(reader))
     }
 
-    pub fn next_batch(&mut self) -> Result<Option<RecordBatch>, ArrowOdbcError> {
+    pub fn next_batch(
+        &mut self,
+    ) -> Result<Option<(FFI_ArrowArray, FFI_ArrowSchema)>, ArrowOdbcError> {
         let next = self.0.next().transpose()?;
+        let next = if let Some(batch) = next {
+            let struct_array: StructArray = batch.into();
+            let arrow_array = ArrowArray::try_new(struct_array.data().clone())?;
+            let array_data = arrow_array.to_data().unwrap();
+            let ffi_array = FFI_ArrowArray::new(&array_data);
+            let ffi_schema = FFI_ArrowSchema::try_from(array_data.data_type()).unwrap();
+            Some((ffi_array, ffi_schema))
+        } else {
+            None
+        };
+
         Ok(next)
     }
 
