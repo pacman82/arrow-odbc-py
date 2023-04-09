@@ -1,3 +1,5 @@
+mod arrow_odbc_reader;
+
 use std::{
     ffi::c_void,
     mem::swap,
@@ -14,7 +16,7 @@ use arrow_odbc::{
 
 use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, OdbcConnection};
 
-pub use crate::arrow_odbc_reader::ArrowOdbcReader;
+pub use self::arrow_odbc_reader::ArrowOdbcReader;
 
 /// Creates an Arrow ODBC reader instance.
 ///
