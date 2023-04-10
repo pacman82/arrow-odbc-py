@@ -164,7 +164,7 @@ def from_table_to_db(
 
     Example:
 
-        .. code-block:: python
+    .. code-block:: python
 
         from arrow_odbc import from_table_to_db
         import pyarrow as pa

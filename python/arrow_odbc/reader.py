@@ -188,7 +188,7 @@ def read_arrow_batches_from_odbc(
 
     Example:
 
-        .. code-block:: python
+    .. code-block:: python
 
         from arrow_odbc import read_arrow_batches_from_odbc
 
