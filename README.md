@@ -177,7 +177,7 @@ There is no ready made wheel for the platform you want to target? Do not worry, 
 | FixedBinary(l)        | Varbinary(l)       |
 | All others            | Unsupported        |
 
-## Comparision other Python ODBC bindings
+## Comparision to other Python ODBC bindings
 
 * [`pyodbc`](https://github.com/mkleehammer/pyodbc) - General purpose ODBC python bindings. In contrast `arrow-odbc` is specifically concerned with bulk reads and writes to arrow arrays.
 * [`turbodbc`](https://github.com/blue-yonder/turbodbc) - Complies with the Python Database API Specification 2.0 (PEP 249) which `arrow-odbc` does not aim to do. Like `arrow-odbc` bulk read and writes is the strong point of `turbodbc`. `turbodbc` has more system dependencies, which can make it cumbersome to install if not using conda. `turbodbc` is build against the C++ implementation of Arrow, which implies it is only compatible with matching version of `pyarrow`.
