@@ -65,6 +65,27 @@ def insert_into_table(
     """
     Consume the batches in the reader and insert them into a table on the database.
 
+    Example:
+
+    .. code-block:: python
+
+        from arrow_odbc import insert_into_table
+        import pyarrow as pa
+        import pandas
+
+
+        def dataframe_to_table(df):
+            table = pa.Table.from_pandas(df)
+            reader = pa.RecordBatchReader.from_batches(table.schema, table.to_batches())
+            insert_into_table(
+                connection_string=connection_string,
+                user="SA",
+                password="My@Test@Password",
+                chunk_size=1000,
+                table="MyTable",
+                reader=reader,
+            )
+
     :param reader: Reader is used to iterate over record batches. It must expose a `schema`
         attribute, referencing an Arrow schema. Each field in the schema must correspond to a
         column in the table with identical name. The iterator must yield individual arrow tables
@@ -137,6 +158,29 @@ def from_table_to_db(
 ):
     """
     Reads an arrow table and inserts its contents into a relational table on the database.
+
+    This is a convinience wrapper around ``insert_into_table`` which converts an arrow table into a
+    record batch reader for you.
+
+    Example:
+
+        .. code-block:: python
+
+        from arrow_odbc import from_table_to_db
+        import pyarrow as pa
+        import pandas
+
+
+        def dataframe_to_table(df):
+            table = pa.Table.from_pandas(df)
+            from_table_to_db(
+                source=table
+                connection_string=connection_string,
+                user="SA",
+                password="My@Test@Password",
+                chunk_size=1000,
+                table="MyTable",
+            )
 
     :param source: PyArrow table with content to be inserted into the target table on the database.
         Each column of the table must correspond to a column in the target table with identical

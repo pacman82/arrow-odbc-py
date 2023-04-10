@@ -119,7 +119,7 @@ class BatchReader:
                 # ...
 
             reader.more_results()
-            
+
             # Process second result
             for batch in reader:
                 # Process arrow batches
@@ -151,7 +151,6 @@ class BatchReader:
             max_binary_size = 0
 
         with ffi.new("bool *") as has_more_results_c:
-
             error = lib.arrow_odbc_reader_more_results(
                 self.handle,
                 has_more_results_c,
@@ -186,6 +185,28 @@ def read_arrow_batches_from_odbc(
 ) -> Optional[BatchReader]:
     """
     Execute the query and read the result as an iterator over Arrow batches.
+
+    Example:
+
+        .. code-block:: python
+
+        from arrow_odbc import read_arrow_batches_from_odbc
+
+        connection_string="Driver={ODBC Driver 17 for SQL Server};Server=localhost;"
+
+        reader = read_arrow_batches_from_odbc(
+            query=f"SELECT * FROM MyTable WHERE a=?",
+            connection_string=connection_string,
+            batch_size=1000,
+            parameters=["I'm a positional query parameter"],
+            user="SA",
+            password="My@Test@Password",
+        )
+
+        for batch in reader:
+            # Process arrow batches
+            df = batch.to_pandas()
+            # ...
 
     :param query: The SQL statement yielding the result set which is converted into arrow record
         batches.

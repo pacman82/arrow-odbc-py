@@ -53,7 +53,15 @@ python -m build
 
 ## Generate documentation
 
+### Posix (with make installed)
+
 ```shell
 cd docs
 make html
+```
+
+### Windows (without make)
+
+```shell
+sphinx-build -M html ./doc/source ./doc/build
 ```
