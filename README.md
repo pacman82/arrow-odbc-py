@@ -6,11 +6,9 @@
 
 Fill Apache Arrow arrays from ODBC data sources. This package is build on top of the [`pyarrow`](https://pypi.org/project/arrow/) Python package and [`arrow-odbc`](https://crates.io/crates/arrow-odbc) Rust crate and enables you to read the data of an ODBC data source as sequence of Apache Arrow record batches.
 
-This package can also be used to insert data in Arrow record batches to database tables.
-
-This package has been designed to be easily deployable, so it provides a prebuild many linux wheel which is independent of the specific version of your Python interpreter and the specific Arrow Version you want to use. It will dynamically link against the ODBC driver manager provided by your system.
-
-Users looking for more features than just bulk fetching/inserting data from/into ODBC data sources in Python should also take a look at [`turbodbc`](https://github.com/blue-yonder/turbodbc) which has a helpful community and seen a lot of battle testing. This Python package is more narrow in Scope (which is a fancy way of saying it has less features), as it is only concerned with bulk fetching Arrow Arrays. `arrow-odbc` may have less features than `turbodbc`, but it is easier to install and more resilient to version changes in `pyarrow`, since it is independent of C++ ABI, system dependencies (with the exeception of your ODBC driver manager of course) and your specific Python ABI. It also offers pre build wheels windows, linux and OS-X on [`pypi`](https://pypi.org/project/arrow-odbc/). In addition to that there is also a conda-forge recipie (thanks to @timkpaine).
+* **Fast**. Makes efficient use of ODBC bulk reads and writes, to lower IO overhead.
+* **Flexible**. Query any ODBC data source you have a driver for. MySQL, MS SQL, Excel, ...
+* **Portable**. Easy to install and update dependencies. No binary dependency to specific implemenations of Python interpreter, Arrow or ODBC driver manager.
 
 ## About Arrow
 
@@ -89,21 +87,38 @@ You can use homebrew to install UnixODBC
 brew install unixodbc
 ```
 
-### Installing Rust toolchain
-
-Note: **Only required if building from source**
-
-To build from source you need to install the Rust toolchain. Installation instruction can be found here: <https://www.rust-lang.org/tools/install>
-
 ### Installing the wheel
 
-Wheels have been uploaded to [PyPi](https://pypi.org) and can be installed using pip. The wheel (including the manylinux wheel) will link against the your system ODBC driver manager at runtime. If there are no prebuild wheels for your platform, you can build the wheel from source. For this the rust toolchain must be installed.
+This package has been designed to be easily deployable, so it provides a prebuild many linux wheel which is independent of the specific version of your Python interpreter and the specific Arrow Version you want to use. It will dynamically link against the ODBC driver manager provided by your system.
+
+Wheels have been uploaded to [`PyPi`](https://pypi.org/project/arrow-odbc/) and can be installed using pip. The wheel (including the manylinux wheel) will link against the your system ODBC driver manager at runtime. If there are no prebuild wheels for your platform, you can build the wheel from source. For this the rust toolchain must be installed.
 
 ```shell
 pip install arrow-odbc
 ```
 
 `arrow-odbc` utilizes `cffi` and the Arrow C-Interface to glue Rust and Python code together. Therefore the wheel does not need to be build against the precise version either of Python or Arrow.
+
+### Installing with conda
+
+```shell
+conda install -c conda-forge turbodbc
+```
+
+Thanks to @timkpaine for maintaining the recipie!
+
+### Building wheel from source
+
+There is no ready made wheel for the platform you want to target? Do not worry, you can probably build it from source.
+
+* To build from source you need to install the Rust toolchain. Installation instruction can be found here: <https://www.rust-lang.org/tools/install>
+* Install ODBC driver manager. See above.
+* Build wheel
+
+  ```shell
+  python -m pip install build
+  python -m build
+  ```
 
 ## Matching of ODBC to Arrow types then querying
 
@@ -161,3 +176,8 @@ pip install arrow-odbc
 | Binary                | Varbinary          |
 | FixedBinary(l)        | Varbinary(l)       |
 | All others            | Unsupported        |
+
+## Comparision other Python ODBC bindings
+
+* [`pyodbc`](https://github.com/mkleehammer/pyodbc) - General purpose ODBC python bindings. In contrast `arrow-odbc` is specifically concerned with bulk reads and writes to arrow arrays.
+* [`turbodbc`](https://github.com/blue-yonder/turbodbc) - Complies with the Python Database API Specification 2.0 (PEP 249) which `arrow-odbc` does not aim to do. Like `arrow-odbc` bulk read and writes is the strong point of `turbodbc`. `turbodbc` has more system dependencies, which can make it cumbersome to install if not using conda. `turbodbc` is build against the C++ implementation of Arrow, which implies it is only compatible with matching version of `pyarrow`.
