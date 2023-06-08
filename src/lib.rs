@@ -3,6 +3,7 @@ mod error;
 mod parameter;
 mod reader;
 mod writer;
+mod logging;
 
 use std::{borrow::Cow, ptr::null_mut, slice, str};
 
@@ -16,6 +17,7 @@ pub use reader::{
 pub use writer::{
     arrow_odbc_writer_free, arrow_odbc_writer_make, arrow_odbc_writer_write_batch, ArrowOdbcWriter,
 };
+pub use logging::arrow_odbc_log_to_stderr;
 
 lazy_static! {
     static ref ENV: Environment = Environment::new().unwrap();

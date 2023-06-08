@@ -15,10 +15,13 @@ from arrow_odbc import (
     insert_into_table,
     from_table_to_db,
     read_arrow_batches_from_odbc,
+    log_to_stderr,
     Error,
 )
 
 MSSQL = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;"
+
+log_to_stderr()
 
 
 def test_should_report_error_on_invalid_connection_string_reading():
@@ -103,7 +106,7 @@ def test_more_results_return_should_indicate_if_there_is_a_result_set():
     reader = read_arrow_batches_from_odbc(
         query=query, batch_size=100, connection_string=MSSQL
     )
-    
+
     assert reader.more_results(batch_size=100)
     assert not reader.more_results(batch_size=100)
 
@@ -607,6 +610,18 @@ def test_insert_large_string():
         ["odbcsv", "fetch", "-c", MSSQL, "-q", f"SELECT a FROM {table}"]
     )
     assert "a\nHello\n" == actual.decode("utf8")
+
+
+def test_reinitalizing_logger_should_raise():
+    """
+    Reinitializin logger should raise
+    """
+    # When / Then
+    with raises(
+        Error,
+        match=r"attempted to set a logger after the logging system was already initialized",
+    ):
+        log_to_stderr()
 
 
 @pytest.mark.slow

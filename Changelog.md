@@ -1,8 +1,9 @@
 # Changelog
 
-## 1.0.2
+## 1.1.0
 
 - Update Rust dependencies
+- Adds `log_to_stderr` for emitting diagnostics directly to standard output.
 
 ## 1.0.1
 
