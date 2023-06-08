@@ -1,6 +1,7 @@
 from .arrow_odbc import lib, ffi  # type: ignore
 from .error import raise_on_error
 
+
 def log_to_stderr(level: int = 1):
     """
     Activate logging from native code directly to standard error. In particular these logs contain
@@ -13,7 +14,7 @@ def log_to_stderr(level: int = 1):
         * 2 - Info
         * 3 - Debug
         * 4 - Trace
-        
+
         All diagnostics emitted by ODBC are usually warning. In case of an exeception multiple
         records with severity error could also be emitted.
     """
