@@ -1,5 +1,5 @@
 [build-system]
-requires = ["cffi", "maturin>=0.13,<0.14"]
+requires = ["cffi", "maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [project]
