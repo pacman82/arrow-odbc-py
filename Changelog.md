@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- Fix version number in documentation.
+
 ## 1.1.0
 
 - Update Rust dependencies

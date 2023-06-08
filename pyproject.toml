@@ -7,7 +7,7 @@ name = "arrow-odbc"
 authors = [{name = "Markus Klein"}]
 description="Read the data of an ODBC data source as sequence of Apache Arrow record batches."
 readme = "README.md"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = ["cffi", "pyarrow"]
 
 [project.license]
