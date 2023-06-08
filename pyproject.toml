@@ -1,5 +1,5 @@
 [build-system]
-requires = ["cffi", "maturin>=0.13,<0.14"]
+requires = ["cffi", "maturin>=0.14,<0.15"]
 build-backend = "maturin"
 
 [project]
@@ -23,3 +23,4 @@ changelog = "https://github.com/pacman82/arrow-odbc-py/blob/main/Changelog.md"
 [tool.maturin]
 # Bindings type
 bindings = "cffi"
+python-source = "python"

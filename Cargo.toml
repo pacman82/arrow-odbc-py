@@ -28,6 +28,3 @@ log = { version = "0.4.17", features = ["release_max_level_off"] }
 panic = 'abort'
 # Link time Optimization
 lto = true
-
-[package.metadata.maturin]
-python-source = "python" 
