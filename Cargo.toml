@@ -14,10 +14,10 @@ name = "arrow_odbc"
 crate-type = ["cdylib"]
 
 [dependencies]
-arrow-odbc = "0.27.0"
+arrow-odbc = "0.28.5"
 # arrow would be included indirectly using arrow-odbc, but we need to explicitly specify the ffi
 # feature.
-arrow = { version = "36.0.0", default-features = false, features = ["ffi"] }
+arrow = { version = "41.0.0", default-features = false, features = ["ffi"] }
 lazy_static = "1.4.0"
 # We only depend indirectly on log, but we include it directly here to disable logging at compile
 # time.

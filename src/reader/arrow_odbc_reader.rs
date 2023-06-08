@@ -34,7 +34,7 @@ impl ArrowOdbcReader {
         let next = self.0.as_mut().and_then(OdbcReader::next).transpose()?;
         let next = if let Some(batch) = next {
             let struct_array: StructArray = batch.into();
-            let arrow_array = ArrowArray::try_new(struct_array.data().clone())?;
+            let arrow_array = ArrowArray::try_new(struct_array.into_data())?;
             let array_data = arrow_array.to_data().unwrap();
             let ffi_array = FFI_ArrowArray::new(&array_data);
             let ffi_schema = FFI_ArrowSchema::try_from(array_data.data_type()).unwrap();

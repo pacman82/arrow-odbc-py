@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2
+
+- Update Rust dependencies
+
 ## 1.0.1
 
 - More code examples in Docstrings
