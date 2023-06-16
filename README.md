@@ -102,7 +102,7 @@ pip install arrow-odbc
 ### Installing with conda
 
 ```shell
-conda install -c conda-forge turbodbc
+conda install -c conda-forge arrow-odbc
 ```
 
 Thanks to @timkpaine for maintaining the recipie!
