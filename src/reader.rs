@@ -149,7 +149,9 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
     let buffer_allocation_options =
         alloc_opts_from_c_args(max_text_size, max_binary_size, fallibale_allocations);
     // Move cursor to the next result set.
-    *has_more_results = try_!(reader.as_mut().more_results(batch_size, buffer_allocation_options));
+    *has_more_results = try_!(reader
+        .as_mut()
+        .more_results(batch_size, buffer_allocation_options));
     null_mut()
 }
 

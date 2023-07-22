@@ -4,7 +4,7 @@ use std::{
     slice, str,
 };
 
-use arrow::ffi::{ArrowArray, ArrowArrayRef, FFI_ArrowArray, FFI_ArrowSchema};
+use arrow::ffi::{from_ffi, FFI_ArrowArray, FFI_ArrowSchema};
 use arrow_odbc::{
     arrow::{array::StructArray, datatypes::Schema, record_batch::RecordBatch},
     odbc_api::StatementConnection,
@@ -83,8 +83,7 @@ pub unsafe extern "C" fn arrow_odbc_writer_write_batch(
     let schema = ptr::replace(schema_ptr, FFI_ArrowSchema::empty());
 
     // Dereference batch
-    let arrow_array = ArrowArray::new(array, schema);
-    let array_data = try_!(arrow_array.to_data());
+    let array_data = try_!(from_ffi(array, &schema));
     let struct_array = StructArray::from(array_data);
     let record_batch = RecordBatch::from(&struct_array);
 
