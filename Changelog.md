@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.3
+
+- Update Rust dependencies
+
 ## 1.1.2
 
 - Declare minimal version in pyproject.toml
