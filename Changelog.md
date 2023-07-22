@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2
+
+- Declare minimal version in pyproject.toml
+
 ## 1.1.1
 
 - Fix version number in documentation.
