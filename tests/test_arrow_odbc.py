@@ -16,13 +16,14 @@ from arrow_odbc import (
     from_table_to_db,
     read_arrow_batches_from_odbc,
     log_to_stderr,
+    enable_odbc_connection_pooling,
     Error,
 )
 
 MSSQL = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;"
 
 log_to_stderr()
-
+enable_odbc_connection_pooling()
 
 def test_should_report_error_on_invalid_connection_string_reading():
     """

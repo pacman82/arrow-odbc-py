@@ -2,6 +2,7 @@
 mod error;
 mod logging;
 mod parameter;
+mod pool;
 mod reader;
 mod writer;
 
