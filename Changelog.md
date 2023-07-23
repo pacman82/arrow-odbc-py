@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0
+
+- Introduce `enable_odbc_connection_pooling` to allow for reducing overhead then creating "new" connections.
+
 ## 1.1.3
 
 - Update Rust dependencies
