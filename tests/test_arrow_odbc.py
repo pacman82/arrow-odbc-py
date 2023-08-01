@@ -207,16 +207,41 @@ def test_timestamp_us():
     run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
 
     query = f"SELECT * FROM {table}"
-
     reader = read_arrow_batches_from_odbc(
         query=query, batch_size=100, connection_string=MSSQL
     )
     it = iter(reader)
-
     actual = next(it)
 
     schema = pa.schema([("a", pa.timestamp("us"))])
     expected = pa.RecordBatch.from_pydict({"a": [1397510742074841]}, schema)
+    print(expected[0])
+    print(actual[0])
+    assert expected == actual
+
+    with raises(StopIteration):
+        next(it)
+
+
+def test_timestamp_ns():
+    """
+    Query a table with one row. Should return one batch
+    """
+    table = "OneRow"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a DATETIME2(7));"')
+    rows = "a\n2014-04-14 21:25:42.0748412"
+    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+
+    query = f"SELECT * FROM {table}"
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+    it = iter(reader)
+    actual = next(it)
+
+    schema = pa.schema([("a", pa.timestamp("ns"))])
+    expected = pa.RecordBatch.from_pydict({"a": [1397510742074841200]}, schema)
     print(expected[0])
     print(actual[0])
     assert expected == actual
