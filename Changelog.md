@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1
+
+- Update Rust dependencies. Includes update to arrow-odbc 0.28.9 which forwards the original error message from the ODBC driver in situtations there it has been previously hidden by error translation.
+
 ## 1.2.0
 
 - Introduce `enable_odbc_connection_pooling` to allow for reducing overhead then creating "new" connections.
