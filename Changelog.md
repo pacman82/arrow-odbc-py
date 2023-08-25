@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.2
+
+- Update Rust dependencies. Includes update to arrow-odbc 0.28.11 which raises an error in case timestamp with nano seconds precision are outside of the valid range.
+
 ## 1.2.1
 
 - Update Rust dependencies. Includes update to arrow-odbc 0.28.9 which forwards the original error message from the ODBC driver in situtations there it has been previously hidden by error translation.
