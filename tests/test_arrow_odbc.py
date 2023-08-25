@@ -25,6 +25,7 @@ MSSQL = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@T
 log_to_stderr()
 enable_odbc_connection_pooling()
 
+
 def test_should_report_error_on_invalid_connection_string_reading():
     """
     We want to forward the original ODBC errors to the end user. Of course foo
@@ -248,6 +249,29 @@ def test_timestamp_ns():
 
     with raises(StopIteration):
         next(it)
+
+
+def test_out_of_range_timestamp_ns():
+    """
+    Query a table with one row. Should return one batch
+    """
+    table = "OneRow"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a DATETIME2(7));"')
+    rows = "a\n2300-04-14 21:25:42.0748412"
+    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+
+    query = f"SELECT * FROM {table}"
+
+    with raises(
+        Error,
+        match="Timestamp is not representable in arrow: 2300-04-14 21:25:42.074841200",
+    ):
+        reader = read_arrow_batches_from_odbc(
+            query=query, batch_size=100, connection_string=MSSQL
+        )
+        it = iter(reader)
+        it.__next__()
 
 
 def test_specify_user_and_password_separatly():
