@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.3
+
+- Update Rust dependencies. Includes update to arrow-odbc 0.28.12, which does not add a semicolon at the end of INSERT statements any more in an effort to increase compatbility with IBM db2.
+
 ## 1.2.2
 
 - Update Rust dependencies. Includes update to arrow-odbc 0.28.11 which raises an error in case timestamp with nano seconds precision are outside of the valid range.
