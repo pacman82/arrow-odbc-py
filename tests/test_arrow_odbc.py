@@ -422,6 +422,28 @@ def test_query_with_none_parameter():
         next(it)
 
 
+def test_query_with_int_parameter():
+    """
+    Use an int parameter in a where clause and verify that the result is filtered accordingly
+    """
+    table = "QueryWithIntParameter"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(
+        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (column_a CHAR(1), column_b INTEGER);"'
+    )
+    rows = "column_a,column_b\nA,1\nB,2\nC,3\nD,4\n"
+    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+
+    query = f"SELECT column_a FROM {table} WHERE column_b=?;"
+    with raises(
+        TypeError,
+        match="read_arrow_batches_from_odbc only supports string arguments for SQL query parameters",
+    ):
+        read_arrow_batches_from_odbc(
+            query=query, batch_size=10, connection_string=MSSQL, parameters=[2]
+        )
+
+
 def test_iris():
     """
     Validate usage works like in the readme

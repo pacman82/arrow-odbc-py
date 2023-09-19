@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.4
+
+- Update rust dependencies
+- Better error message if passing a non-string argument using `parameters` into `read_arrow_batches_from_odbc`.
+
 ## 1.2.3
 
 - Update Rust dependencies. Includes update to arrow-odbc 0.28.12, which does not add a semicolon at the end of INSERT statements any more in an effort to increase compatbility with IBM db2.

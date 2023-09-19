@@ -282,6 +282,14 @@ def read_arrow_batches_from_odbc(
         parameters_len = 0
         encoded_parameters = []
     else:
+        # Check precondition in order to save users some debugging, in case they directly pass a
+        # non-string argument and do not use a type linter.
+        if not all([p is None or hasattr(p, "encode") for p in parameters]):
+            raise TypeError(
+                "read_arrow_batches_from_odbc only supports string arguments for SQL query "
+                "parameters"
+            )
+        
         parameters_array = ffi.new("ArrowOdbcParameter *[]", len(parameters))
         parameters_len = len(parameters)
         # Must be kept alive. Within Rust code we only allocate an additional
