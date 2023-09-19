@@ -1,6 +1,6 @@
 import pyarrow as pa
 
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple
 from cffi.api import FFI  # type: ignore
 
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
@@ -177,7 +177,7 @@ def read_arrow_batches_from_odbc(
     connection_string: str,
     user: Optional[str] = None,
     password: Optional[str] = None,
-    parameters: Optional[List[Optional[Any]]] = None,
+    parameters: Optional[List[Optional[str]]] = None,
     max_text_size: Optional[int] = None,
     max_binary_size: Optional[int] = None,
     falliable_allocations: bool = True,
@@ -228,8 +228,7 @@ def read_arrow_batches_from_odbc(
         positional parameters. This argument takes a list of parameters those number must match the
         number of placholders in the SQL statement. Using this instead of literals helps you avoid
         SQL injections or may otherwise simplify your code. Currently all parameters are passed as
-        VARCHAR strings. The arguments are converted into strings using ``str`` first before send
-        via ODBC. You can use `None` to pass `NULL`.
+        VARCHAR strings. You can use `None` to pass `NULL`.
     :param max_text_size: An upper limit for the size of buffers bound to variadic text columns of
         the data source. This limit does not (directly) apply to the size of the created arrow
         buffers, but rather applies to the buffers used for the data in transit. Use this option if
@@ -287,7 +286,7 @@ def read_arrow_batches_from_odbc(
         parameters_len = len(parameters)
         # Must be kept alive. Within Rust code we only allocate an additional
         # indicator the string payload is just referenced.
-        encoded_parameters = [to_bytes_and_len(str(p)) for p in parameters]
+        encoded_parameters = [to_bytes_and_len(p) for p in parameters]
 
     if max_text_size is None:
         max_text_size = 0
