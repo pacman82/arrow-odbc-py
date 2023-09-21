@@ -1,8 +1,12 @@
 # Changelog
 
+## 1.2.5
+
+- Update Rust dependencies. Including an update to `odbc-api 1.0.1`, which contains a fix preventing false positive truncation errors in the presence of `NULL` values and ODBC diagnostics.
+
 ## 1.2.4
 
-- Update rust dependencies
+- Update Rust dependencies
 - Better error message if passing a non-string argument using `parameters` into `read_arrow_batches_from_odbc`.
 
 ## 1.2.3
