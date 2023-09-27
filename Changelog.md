@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.7
+
+- Update Rust dependencies. Including an update to `odbc-api 2.0.0`, which provides more details on truncation errors.
+
 ## 1.2.6
 
 - Update Rust dependencies. Including an update to `odbc-api 1.0.1`, which contains a fix preventing false positive truncation errors in the presence of `NULL` values and ODBC diagnostics. This bugfix fixes the error in variadic text fields theras the previous one only fixed the issue for variadic binary fields.
