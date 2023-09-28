@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.8
+
+- Debug logging around the inspection of relational types using the ODBC driver.
+
 ## 1.2.7
 
 - Update Rust dependencies. Including an update to `odbc-api 2.0.0`, which provides more details on truncation errors.
