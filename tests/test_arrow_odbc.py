@@ -658,17 +658,20 @@ def test_insert_from_parquet():
 
 def test_insert_large_string():
     """
-    Insert an arrow table whose schema contains a "large string".
+    Insert an arrow table whose schema contains a "large string". Intention of this test is
+    to verify that arrow schemas large utf-8 strings. Not necessarily that actually large strings
+    are working (although they do).
     """
     # Given
     table = "InsertLargeString"
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a Varchar(50))"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a NVARCHAR(max))"')
     schema = pa.schema([("a", pa.large_string())])
+    large_string = "H" * 2000
 
     def iter_record_batches():
         # The string value is not actually large, just the schema information allows it to be
-        yield pa.RecordBatch.from_arrays([pa.array(["Hello"])], schema=schema)
+        yield pa.RecordBatch.from_arrays([pa.array([large_string])], schema=schema)
 
     reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
 
@@ -679,9 +682,9 @@ def test_insert_large_string():
 
     # Then
     actual = check_output(
-        ["odbcsv", "fetch", "-c", MSSQL, "-q", f"SELECT a FROM {table}"]
+        ["odbcsv", "fetch", "-c", MSSQL, "--max-str-len", "2000","-q", f"SELECT a FROM {table}"]
     )
-    assert "a\nHello\n" == actual.decode("utf8")
+    assert f"a\n{large_string}\n" == actual.decode("utf8")
 
 
 def test_reinitalizing_logger_should_raise():
