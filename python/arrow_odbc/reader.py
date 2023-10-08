@@ -169,6 +169,32 @@ class BatchReader:
         self.schema = _schema_from_handle(self.handle)
 
         return has_more_results
+    
+
+    def fetch_concurrently(self):
+        """
+        Allocate another transit buffer and use it to fetch row set groups (aka. batches) from the
+        ODBC data source in a dedicated system thread, while the main thread converts the previous
+        batch to arrow arrays and executes the application logic.
+
+        If you extract more than one result set from the cursor, you need to call these method for
+        each result set you want to extract concurrently. This has been done so it is possible to
+        skip result sets without worrying about the fetching thread to start fetching row groups
+        from a result set you intended to skip.
+
+        Calling this method on an already concurrent reader has no effect.
+        """
+        error = lib.arrow_odbc_reader_into_concurrent(self.handle)
+
+        # Making a reader concurrent will not change its schema, yet if there is an error the reader
+        # is destroyed and its schema is empty. The if is a slight optimization.
+        # self.schema == _schema_from_handle(self.handle)
+        # should always be true and so asigning it never would make the code incorrect. Yet we only
+        # need to do so if it actually changes.
+        if error != ffi.NULL:
+            self.schema = _schema_from_handle(self.handle)
+
+        raise_on_error(error)
 
 
 def read_arrow_batches_from_odbc(

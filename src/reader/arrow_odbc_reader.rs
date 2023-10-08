@@ -9,7 +9,7 @@ use arrow::{
 };
 use arrow_odbc::{
     odbc_api::{Cursor, CursorImpl, StatementConnection},
-    BufferAllocationOptions, OdbcReader,
+    BufferAllocationOptions, ConcurrentOdbcReader, OdbcReader,
 };
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
@@ -19,6 +19,7 @@ pub enum ArrowOdbcReader {
     /// all associated resources have been deallocated
     NoMoreResultSets,
     Reader(OdbcReader<CursorImpl<StatementConnection<'static>>>),
+    ConcurrentReader(ConcurrentOdbcReader<CursorImpl<StatementConnection<'static>>>),
 }
 
 impl ArrowOdbcReader {
@@ -42,6 +43,7 @@ impl ArrowOdbcReader {
         let next = match self {
             ArrowOdbcReader::NoMoreResultSets => None,
             ArrowOdbcReader::Reader(reader) => reader.next().transpose()?,
+            ArrowOdbcReader::ConcurrentReader(reader) => reader.next().transpose()?,
         };
         let next = if let Some(batch) = next {
             let struct_array: StructArray = batch.into();
@@ -65,11 +67,11 @@ impl ArrowOdbcReader {
         // reader and move it to a different typestate.
         let mut tmp_self = ArrowOdbcReader::NoMoreResultSets;
         swap(self, &mut tmp_self);
-        let inner = match tmp_self {
+        let cursor = match tmp_self {
             ArrowOdbcReader::NoMoreResultSets => return Ok(false),
-            ArrowOdbcReader::Reader(inner) => inner,
+            ArrowOdbcReader::Reader(inner) => inner.into_cursor()?,
+            ArrowOdbcReader::ConcurrentReader(inner) => inner.into_cursor()?,
         };
-        let cursor = inner.into_cursor()?;
         if let Some(cursor) = cursor.more_results()? {
             // There is another result set. Let us create a new reader
             let reader = OdbcReader::with(cursor, batch_size, None, buffer_allocation_options)?;
@@ -93,7 +95,35 @@ impl ArrowOdbcReader {
                 let schema = &*schema_ref;
                 schema.try_into()?
             }
+            // This is actually dead code. Python part caches schema information as a member of the
+            // reader. Every state change that would change it is performed on a sequential reader.
+            // Yet the operation can be defined nicely, so we will do it despite this being
+            // unreachable for now.
+            ArrowOdbcReader::ConcurrentReader(inner) => {
+                let schema_ref = inner.schema();
+                let schema = &*schema_ref;
+                schema.try_into()?
+            }
         };
         Ok(schema_ffi)
+    }
+
+    pub fn into_concurrent(&mut self) -> Result<(), ArrowOdbcError> {
+        // Move self into a temporary instance we own, in order to take ownership of the inner
+        // reader and move it to a different typestate.
+        let mut tmp_self = ArrowOdbcReader::NoMoreResultSets;
+        swap(self, &mut tmp_self);
+
+        *self = match tmp_self {
+            // Nothing to do. There is nothing left to fetch.
+            ArrowOdbcReader::NoMoreResultSets => ArrowOdbcReader::NoMoreResultSets,
+            // Nothing to do. Reader is already concurrent,
+            ArrowOdbcReader::ConcurrentReader(inner) => ArrowOdbcReader::ConcurrentReader(inner),
+            ArrowOdbcReader::Reader(inner) => {
+                let reader = inner.into_concurrent()?;
+                ArrowOdbcReader::ConcurrentReader(reader)
+            }
+        };
+        Ok(())
     }
 }

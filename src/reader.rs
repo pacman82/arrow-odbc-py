@@ -168,6 +168,17 @@ pub unsafe extern "C" fn arrow_odbc_reader_schema(
     null_mut()
 }
 
+/// # Safety
+///
+/// * `reader` must point to a valid non-null reader, allocated by [`arrow_odbc_reader_make`].
+#[no_mangle]
+pub unsafe extern "C" fn arrow_odbc_reader_into_concurrent(
+    mut reader: NonNull<ArrowOdbcReader>,
+) -> *mut ArrowOdbcError {
+    try_!(reader.as_mut().into_concurrent());
+    null_mut()
+}
+
 fn alloc_opts_from_c_args(
     max_text_size: usize,
     max_binary_size: usize,

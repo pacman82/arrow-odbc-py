@@ -133,6 +133,27 @@ def test_advancing_past_last_result_set_leaves_empty_reader():
         next(iter(reader))
 
 
+def test_making_an_empty_reader_concurrent_is_no_error():
+    """
+    Making an empty reader, which has been moved past the last result set, concurrent has no effect.
+    """
+    # This statement produces one result
+    query = f"SELECT 1 AS a;"
+
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+    # Move to a second result set, which does not exist
+    reader.more_results(batch_size=100)
+    # Fetch the non-existing result set concurrently. This should leave the reader unchanged
+    reader.fetch_concurrently()
+
+    # Assert schema and batches are empty
+    assert reader.schema == pa.schema([])
+    with raises(StopIteration):
+        next(iter(reader))
+
+
 def test_empty_table():
     """
     Should return an empty iterator querying an empty table.
@@ -178,9 +199,67 @@ def test_one_row():
         next(it)
 
 
+def test_fetch_concurrently():
+    """
+    Use a concurrent batch reader to fetch one row
+    """
+    table = "FetchConcurrently"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a int);"')
+    rows = "a\n42"
+    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+
+    query = f"SELECT * FROM {table}"
+
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+    reader.fetch_concurrently()
+    it = iter(reader)
+
+    actual = next(it)
+
+    schema = pa.schema([("a", pa.int32())])
+    expected = pa.RecordBatch.from_pydict({"a": [42]}, schema)
+    assert expected == actual
+
+    with raises(StopIteration):
+        next(it)
+
+
+def test_concurrent_reader_into_concurrent():
+    """
+    Turning an already concurrent reader into a concurrent reader has no additional effect and
+    leaves the reader valid.
+    """
+    table = "FetchAlreadyConcurrently"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a int);"')
+    rows = "a\n42"
+    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+
+    query = f"SELECT * FROM {table}"
+
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+    reader.fetch_concurrently()
+    reader.fetch_concurrently() # Transforming already concurrent reader into concurrent reader
+    it = iter(reader)
+
+    actual = next(it)
+
+    schema = pa.schema([("a", pa.int32())])
+    expected = pa.RecordBatch.from_pydict({"a": [42]}, schema)
+    assert expected == actual
+
+    with raises(StopIteration):
+        next(it)
+
+
 def test_schema():
     """
-    Query a table with one row. Should return one batch
+    Query a table. Reader should have a member indicating the correct schema
     """
     table = "TestSchema"
     os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
@@ -192,6 +271,26 @@ def test_schema():
     reader = read_arrow_batches_from_odbc(
         query=query, batch_size=100, connection_string=MSSQL
     )
+
+    expected = pa.schema([("a", pa.int32()), ("b", pa.string())])
+    assert expected == reader.schema
+
+
+def test_schema_from_concurrent_reader():
+    """
+    Query a table concurrently. Reader should have a member indicating the correct schema
+    """
+    table = "TestSchema"
+    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
+    os.system(
+        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a INT, b VARCHAR(50));"'
+    )
+
+    query = f"SELECT * FROM {table}"
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+    reader.fetch_concurrently()
 
     expected = pa.schema([("a", pa.int32()), ("b", pa.string())])
     assert expected == reader.schema
