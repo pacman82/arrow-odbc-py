@@ -36,6 +36,10 @@ reader = read_arrow_batches_from_odbc(
     password="My@Test@Password",
 )
 
+# Trade memory for speed. For the price of an additional transit buffer and a native system thread
+# we fetch batches now concurrent to our application logic.
+reader.fetch_concurrently()
+
 for batch in reader:
     # Process arrow batches
     df = batch.to_pandas()

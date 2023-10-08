@@ -169,7 +169,6 @@ class BatchReader:
         self.schema = _schema_from_handle(self.handle)
 
         return has_more_results
-    
 
     def fetch_concurrently(self):
         """
@@ -183,6 +182,30 @@ class BatchReader:
         from a result set you intended to skip.
 
         Calling this method on an already concurrent reader has no effect.
+
+        Example:
+
+        .. code-block:: python
+
+            from arrow_odbc import read_arrow_batches_from_odbc
+
+            connection_string="Driver={ODBC Driver 17 for SQL Server};Server=localhost;"
+
+            reader = read_arrow_batches_from_odbc(
+                query=f"SELECT * FROM MyTable,
+                connection_string=connection_string,
+                batch_size=1000,
+                user="SA",
+                password="My@Test@Password",
+            )
+            # Trade memory for speed. For the price of an additional transit buffer and a native
+            # system thread we fetch batches now concurrent to our application logic.
+            reader.fetch_concurrently()
+
+            for batch in reader:
+                # Process arrow batches
+                df = batch.to_pandas()
+                # ...
         """
         error = lib.arrow_odbc_reader_into_concurrent(self.handle)
 
@@ -315,7 +338,7 @@ def read_arrow_batches_from_odbc(
                 "read_arrow_batches_from_odbc only supports string arguments for SQL query "
                 "parameters"
             )
-        
+
         parameters_array = ffi.new("ArrowOdbcParameter *[]", len(parameters))
         parameters_len = len(parameters)
         # Must be kept alive. Within Rust code we only allocate an additional

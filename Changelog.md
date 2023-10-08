@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0
+
+- Add method `fetch_concurrently` to `BatchReader` allowing for fetching batches concurrently from the ODBC data source at the price of an additional transit buffer.
+
 ## 1.2.8
 
 - Debug logging around the inspection of relational types using the ODBC driver.
