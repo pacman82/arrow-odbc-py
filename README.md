@@ -37,7 +37,8 @@ reader = read_arrow_batches_from_odbc(
 )
 
 # Trade memory for speed. For the price of an additional transit buffer and a native system thread
-# we fetch batches now concurrent to our application logic.
+# we fetch batches now concurrent to our application logic. Just remove this line, if you want to
+# fetch sequentially in your main application thread.
 reader.fetch_concurrently()
 
 for batch in reader:
