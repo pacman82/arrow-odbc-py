@@ -6,10 +6,9 @@ mod pool;
 mod reader;
 mod writer;
 
-use std::{borrow::Cow, ptr::null_mut, slice, str};
+use std::{borrow::Cow, ptr::null_mut, slice, str, sync::OnceLock};
 
 use arrow_odbc::odbc_api::{escape_attribute_value, Connection, ConnectionOptions, Environment};
-use lazy_static::lazy_static;
 
 pub use error::{arrow_odbc_error_free, arrow_odbc_error_message, ArrowOdbcError};
 pub use logging::arrow_odbc_log_to_stderr;
@@ -20,9 +19,7 @@ pub use writer::{
     arrow_odbc_writer_free, arrow_odbc_writer_make, arrow_odbc_writer_write_batch, ArrowOdbcWriter,
 };
 
-lazy_static! {
-    static ref ENV: Environment = Environment::new().unwrap();
-}
+static ENV: OnceLock<Result<Environment, arrow_odbc::odbc_api::Error>> = OnceLock::new();
 
 /// Opaque type to transport connection to an ODBC Datasource over language boundry
 pub struct OdbcConnection(Connection<'static>);
@@ -46,6 +43,8 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
     login_timeout_sec_ptr: *const u32,
     connection_out: *mut *mut OdbcConnection,
 ) -> *mut ArrowOdbcError {
+    let env = try_!(ENV.get_or_init(Environment::new));
+
     let connection_string = slice::from_raw_parts(connection_string_buf, connection_string_len);
     let mut connection_string = Cow::Borrowed(str::from_utf8(connection_string).unwrap());
 
@@ -58,7 +57,7 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
         Some(*login_timeout_sec_ptr)
     };
 
-    let connection = try_!(ENV.connect_with_connection_string(
+    let connection = try_!(env.connect_with_connection_string(
         &connection_string,
         ConnectionOptions { login_timeout_sec }
     ));
