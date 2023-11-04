@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1
+
+- Then failing to create an environment `arrow-odbc` is no longer going to panic and emit an exception instead.
+
 ## 1.3.0
 
 - Add method `fetch_concurrently` to `BatchReader` allowing for fetching batches concurrently from the ODBC data source at the price of an additional transit buffer.
