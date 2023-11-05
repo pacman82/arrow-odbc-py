@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.2
+
+- Updated rust dependencies
+- Error message indicating that an update of unixODBC could help if failing to create an environment.
+
 ## 1.3.1
 
 - Then failing to create an environment `arrow-odbc` is no longer going to panic and emit an exception instead.
