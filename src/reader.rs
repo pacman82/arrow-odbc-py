@@ -9,7 +9,7 @@ use std::{
 };
 
 use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema};
-use arrow_odbc::BufferAllocationOptions;
+use arrow_odbc::OdbcReaderBuilder;
 
 use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, OdbcConnection};
 
@@ -67,16 +67,16 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
             .collect()
     };
 
-    let buffer_allocation_options =
-        alloc_opts_from_c_args(max_text_size, max_binary_size, fallibale_allocations);
+    let reader_builder = reader_builder_from_c_args(
+        max_text_size,
+        max_binary_size,
+        batch_size,
+        fallibale_allocations,
+    );
 
     let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
     let reader = if let Some(cursor) = maybe_cursor {
-        try_!(ArrowOdbcReader::new(
-            cursor,
-            batch_size,
-            buffer_allocation_options
-        ))
+        try_!(ArrowOdbcReader::new(cursor, reader_builder,))
     } else {
         ArrowOdbcReader::empty()
     };
@@ -146,12 +146,14 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
     max_binary_size: usize,
     fallibale_allocations: bool,
 ) -> *mut ArrowOdbcError {
-    let buffer_allocation_options =
-        alloc_opts_from_c_args(max_text_size, max_binary_size, fallibale_allocations);
+    let reader_builder = reader_builder_from_c_args(
+        max_text_size,
+        max_binary_size,
+        batch_size,
+        fallibale_allocations,
+    );
     // Move cursor to the next result set.
-    *has_more_results = try_!(reader
-        .as_mut()
-        .more_results(batch_size, buffer_allocation_options));
+    *has_more_results = try_!(reader.as_mut().more_results(reader_builder));
     null_mut()
 }
 
@@ -179,24 +181,22 @@ pub unsafe extern "C" fn arrow_odbc_reader_into_concurrent(
     null_mut()
 }
 
-fn alloc_opts_from_c_args(
+fn reader_builder_from_c_args(
     max_text_size: usize,
     max_binary_size: usize,
+    max_num_rows_per_batch: usize,
     fallibale_allocations: bool,
-) -> BufferAllocationOptions {
-    let max_text_size = if max_text_size == 0 {
-        None
-    } else {
-        Some(max_text_size)
+) -> OdbcReaderBuilder {
+    let mut builder = OdbcReaderBuilder::new();
+    builder
+        .with_fallibale_allocations(fallibale_allocations)
+        .with_max_num_rows_per_batch(max_num_rows_per_batch)
+        .with_max_bytes_per_batch(usize::MAX);
+    if max_text_size != 0 {
+        builder.with_max_text_size(max_text_size);
     };
-    let max_binary_size = if max_binary_size == 0 {
-        None
-    } else {
-        Some(max_binary_size)
+    if max_binary_size != 0 {
+        builder.with_max_binary_size(max_binary_size);
     };
-    BufferAllocationOptions {
-        max_text_size,
-        max_binary_size,
-        fallibale_allocations,
-    }
+    builder
 }

@@ -9,7 +9,7 @@ use arrow::{
 };
 use arrow_odbc::{
     odbc_api::{Cursor, CursorImpl, StatementConnection},
-    BufferAllocationOptions, ConcurrentOdbcReader, OdbcReader,
+    ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder,
 };
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
@@ -25,11 +25,9 @@ pub enum ArrowOdbcReader {
 impl ArrowOdbcReader {
     pub fn new(
         cursor: CursorImpl<StatementConnection<'static>>,
-        batch_size: usize,
-        buffer_allocation_options: BufferAllocationOptions,
+        reader_builder: OdbcReaderBuilder,
     ) -> Result<Self, arrow_odbc::Error> {
-        let schema = None; // Autodiscover schema information
-        let reader = OdbcReader::with(cursor, batch_size, schema, buffer_allocation_options)?;
+        let reader = reader_builder.build(cursor)?;
         Ok(Self::Reader(reader))
     }
 
@@ -58,11 +56,7 @@ impl ArrowOdbcReader {
         Ok(next)
     }
 
-    pub fn more_results(
-        &mut self,
-        batch_size: usize,
-        buffer_allocation_options: BufferAllocationOptions,
-    ) -> Result<bool, ArrowOdbcError> {
+    pub fn more_results(&mut self, builder: OdbcReaderBuilder) -> Result<bool, ArrowOdbcError> {
         // Move self into a temporary instance we own, in order to take ownership of the inner
         // reader and move it to a different typestate.
         let mut tmp_self = ArrowOdbcReader::NoMoreResultSets;
@@ -74,7 +68,7 @@ impl ArrowOdbcReader {
         };
         if let Some(cursor) = cursor.more_results()? {
             // There is another result set. Let us create a new reader
-            let reader = OdbcReader::with(cursor, batch_size, None, buffer_allocation_options)?;
+            let reader = builder.build(cursor)?;
             *self = ArrowOdbcReader::Reader(reader);
             Ok(true)
         } else {
