@@ -85,7 +85,7 @@ class BatchReader:
 
     def more_results(
         self,
-        batch_size: int,
+        batch_size: int = 65535,
         max_bytes_per_batch: Optional[int] = 2**21,
         max_text_size: Optional[int] = None,
         max_binary_size: Optional[int] = None,
@@ -128,7 +128,8 @@ class BatchReader:
                 # ...
 
         :param batch_size: The maximum number rows within each batch. Batch size can be individually
-            choosen for each result set.
+            choosen for each result set. The maximum number of rows can be less if the upper bound
+            defined by ``max_bytes_per_batch`` is lower.
         :param max_bytes_per_batch: An upper limit for the total size (all columns) of the buffer
             used to transit data from the ODBC driver to the application. Please note that memory
             consumption of this buffer is determined not by the actual values, but by the maximum
@@ -230,8 +231,8 @@ class BatchReader:
 
 def read_arrow_batches_from_odbc(
     query: str,
-    batch_size: int,
     connection_string: str,
+    batch_size: int = 65535,
     user: Optional[str] = None,
     password: Optional[str] = None,
     parameters: Optional[List[Optional[str]]] = None,
@@ -268,12 +269,8 @@ def read_arrow_batches_from_odbc(
 
     :param query: The SQL statement yielding the result set which is converted into arrow record
         batches.
-    :param batch_size: The maximum number rows within each batch. Please note that the actual batch
-        size is up to the ODBC driver of your database. This parameter influences primarily the size
-        of the buffers the ODBC driver is supposed to fill with data, yet it is up to the driver how
-        many values it fills in one go. Also note that the primary use-case of batching is to reduce
-        IO overhead. So even if you fetch millions of rows a batch size of 100 or 1000 may be
-        entirely reasonable. This is trading memory for speed, but with diminishing returns.
+    :param batch_size: The maximum number rows within each batch. The maximum number of rows can be
+        less if the upper bound defined by ``max_bytes_per_batch`` is lower.
     :param connection_string: ODBC Connection string used to connect to the data source. To find a
         connection string for your data source try https://www.connectionstrings.com/.
     :param user: Allows for specifying the user seperatly from the connection string if it is not
