@@ -30,7 +30,6 @@ connection_string="Driver={ODBC Driver 17 for SQL Server};Server=localhost;"
 reader = read_arrow_batches_from_odbc(
     query=f"SELECT * FROM MyTable WHERE a=?",
     connection_string=connection_string,
-    batch_size=1000,
     parameters=["I'm a positional query parameter"],
     user="SA",
     password="My@Test@Password",
