@@ -86,7 +86,7 @@ class BatchReader:
     def more_results(
         self,
         batch_size: int,
-        max_bytes_per_batch = 2**21,
+        max_bytes_per_batch: Optional[int] = 2**21,
         max_text_size: Optional[int] = None,
         max_binary_size: Optional[int] = None,
         falliable_allocations: bool = True,
@@ -235,7 +235,7 @@ def read_arrow_batches_from_odbc(
     user: Optional[str] = None,
     password: Optional[str] = None,
     parameters: Optional[List[Optional[str]]] = None,
-    max_bytes_per_batch = 2**21,
+    max_bytes_per_batch: Optional[int] = 2**21,
     max_text_size: Optional[int] = None,
     max_binary_size: Optional[int] = None,
     falliable_allocations: bool = True,
@@ -365,6 +365,9 @@ def read_arrow_batches_from_odbc(
 
     if max_binary_size is None:
         max_binary_size = 0
+
+    if max_bytes_per_batch is None:
+        max_bytes_per_batch = 0
 
     for p_index in range(0, parameters_len):
         (p_bytes, p_len) = encoded_parameters[p_index]

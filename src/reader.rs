@@ -196,7 +196,11 @@ fn reader_builder_from_c_args(
     builder
         .with_fallibale_allocations(fallibale_allocations)
         .with_max_num_rows_per_batch(max_num_rows_per_batch)
-        .with_max_bytes_per_batch(max_bytes_per_batch);
+        .with_max_bytes_per_batch(if max_bytes_per_batch == 0 {
+            usize::MAX
+        } else {
+            max_bytes_per_batch
+        });
     if max_text_size != 0 {
         builder.with_max_text_size(max_text_size);
     };

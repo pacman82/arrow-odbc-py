@@ -578,8 +578,8 @@ def test_allocation_erros():
         reader = read_arrow_batches_from_odbc(
             query=query,
             batch_size=1000,
-            # Set this really high, otherwise we can not trigger a failed allocation
-            max_bytes_per_batch=2**64 - 1,
+            # Deactivate size limit, so we have an easier time triggering allocation errors
+            max_bytes_per_batch=None,
             connection_string=MSSQL,
             falliable_allocations=True,
         )
