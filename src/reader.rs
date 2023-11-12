@@ -45,7 +45,8 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     connection: NonNull<OdbcConnection>,
     query_buf: *const u8,
     query_len: usize,
-    batch_size: usize,
+    max_num_rows_per_batch: usize,
+    max_bytes_per_batch: usize,
     parameters: *const *mut ArrowOdbcParameter,
     parameters_len: usize,
     max_text_size: usize,
@@ -70,7 +71,8 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     let reader_builder = reader_builder_from_c_args(
         max_text_size,
         max_binary_size,
-        batch_size,
+        max_num_rows_per_batch,
+        max_bytes_per_batch,
         fallibale_allocations,
     );
 
@@ -141,7 +143,8 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
 pub unsafe extern "C" fn arrow_odbc_reader_more_results(
     mut reader: NonNull<ArrowOdbcReader>,
     has_more_results: *mut bool,
-    batch_size: usize,
+    max_num_rows_per_batch: usize,
+    max_bytes_per_batch: usize,
     max_text_size: usize,
     max_binary_size: usize,
     fallibale_allocations: bool,
@@ -149,7 +152,8 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
     let reader_builder = reader_builder_from_c_args(
         max_text_size,
         max_binary_size,
-        batch_size,
+        max_num_rows_per_batch,
+        max_bytes_per_batch,
         fallibale_allocations,
     );
     // Move cursor to the next result set.
@@ -185,13 +189,14 @@ fn reader_builder_from_c_args(
     max_text_size: usize,
     max_binary_size: usize,
     max_num_rows_per_batch: usize,
+    max_bytes_per_batch: usize,
     fallibale_allocations: bool,
 ) -> OdbcReaderBuilder {
     let mut builder = OdbcReaderBuilder::new();
     builder
         .with_fallibale_allocations(fallibale_allocations)
         .with_max_num_rows_per_batch(max_num_rows_per_batch)
-        .with_max_bytes_per_batch(usize::MAX);
+        .with_max_bytes_per_batch(max_bytes_per_batch);
     if max_text_size != 0 {
         builder.with_max_text_size(max_text_size);
     };

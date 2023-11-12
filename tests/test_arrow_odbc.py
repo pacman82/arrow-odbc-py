@@ -575,9 +575,11 @@ def test_allocation_erros():
     query = f"SELECT * FROM {table}"
 
     with raises(Error, match="Column buffer is too large to be allocated."):
-        read_arrow_batches_from_odbc(
+        reader = read_arrow_batches_from_odbc(
             query=query,
             batch_size=1000,
+            # Set this really high, otherwise we can not trigger a failed allocation
+            max_bytes_per_batch=2**64 - 1,
             connection_string=MSSQL,
             falliable_allocations=True,
         )

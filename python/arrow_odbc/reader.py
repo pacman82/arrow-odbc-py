@@ -86,6 +86,7 @@ class BatchReader:
     def more_results(
         self,
         batch_size: int,
+        max_bytes_per_batch = 2**21,
         max_text_size: Optional[int] = None,
         max_binary_size: Optional[int] = None,
         falliable_allocations: bool = True,
@@ -128,6 +129,12 @@ class BatchReader:
 
         :param batch_size: The maximum number rows within each batch. Batch size can be individually
             choosen for each result set.
+        :param max_bytes_per_batch: An upper limit for the total size (all columns) of the buffer
+            used to transit data from the ODBC driver to the application. Please note that memory
+            consumption of this buffer is determined not by the actual values, but by the maximum
+            possible length of an indiviual row times the number of rows it can hold. Both
+            ``batch_size`` and this parameter define upper bounds for the same buffer. Which ever
+            bound is lower is used to determine the buffer size.
         :param max_text_size: An upper limit for the size of buffers bound to variadic text columns
             of the data source. This limit does not (directly) apply to the size of the created
             arrow buffers, but rather applies to the buffers used for the data in transit. Use this
@@ -155,6 +162,7 @@ class BatchReader:
                 self.handle,
                 has_more_results_c,
                 batch_size,
+                max_bytes_per_batch,
                 max_text_size,
                 max_binary_size,
                 falliable_allocations,
@@ -227,6 +235,7 @@ def read_arrow_batches_from_odbc(
     user: Optional[str] = None,
     password: Optional[str] = None,
     parameters: Optional[List[Optional[str]]] = None,
+    max_bytes_per_batch = 2**21,
     max_text_size: Optional[int] = None,
     max_binary_size: Optional[int] = None,
     falliable_allocations: bool = True,
@@ -278,6 +287,12 @@ def read_arrow_batches_from_odbc(
         number of placholders in the SQL statement. Using this instead of literals helps you avoid
         SQL injections or may otherwise simplify your code. Currently all parameters are passed as
         VARCHAR strings. You can use `None` to pass `NULL`.
+    :param max_bytes_per_batch: An upper limit for the total size (all columns) of the buffer used
+        to transit data from the ODBC driver to the application. Please note that memory consumption
+        of this buffer is determined not by the actual values, but by the maximum possible length of
+        an indiviual row times the number of rows it can hold. Both ``batch_size`` and this
+        parameter define upper bounds for the same buffer. Which ever bound is lower is used to
+        determine the buffer size.
     :param max_text_size: An upper limit for the size of buffers bound to variadic text columns of
         the data source. This limit does not (directly) apply to the size of the created arrow
         buffers, but rather applies to the buffers used for the data in transit. Use this option if
@@ -362,6 +377,7 @@ def read_arrow_batches_from_odbc(
         query_bytes,
         len(query_bytes),
         batch_size,
+        max_bytes_per_batch,
         parameters_array,
         parameters_len,
         max_text_size,
