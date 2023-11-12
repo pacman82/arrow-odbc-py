@@ -4,6 +4,7 @@
 
 - Transit buffers are now limited to 2GiB by default. You can use the `max_bytes_per_batch` parameter to adjust or deactivate that limit.
 - `read_arrow_batches_from_odbc` has the order of its arguments changed, so `batch_size` can have a default argument.
+- `fallibale_allocations` now defaults to `False`, as due to the size limits, it would rarerly trigger and it can have huge potential performance implications.
 
 ## 1.3.2
 

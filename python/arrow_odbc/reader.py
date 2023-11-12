@@ -89,7 +89,7 @@ class BatchReader:
         max_bytes_per_batch: Optional[int] = 2**21,
         max_text_size: Optional[int] = None,
         max_binary_size: Optional[int] = None,
-        falliable_allocations: bool = True,
+        falliable_allocations: bool = False,
     ) -> bool:
         """
         Move the reader to the next result set returned by the data source.
@@ -239,7 +239,7 @@ def read_arrow_batches_from_odbc(
     max_bytes_per_batch: Optional[int] = 2**21,
     max_text_size: Optional[int] = None,
     max_binary_size: Optional[int] = None,
-    falliable_allocations: bool = True,
+    falliable_allocations: bool = False,
     login_timeout_sec: Optional[int] = None,
 ) -> Optional[BatchReader]:
     """
