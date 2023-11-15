@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.1
+
+- Updated Rust dependencies. Including an update to `arrow-odbc` (the Rust crate) which fixes an issue which would cause a division by zero if iterating using `more_results` over several SQL statements, there one of them would not be a "true" cursor, i.e. not emitting a result set, or having an empty schema.
+
 ## 2.0.0
 
 - Transit buffers are now limited to 2GiB by default. You can use the `max_bytes_per_batch` parameter to adjust or deactivate that limit.
