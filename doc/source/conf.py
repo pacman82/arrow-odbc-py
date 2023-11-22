@@ -22,7 +22,7 @@ copyright = "2021, Markus Klein"
 author = "Markus Klein"
 
 # The full version, including alpha/beta/rc tags
-release = "2.0.1"
+release = "2.0.2"
 
 
 # -- General configuration ---------------------------------------------------
