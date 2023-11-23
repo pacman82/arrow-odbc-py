@@ -24,3 +24,5 @@ changelog = "https://github.com/pacman82/arrow-odbc-py/blob/main/Changelog.md"
 # Bindings type
 bindings = "cffi"
 python-source = "python"
+# Not sure what the default would be, best be sure and make release profile explicit
+profile = "release"
