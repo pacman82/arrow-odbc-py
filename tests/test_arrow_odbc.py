@@ -461,7 +461,7 @@ def test_query_zero_sized_column():
     characters.
     """
     query = "SELECT CAST('a' AS VARCHAR(MAX)) as a"
-    with raises(Error, match="ODBC reported a size of '0' for the column"):
+    with raises(Error, match="ODBC driver did not specify a sensible upper bound for the column"):
         read_arrow_batches_from_odbc(
             query=query, batch_size=100, connection_string=MSSQL
         )
