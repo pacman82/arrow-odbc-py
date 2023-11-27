@@ -160,9 +160,9 @@ dependencies = [
 
 [[package]]
 name = "arrow-odbc"
-version = "3.1.2"
+version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92d061950f15cb16ecf09b5fe693a7e05477ae3e8dc3b0964ad11d3a4cbe3593"
+checksum = "90daa7ebf299202980f4edd712e12fed7aa8bafc26bf10e606efc0df0c035e7a"
 dependencies = [
  "arrow",
  "atoi",
@@ -940,9 +940,9 @@ checksum = "d079845b37af429bfe5dfa76e6d087d788031045b25cfc6fd898486fd9847666"
 
 [[package]]
 name = "odbc-api"
-version = "3.0.1"
+version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a4b4a41d9548733c94caec9e654f07702cce88e44885c8c7cbf9772dc1eedf8"
+checksum = "e1d4581fb98ed935a82900e472d14aea1c6d50b47f753bc2292e79e8fdd335de"
 dependencies = [
  "force-send-sync",
  "log",
@@ -1544,9 +1544,9 @@ checksum = "ed94fce61571a4006852b7389a063ab983c02eb1bb37b47f8272ce92d06d9538"
 
 [[package]]
 name = "winit"
-version = "0.29.3"
+version = "0.29.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "161598019a9da35ab6c34dc46cd13546cba9dbf9816475d4dd9a639455016563"
+checksum = "d25d662bb83b511acd839534bb2d88521b0bbc81440969cb077d23c4db9e62c7"
 dependencies = [
  "android-activity",
  "atomic-waker",
