@@ -124,6 +124,16 @@ There is no ready made wheel for the platform you want to target? Do not worry, 
   python -m build
   ```
 
+#### Building wheel from source on Mac ARM
+
+Following above instruction on an Mac ARM will lead to the build process erroring out with a message that the `odbc` library can not be found for linkning. This is because `brew` chooses to install the library into a different folder on this platform. One way to fix this is to create a symbolic link.
+
+```shell
+sudo ln -s /opt/homebrew/lib /Users/your_user_name/lib
+```
+
+Using this addition step `cargo` from the rust build chain is able to find the `odbc` library and to link against it. Alternatively you can install unixODBC from source using `make`.
+
 ## Matching of ODBC to Arrow types then querying
 
 | ODBC                     | Arrow                |
