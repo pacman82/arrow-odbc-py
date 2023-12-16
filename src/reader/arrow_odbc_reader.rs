@@ -24,11 +24,9 @@ pub enum ArrowOdbcReader {
 
 impl ArrowOdbcReader {
     pub fn new(
-        cursor: CursorImpl<StatementConnection<'static>>,
-        reader_builder: OdbcReaderBuilder,
-    ) -> Result<Self, arrow_odbc::Error> {
-        let reader = reader_builder.build(cursor)?;
-        Ok(Self::Reader(reader))
+        reader: OdbcReader<CursorImpl<StatementConnection<'static>>>,
+    ) -> Self {
+        Self::Reader(reader)
     }
 
     pub fn empty() -> Self {

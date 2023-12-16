@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.3
+
+- Updated Rust dependencies. Use terminating zeros instead of indicators to determine string length, if the database management system name is reported to be 'DB2/LINUX'. This is to work around a bug in the IBM ODBC driver which returns garbage memory as indicators.
+
 ## 2.0.2
 
 - Updated Rust dependencies. Including an update to `arrow-odbc` (the Rust crate) which fixes an issue which would cause a panic if extracting JSON from a MySQL database.

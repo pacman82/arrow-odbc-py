@@ -9,7 +9,8 @@ use std::{
 };
 
 use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema};
-use arrow_odbc::OdbcReaderBuilder;
+use arrow_odbc::{OdbcReaderBuilder, odbc_api::Quirks};
+use log::debug;
 
 use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, OdbcConnection};
 
@@ -68,7 +69,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
             .collect()
     };
 
-    let reader_builder = reader_builder_from_c_args(
+    let mut reader_builder = reader_builder_from_c_args(
         max_text_size,
         max_binary_size,
         max_num_rows_per_batch,
@@ -76,9 +77,16 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
         fallibale_allocations,
     );
 
+    // Use database managment system name to see if we need to apply workarounds
+    let dbms_name = try_!(connection.0.database_management_system_name());
+    debug!("Database managment system name as reported by ODBC: {dbms_name}");
+    let quirks = Quirks::from_dbms_name(&dbms_name);
+    reader_builder.with_shims(quirks);
+
     let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
     let reader = if let Some(cursor) = maybe_cursor {
-        try_!(ArrowOdbcReader::new(cursor, reader_builder,))
+        let reader = try_!(reader_builder.build(cursor));
+        ArrowOdbcReader::new(reader)
     } else {
         ArrowOdbcReader::empty()
     };
