@@ -160,9 +160,9 @@ dependencies = [
 
 [[package]]
 name = "arrow-odbc"
-version = "4.1.0"
+version = "4.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f6883d69e4a9cdda183e2cffc6e45271f7cb50614445a44a1a9d5e973cc01f9"
+checksum = "2a20085c1fbe9f4ca96755ed5437659a37d4cd8181aac2fd6165dc5a0c893cdb"
 dependencies = [
  "arrow",
  "atoi",
@@ -1647,9 +1647,9 @@ dependencies = [
 
 [[package]]
 name = "winnow"
-version = "0.5.28"
+version = "0.5.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c830786f7720c2fd27a1a0e27a709dbd3c4d009b56d098fc742d4f4eab91fe2"
+checksum = "9b5c3db89721d50d0e2a673f5043fc4722f76dcc352d7b1ab8b8288bed4ed2c5"
 dependencies = [
  "memchr",
 ]

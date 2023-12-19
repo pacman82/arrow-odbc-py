@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.4
+
+- Updated Rust dependencies.
+- In order to work with mandatory columns workaround for IBM DB2 returning memory garbage now no longer maps empty strings to zero.
+
 ## 2.0.3
 
 - Updated Rust dependencies. Use terminating zeros instead of indicators to determine string length, if the database management system name is reported to be 'DB2/LINUX'. This is to work around a bug in the IBM ODBC driver which returns garbage memory as indicators.
