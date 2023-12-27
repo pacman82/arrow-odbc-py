@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.5
+
+- Updated Rust dependencies. This includes an update to `arrow-odbc` (the Rust crate) which fixes a panic occuring if the database returns column names in non UTF-8 encodings on non-windows platforms. This version will raise an exception instead.
+
 ## 2.0.4
 
 - Updated Rust dependencies.
