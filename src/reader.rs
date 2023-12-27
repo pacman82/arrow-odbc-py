@@ -18,8 +18,7 @@ pub use self::arrow_odbc_reader::ArrowOdbcReader;
 
 /// Creates an Arrow ODBC reader instance.
 ///
-/// Takes ownership of connection even in case of an error. `reader_out` is assigned a NULL pointer
-/// in case the query does not return a result set.
+/// Takes ownership of connection even in case of an error.
 ///
 /// # Safety
 ///
