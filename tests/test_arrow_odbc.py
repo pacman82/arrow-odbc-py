@@ -1,3 +1,4 @@
+import datetime
 import gc
 import os
 
@@ -541,6 +542,23 @@ def test_query_with_int_parameter():
         read_arrow_batches_from_odbc(
             query=query, batch_size=10, connection_string=MSSQL, parameters=[2]
         )
+
+
+def test_query_timestamp_as_date():
+    """
+    Query a timestamp as date by providing an arrow schema
+    """
+    query = "SELECT CAST('2023-12-24' AS DATETIME2) as a"
+
+    schema = pa.schema([("a", pa.date32())])
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=1, connection_string=MSSQL, schema=schema
+    )
+    it = iter(reader)
+    batch = next(it)
+    value = batch.to_pydict()
+
+    assert value == { "a": [datetime.date(2023, 12, 24)] }
 
 
 def test_iris():

@@ -66,7 +66,6 @@ class BatchReader:
         if self.handle == ffi.NULL:
             raise StopIteration()
 
-        # In case of an error this is going to be a non null handle to the error
         array = arrow_ffi.new("struct ArrowArray *")
         schema = arrow_ffi.new("struct ArrowSchema *")
 
@@ -241,6 +240,7 @@ def read_arrow_batches_from_odbc(
     max_binary_size: Optional[int] = None,
     falliable_allocations: bool = False,
     login_timeout_sec: Optional[int] = None,
+    schema: Optional[Schema] = None,
 ) -> Optional[BatchReader]:
     """
     Execute the query and read the result as an iterator over Arrow batches.
@@ -321,6 +321,13 @@ def read_arrow_batches_from_odbc(
         disabled and a connection attempt will wait indefinitely. If the specified timeout exceeds
         the maximum login timeout in the data source, the driver substitutes that value and uses
         that instead.
+    :param schema: Allows you to overwrite the automatically detected schema with one supplied by
+        the application. Reasons for doing so include domain knowledge you have about the data which
+        is not reflected in the schema information. E.g. you happen to know a field of timestamps
+        contains strictly dates. Another reason could be that for certain usecases another it can
+        make sense to decide the type based on what you want to do with it, rather than its source.
+        E.g. if you simply want to put everything into a CSV file it can make perfect sense to fetch
+        everything as string independent of its source type.
     :return: In case the query does not produce a result set (e.g. in case of an INSERT statement),
         ``None`` is returned. Should the statement return a result set a ``BatchReader`` is
         returned, which implements the iterator protocol and iterates over individual arrow batches.
@@ -366,6 +373,13 @@ def read_arrow_batches_from_odbc(
     if max_bytes_per_batch is None:
         max_bytes_per_batch = 0
 
+    if schema is None:
+        ptr_schema = ffi.NULL
+    else:
+        ptr_schema = arrow_ffi.new("struct ArrowSchema *")
+        int_schema = int(ffi.cast("uintptr_t", ptr_schema))
+        schema._export_to_c(int_schema)
+
     for p_index in range(0, parameters_len):
         (p_bytes, p_len) = encoded_parameters[p_index]
         parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(p_bytes, p_len)
@@ -383,6 +397,7 @@ def read_arrow_batches_from_odbc(
         max_text_size,
         max_binary_size,
         falliable_allocations,
+        ptr_schema,
         reader_out,
     )
 

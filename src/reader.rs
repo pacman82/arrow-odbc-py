@@ -6,10 +6,11 @@ use std::{
     os::raw::c_int,
     ptr::{null_mut, NonNull},
     slice, str,
+    sync::Arc,
 };
 
 use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema};
-use arrow_odbc::{OdbcReaderBuilder, odbc_api::Quirks};
+use arrow_odbc::{odbc_api::Quirks, OdbcReaderBuilder};
 use log::debug;
 
 use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, OdbcConnection};
@@ -38,6 +39,10 @@ pub use self::arrow_odbc_reader::ArrowOdbcReader;
 /// * `fallibale_allocations`: `TRUE` if allocations should return an error, `FALSE` if it is fine
 ///   to abort the process. Enabling might have a performance overhead, so it might be desirable to
 ///   disable it, if you know there is enough memory available.
+/// * `schema`: Optional input arrow schema. NULL means no input schema is supplied. Should a
+///   schema be supplied `schema` Rust will take ownership of it an the `schema` will be
+///   overwritten with an empty one. This means the Python code, must only deallocate the memory
+///   directly pointed to by `schema`, but not freeing the resources of the passed schema.
 /// * `reader_out` in case of success this will point to an instance of `ArrowOdbcReader`.
 ///   Ownership is transferred to the caller.
 #[no_mangle]
@@ -52,10 +57,13 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     max_text_size: usize,
     max_binary_size: usize,
     fallibale_allocations: bool,
+    schema: *mut c_void,
     reader_out: *mut *mut ArrowOdbcReader,
 ) -> *mut ArrowOdbcError {
+    // Transtlate C Args into more idiomatic rust representations
     let query = slice::from_raw_parts(query_buf, query_len);
     let query = str::from_utf8(query).unwrap();
+    let schema = take_schema(schema);
 
     let connection = *Box::from_raw(connection.as_ptr());
 
@@ -74,6 +82,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
         max_num_rows_per_batch,
         max_bytes_per_batch,
         fallibale_allocations,
+        schema,
     );
 
     // Use database managment system name to see if we need to apply workarounds
@@ -162,6 +171,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
         max_num_rows_per_batch,
         max_bytes_per_batch,
         fallibale_allocations,
+        None, // TODO: pass schema from python
     );
     // Move cursor to the next result set.
     *has_more_results = try_!(reader.as_mut().more_results(reader_builder));
@@ -198,6 +208,7 @@ fn reader_builder_from_c_args(
     max_num_rows_per_batch: usize,
     max_bytes_per_batch: usize,
     fallibale_allocations: bool,
+    schema: Option<FFI_ArrowSchema>,
 ) -> OdbcReaderBuilder {
     let mut builder = OdbcReaderBuilder::new();
     builder
@@ -214,5 +225,23 @@ fn reader_builder_from_c_args(
     if max_binary_size != 0 {
         builder.with_max_binary_size(max_binary_size);
     };
+    if let Some(ffi_schema) = schema {
+        builder.with_schema(Arc::new((&ffi_schema).try_into().unwrap()));
+    }
     builder
+}
+
+/// Takes ownership of the supplied schema. Evaluates to `None` if Schema is NULL. The memory
+/// pointed to be `schema` must still be cleared by the caller. Since it is not known how `schema`
+/// has been allocated. Yet its contend have been replaced with that of an empty schema.
+unsafe fn take_schema(schema: *mut c_void) -> Option<FFI_ArrowSchema> {
+    if schema.is_null() {
+        None
+    } else {
+        let schema = schema as *mut FFI_ArrowSchema;
+        let schema = &mut *schema;
+        let mut tmp_schema = FFI_ArrowSchema::empty();
+        swap(schema, &mut tmp_schema);
+        Some(tmp_schema)
+    }
 }
