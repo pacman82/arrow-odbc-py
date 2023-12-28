@@ -89,6 +89,7 @@ class BatchReader:
         max_text_size: Optional[int] = None,
         max_binary_size: Optional[int] = None,
         falliable_allocations: bool = False,
+        schema: Optional[Schema] = None
     ) -> bool:
         """
         Move the reader to the next result set returned by the data source.
@@ -157,6 +158,8 @@ class BatchReader:
         if max_binary_size is None:
             max_binary_size = 0
 
+        ptr_schema = _export_schema_to_c(schema)
+
         with ffi.new("bool *") as has_more_results_c:
             error = lib.arrow_odbc_reader_more_results(
                 self.handle,
@@ -166,6 +169,7 @@ class BatchReader:
                 max_text_size,
                 max_binary_size,
                 falliable_allocations,
+                ptr_schema,
             )
             # See if we managed to execute the query successfully and return an
             # error if not
@@ -373,12 +377,7 @@ def read_arrow_batches_from_odbc(
     if max_bytes_per_batch is None:
         max_bytes_per_batch = 0
 
-    if schema is None:
-        ptr_schema = ffi.NULL
-    else:
-        ptr_schema = arrow_ffi.new("struct ArrowSchema *")
-        int_schema = int(ffi.cast("uintptr_t", ptr_schema))
-        schema._export_to_c(int_schema)
+    ptr_schema = _export_schema_to_c(schema)
 
     for p_index in range(0, parameters_len):
         (p_bytes, p_len) = encoded_parameters[p_index]
@@ -407,3 +406,13 @@ def read_arrow_batches_from_odbc(
 
     reader = reader_out[0]
     return BatchReader(reader)
+
+
+def _export_schema_to_c(schema):
+    if schema is None:
+        ptr_schema = ffi.NULL
+    else:
+        ptr_schema = arrow_ffi.new("struct ArrowSchema *")
+        int_schema = int(ffi.cast("uintptr_t", ptr_schema))
+        schema._export_to_c(int_schema)
+    return ptr_schema

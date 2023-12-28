@@ -155,6 +155,10 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
 ///
 /// * `reader` must point to a valid non-null reader, allocated by [`arrow_odbc_reader_make`].
 /// * `has_more_results` must point to a valid boolean.
+/// * `schema`: Optional input arrow schema. NULL means no input schema is supplied. Should a
+///   schema be supplied `schema` Rust will take ownership of it an the `schema` will be
+///   overwritten with an empty one. This means the Python code, must only deallocate the memory
+///   directly pointed to by `schema`, but not freeing the resources of the passed schema.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_more_results(
     mut reader: NonNull<ArrowOdbcReader>,
@@ -164,14 +168,17 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
     max_text_size: usize,
     max_binary_size: usize,
     fallibale_allocations: bool,
+    schema: * mut c_void,
 ) -> *mut ArrowOdbcError {
+    let schema = take_schema(schema);
+
     let reader_builder = reader_builder_from_c_args(
         max_text_size,
         max_binary_size,
         max_num_rows_per_batch,
         max_bytes_per_batch,
         fallibale_allocations,
-        None, // TODO: pass schema from python
+        schema,
     );
     // Move cursor to the next result set.
     *has_more_results = try_!(reader.as_mut().more_results(reader_builder));

@@ -114,6 +114,25 @@ def test_more_results_return_should_indicate_if_there_is_a_result_set():
     assert not reader.more_results(batch_size=100)
 
 
+def test_custom_schema_for_second_result_set():
+    """
+    Generate two result sets. Fetch the second of the two as text using a custom schema.
+    """
+    # This statement produces two result sets
+    query = f"SELECT 1 AS a; SELECT 2 AS a;"
+
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=1, connection_string=MSSQL
+    )
+    # Ignore first result and use second straight away
+    schema = pa.schema([pa.field("a", pa.string())])
+    reader.more_results(batch_size=1, schema=schema)
+    batch = next(iter(reader))
+    
+    expected = pa.RecordBatch.from_pydict({"a": ["2"]}, schema)
+    assert batch == expected
+
+
 def test_advancing_past_last_result_set_leaves_empty_reader():
     """
     Moving past the last result set, leaves a reader returning a schema with no columns and no
