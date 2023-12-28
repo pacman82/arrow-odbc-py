@@ -14,6 +14,17 @@ use arrow_odbc::{
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
 /// type also has ownership of the ODBC Connection handle.
+/// 
+/// Originally this type had been intended soley as an opaque handle to the reader. However the
+/// design that emerged is that this holds the statement and connection handle in various states.
+/// This has several benefits:
+/// 
+/// * It allows statetransitions to happen in the Rust part, which is good, because they actually
+///   can be triggered by calls to ODBC.
+/// * We can keep the C-Interface lean, we just hold a handle to this instance, rather than
+///   modelling a lot of different Python wrappers for various states.
+/// * Since Python does not posses destructive move semantics, we would not be able to represent
+///   the transitions in the Python part well anyway.
 pub enum ArrowOdbcReader {
     /// The last result set has been extracted from the cursor. There is nothing more to fetch and
     /// all associated resources have been deallocated
