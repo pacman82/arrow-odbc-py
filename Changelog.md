@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.0
+
+- Allow overwriting automatically deduced arrow schemas through optional schema arguments.
+
 ## 2.0.5
 
 - Updated Rust dependencies. This includes an update to `arrow-odbc` (the Rust crate) which fixes a panic occuring if the database returns column names in non UTF-8 encodings on non-windows platforms. This version will raise an exception instead.
