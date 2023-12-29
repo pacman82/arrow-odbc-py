@@ -239,7 +239,7 @@ def read_arrow_batches_from_odbc(
     user: Optional[str] = None,
     password: Optional[str] = None,
     parameters: Optional[List[Optional[str]]] = None,
-    max_bytes_per_batch: Optional[int] = 2**21,
+    max_bytes_per_batch: Optional[int] = 2**29,
     max_text_size: Optional[int] = None,
     max_binary_size: Optional[int] = None,
     falliable_allocations: bool = False,

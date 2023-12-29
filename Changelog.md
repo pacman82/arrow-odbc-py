@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1
+
+- Change default `max_bytes_per_batch`` from 2MiB to 256MiB.
+
 ## 2.1.0
 
 - Allow overwriting automatically deduced arrow schemas through optional schema arguments.
