@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.2
+
+- Updated Rust dependencies. This includes an update to `arrow-odbc` (the Rust crate) which features a more robust parsing of decimals. Decimals now work even if they are rendered with a comma `,` as a radix character instead of a decimal point (`.`).
+
 ## 2.1.1
 
 - Change default `max_bytes_per_batch`` from 2MiB to 256MiB.
