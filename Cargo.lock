@@ -160,12 +160,11 @@ dependencies = [
 
 [[package]]
 name = "arrow-odbc"
-version = "5.0.3"
+version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fed2e1c3ff781b80a73ce8d2b77fd6134e6ad51d1010ce620f28c06a5d197ff0"
+checksum = "19a5d4596481170b5ba418ffff558d37d7de45c95ce0b3ddcc117f6b72aefd07"
 dependencies = [
  "arrow",
- "atoi",
  "chrono",
  "log",
  "odbc-api",
@@ -515,12 +514,6 @@ dependencies = [
  "libc",
  "windows-sys 0.52.0",
 ]
-
-[[package]]
-name = "force-send-sync"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32688dcc448aa684426ecc398f9af78c55b0769515ccd12baa565daf6f32feb6"
 
 [[package]]
 name = "foreign-types"
@@ -937,11 +930,11 @@ checksum = "d079845b37af429bfe5dfa76e6d087d788031045b25cfc6fd898486fd9847666"
 
 [[package]]
 name = "odbc-api"
-version = "4.1.0"
+version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "238ff0913f61960e462fedf7cd567d09d6442cc7cc8fbfec7df2558a5d4eb4c5"
+checksum = "da99edfd6a6d0390adb04a9a37a80ae3168cf27cb876f3fa9ff7443153dfce6e"
 dependencies = [
- "force-send-sync",
+ "atoi",
  "log",
  "odbc-sys",
  "thiserror",
