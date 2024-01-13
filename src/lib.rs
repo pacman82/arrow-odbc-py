@@ -19,7 +19,9 @@ pub use writer::{
     arrow_odbc_writer_free, arrow_odbc_writer_make, arrow_odbc_writer_write_batch, ArrowOdbcWriter,
 };
 
-static ENV: OnceLock<Result<Environment, arrow_odbc::odbc_api::Error>> = OnceLock::new();
+/// Using an ODBC environment with static lifetime eases our work with concurrent fetching, as we
+/// can work with safe code and without scoped threads.
+static ENV: OnceLock<Environment> = OnceLock::new();
 
 /// Opaque type to transport connection to an ODBC Datasource over language boundry
 pub struct OdbcConnection(Connection<'static>);
@@ -43,7 +45,14 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
     login_timeout_sec_ptr: *const u32,
     connection_out: *mut *mut OdbcConnection,
 ) -> *mut ArrowOdbcError {
-    let env = try_!(ENV.get_or_init(Environment::new));
+    let env = if let Some(env) = ENV.get() {
+        // Use existing environment
+        env
+    } else {
+        // ODBC Environment does not exist yet, create it.
+        let env = try_!(Environment::new());
+        ENV.get_or_init(|| env)
+    };
 
     let connection_string = slice::from_raw_parts(connection_string_buf, connection_string_len);
     let mut connection_string = Cow::Borrowed(str::from_utf8(connection_string).unwrap());
