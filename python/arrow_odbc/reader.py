@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional
 from cffi.api import FFI  # type: ignore
 
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
