@@ -35,14 +35,8 @@ class BatchReader:
         `BatchReader`.
         """
 
-        # We take owners of the corresponding reader written in Rust and keep it alive until `self`
-        # is deleted.
-        #
-        # The introduction of `more_results` made it necessary to also be able to represent already
-        # consumed or empty cursors. In Python the user can always keep a reference to a
-        # BatchReader alive and we have no way to force him/her to release it in case we move past
-        # the last result set. Therfore we mutate this instance and represent these states with
-        # handle == NULL and an empty schema.
+        # We take ownership of the corresponding reader written in Rust and keep it alive until
+        # `self` is deleted.
         self.handle = handle
 
         # If this raises `__del__` will be invoked and free the handle, so we do not leak
@@ -58,11 +52,7 @@ class BatchReader:
         return self
 
     def __next__(self) -> RecordBatch:
-        # Implment iterator protocol
-
-        # In case this represents a non-cursor behave as iterating over an empty set of batches
-        if self.handle == ffi.NULL:
-            raise StopIteration()
+        # Implement iterator protocol
 
         array = arrow_ffi.new("struct ArrowArray *")
         schema = arrow_ffi.new("struct ArrowSchema *")
