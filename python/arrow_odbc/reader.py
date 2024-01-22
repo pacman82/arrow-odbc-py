@@ -253,7 +253,7 @@ def read_arrow_batches_from_odbc(
     falliable_allocations: bool = False,
     login_timeout_sec: Optional[int] = None,
     schema: Optional[Schema] = None,
-) -> Optional[BatchReader]:
+) -> BatchReader:
     """
     Execute the query and read the result as an iterator over Arrow batches.
 
@@ -342,9 +342,8 @@ def read_arrow_batches_from_odbc(
         make sense to decide the type based on what you want to do with it, rather than its source.
         E.g. if you simply want to put everything into a CSV file it can make perfect sense to fetch
         everything as string independent of its source type.
-    :return: In case the query does not produce a result set (e.g. in case of an INSERT statement),
-        ``None`` is returned. Should the statement return a result set a ``BatchReader`` is
-        returned, which implements the iterator protocol and iterates over individual arrow batches.
+    :return: A ``BatchReader`` is returned, which implements the iterator protocol and iterates over
+        individual arrow batches.
     """
     query_bytes = query.encode("utf-8")
 
