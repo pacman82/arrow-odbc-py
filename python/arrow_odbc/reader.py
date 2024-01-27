@@ -9,6 +9,7 @@ from arrow_odbc.connect import to_bytes_and_len, connect_to_database  # type: ig
 from .arrow_odbc import ffi, lib  # type: ignore
 from .error import raise_on_error
 
+DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES = 2**29
 
 def _schema_from_handle(handle) -> Schema:
     """
@@ -73,7 +74,7 @@ class BatchReader:
     def more_results(
         self,
         batch_size: int = 65535,
-        max_bytes_per_batch: Optional[int] = 2**21,
+        max_bytes_per_batch: Optional[int] = DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
         max_text_size: Optional[int] = None,
         max_binary_size: Optional[int] = None,
         falliable_allocations: bool = False,
@@ -237,7 +238,7 @@ def read_arrow_batches_from_odbc(
     user: Optional[str] = None,
     password: Optional[str] = None,
     parameters: Optional[List[Optional[str]]] = None,
-    max_bytes_per_batch: Optional[int] = 2**29,
+    max_bytes_per_batch: Optional[int] = DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
     max_text_size: Optional[int] = None,
     max_binary_size: Optional[int] = None,
     falliable_allocations: bool = False,

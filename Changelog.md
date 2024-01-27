@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.6
+
+- `BatchReader.more_results` now shares the same default value for fetch buffer size as `read_arrow_batches_from_odbc`.
+
 ## 2.1.5
 
 - Updated Rust dependencies. This includes an update to `odbc-api` which activates db2 specific workaround for any platform
