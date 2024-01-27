@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.5
+
+- - Updated Rust dependencies. This includes an update to `odbc-api` which activates db2 specific workaround for any platform
+
 ## 2.1.4
 
 - Updated Rust dependencies. This includes an update to `arrow-odbc` (the Rust crate) which features a more robust parsing of decimals. Decimals now work even if they do not have all trailing zeroes in their text representation.

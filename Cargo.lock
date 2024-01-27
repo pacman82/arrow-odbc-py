@@ -159,9 +159,9 @@ dependencies = [
 
 [[package]]
 name = "arrow-odbc"
-version = "6.1.0"
+version = "7.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd963696db08a15168bc3e75541a6c6a7e612de77d74e6a0e1e0dc80f3d07415"
+checksum = "2226d96e99c3246faff092e3f0f53efc277aba2a688abe5157fd25102b675f97"
 dependencies = [
  "arrow",
  "chrono",
@@ -374,16 +374,16 @@ checksum = "fd16c4719339c4530435d38e511904438d07cce7950afa3718a84ac36c10e89e"
 
 [[package]]
 name = "chrono"
-version = "0.4.31"
+version = "0.4.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f2c685bad3eb3d45a01354cedb7d5faa66194d1d58ba6e267a8de788f79db38"
+checksum = "9f13690e35a5e4ace198e7beea2895d29f3a9cc55015fcebe6336bd2010af9eb"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
  "js-sys",
  "num-traits",
  "wasm-bindgen",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.0",
 ]
 
 [[package]]
@@ -929,9 +929,9 @@ checksum = "d079845b37af429bfe5dfa76e6d087d788031045b25cfc6fd898486fd9847666"
 
 [[package]]
 name = "odbc-api"
-version = "5.0.0"
+version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da99edfd6a6d0390adb04a9a37a80ae3168cf27cb876f3fa9ff7443153dfce6e"
+checksum = "ac31b4bfb4942db4fba0e53a5249b3249bcb47c7e4a23973247ae0f201d49754"
 dependencies = [
  "atoi",
  "log",
@@ -1599,9 +1599,9 @@ checksum = "dff9641d1cd4be8d1a070daf9e3773c5f67e78b4d9d42263020c057706765c04"
 
 [[package]]
 name = "winit"
-version = "0.29.9"
+version = "0.29.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2376dab13e09c01ad8b679f0dbc7038af4ec43d9a91344338e37bd686481550"
+checksum = "4c824f11941eeae66ec71111cc2674373c772f482b58939bb4066b642aa2ffcf"
 dependencies = [
  "android-activity",
  "atomic-waker",
