@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.0
+
+- `read_arrow_batches_from_odbc` now requires the paramteter `driver_returns_memory_garbage_for_indicators` explicitly set to `True` in order to compensate for weaknesses in the IBM/DB2 driver and no longer tries to autodetect this. This change in interface has been made in order to not accidentially apply the workaround to drivers which in actuallity report indices just fine.
+
 ## 2.1.6
 
 - `BatchReader.more_results` now shares the same default value for fetch buffer size as `read_arrow_batches_from_odbc`.

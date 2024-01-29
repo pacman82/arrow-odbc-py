@@ -10,7 +10,7 @@ use std::{
 };
 
 use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema};
-use arrow_odbc::{odbc_api::Quirks, OdbcReaderBuilder};
+use arrow_odbc::{OdbcReaderBuilder, Quirks};
 use log::debug;
 
 use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, OdbcConnection};
@@ -58,6 +58,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     max_binary_size: usize,
     fallibale_allocations: bool,
     schema: *mut c_void,
+    driver_returns_memory_garbage_for_indicators: bool,
     reader_out: *mut *mut ArrowOdbcReader,
 ) -> *mut ArrowOdbcError {
     // Transtlate C Args into more idiomatic rust representations
@@ -88,7 +89,10 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     // Use database managment system name to see if we need to apply workarounds
     let dbms_name = try_!(connection.0.database_management_system_name());
     debug!("Database managment system name as reported by ODBC: {dbms_name}");
-    let quirks = Quirks::from_dbms_name(&dbms_name);
+    let quirks = Quirks {
+        indicators_returned_from_bulk_fetch_are_memory_garbage:
+            driver_returns_memory_garbage_for_indicators,
+    };
     reader_builder.with_shims(quirks);
 
     let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
@@ -168,7 +172,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
     max_text_size: usize,
     max_binary_size: usize,
     fallibale_allocations: bool,
-    schema: * mut c_void,
+    schema: *mut c_void,
 ) -> *mut ArrowOdbcError {
     let schema = take_schema(schema);
 
