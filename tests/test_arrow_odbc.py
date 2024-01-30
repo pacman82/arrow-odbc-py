@@ -282,10 +282,11 @@ def test_schema():
     Query a table. Reader should have a member indicating the correct schema
     """
     table = "TestSchema"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(
-        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a INT, b VARCHAR(50));"'
-    )
+    connection = pyodbc.connect(MSSQL)
+    connection.execute(f"DROP TABLE IF EXISTS {table};")
+    connection.execute(f"CREATE TABLE {table} (a INT, b VARCHAR);")
+    connection.commit()
+    connection.close()
 
     query = f"SELECT * FROM {table}"
     reader = read_arrow_batches_from_odbc(
@@ -300,11 +301,12 @@ def test_schema_from_concurrent_reader():
     """
     Query a table concurrently. Reader should have a member indicating the correct schema
     """
-    table = "TestSchema"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(
-        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a INT, b VARCHAR(50));"'
-    )
+    table = "TestSchemaFromConcurrentReader"
+    connection = pyodbc.connect(MSSQL)
+    connection.execute(f"DROP TABLE IF EXISTS {table};")
+    connection.execute(f"CREATE TABLE {table} (a INT, b VARCHAR);")
+    connection.commit()
+    connection.close()
 
     query = f"SELECT * FROM {table}"
     reader = read_arrow_batches_from_odbc(
@@ -320,11 +322,8 @@ def test_timestamp_us():
     """
     Query a table with one row. Should return one batch
     """
-    table = "OneRow"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a DATETIME2(6));"')
-    rows = "a\n2014-04-14 21:25:42.074841"
-    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+    table = "TimestampUs"
+    setup_table(table=table, column_type="DATETIME2(6)", values=["2014-04-14 21:25:42.074841"])
 
     query = f"SELECT * FROM {table}"
     reader = read_arrow_batches_from_odbc(
@@ -347,11 +346,8 @@ def test_timestamp_ns():
     """
     Query a table with one row. Should return one batch
     """
-    table = "OneRow"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a DATETIME2(7));"')
-    rows = "a\n2014-04-14 21:25:42.0748412"
-    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+    table = "TimestampNs"
+    setup_table(table=table, column_type="DATETIME2(7)", values=["2014-04-14 21:25:42.0748412"])
 
     query = f"SELECT * FROM {table}"
     reader = read_arrow_batches_from_odbc(
@@ -374,11 +370,8 @@ def test_out_of_range_timestamp_ns():
     """
     Query a table with one row. Should return one batch
     """
-    table = "OneRow"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a DATETIME2(7));"')
-    rows = "a\n2300-04-14 21:25:42.0748412"
-    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+    table = "OutOfRangeTimestampNs"
+    setup_table(table=table, column_type="DATETIME2(7)", values=["2300-04-14 21:25:42.0748412"])
 
     query = f"SELECT * FROM {table}"
 
