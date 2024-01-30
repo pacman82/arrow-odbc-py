@@ -486,14 +486,13 @@ def test_query_with_string_parameter():
     filtered accordingly
     """
     table = "QueryWithStringParameter"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(
-        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (column_a CHAR(1), column_b INTEGER);"'
-    )
-    rows = "column_a,column_b\nA,1\nB,2\nC,3\nD,4\n"
-    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
-
-    query = f"SELECT column_b FROM {table} WHERE column_a=?;"
+    connection = pyodbc.connect(MSSQL)
+    connection.execute(f"DROP TABLE IF EXISTS {table};")
+    connection.execute(f"CREATE TABLE {table} (a CHAR(1), b INTEGER);")
+    connection.execute(f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);")
+    connection.commit()
+    connection.close()
+    query = f"SELECT b FROM {table} WHERE a=?;"
 
     reader = read_arrow_batches_from_odbc(
         query=query, batch_size=10, connection_string=MSSQL, parameters=["B"]
@@ -502,8 +501,8 @@ def test_query_with_string_parameter():
 
     actual = next(it)
 
-    schema = pa.schema([("column_b", pa.int32())])
-    expected = pa.RecordBatch.from_pydict({"column_b": [2]}, schema)
+    schema = pa.schema([("b", pa.int32())])
+    expected = pa.RecordBatch.from_pydict({"b": [2]}, schema)
     assert expected == actual
 
     with raises(StopIteration):
@@ -516,14 +515,14 @@ def test_query_with_none_parameter():
     filtered accordingly
     """
     table = "QueryWithNoneParameter"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(
-        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (column_a CHAR(1), column_b INTEGER);"'
-    )
-    rows = "column_a,column_b\nA,1\nB,2\nC,3\nD,4\n"
-    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+    connection = pyodbc.connect(MSSQL)
+    connection.execute(f"DROP TABLE IF EXISTS {table};")
+    connection.execute(f"CREATE TABLE {table} (a CHAR(1), b INTEGER);")
+    connection.execute(f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);")
+    connection.commit()
+    connection.close()
 
-    query = f"SELECT column_b FROM {table} WHERE column_a=?;"
+    query = f"SELECT b FROM {table} WHERE a=?;"
 
     reader = read_arrow_batches_from_odbc(
         query=query, batch_size=10, connection_string=MSSQL, parameters=[None]
@@ -539,14 +538,14 @@ def test_query_with_int_parameter():
     Use an int parameter in a where clause and verify that the result is filtered accordingly
     """
     table = "QueryWithIntParameter"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(
-        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (column_a CHAR(1), column_b INTEGER);"'
-    )
-    rows = "column_a,column_b\nA,1\nB,2\nC,3\nD,4\n"
-    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+    connection = pyodbc.connect(MSSQL)
+    connection.execute(f"DROP TABLE IF EXISTS {table};")
+    connection.execute(f"CREATE TABLE {table} (a CHAR(1), b INTEGER);")
+    connection.execute(f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);")
+    connection.commit()
+    connection.close()
 
-    query = f"SELECT column_a FROM {table} WHERE column_b=?;"
+    query = f"SELECT a FROM {table} WHERE #b=?;"
     with raises(
         TypeError,
         match="read_arrow_batches_from_odbc only supports string arguments for SQL query parameters",
@@ -573,6 +572,26 @@ def test_query_timestamp_as_date():
     assert value == { "a": [datetime.date(2023, 12, 24)] }
 
 
+def test_allocation_erros():
+    """
+    Avoids unrecoverable allocation errors, if querying an image column
+    """
+    table = "AllocationError"
+    setup_table(table=table, column_type="Image", values=[])
+
+    query = f"SELECT * FROM {table}"
+
+    with raises(Error, match="Column buffer is too large to be allocated."):
+        reader = read_arrow_batches_from_odbc(
+            query=query,
+            batch_size=1000,
+            # Deactivate size limit, so we have an easier time triggering allocation errors
+            max_bytes_per_batch=None,
+            connection_string=MSSQL,
+            falliable_allocations=True,
+        )
+
+
 def test_iris():
     """
     Validate usage works like in the readme
@@ -594,36 +613,13 @@ def test_iris():
         df = batch.to_pydict()
 
 
-def test_allocation_erros():
-    """
-    Avoids unrecoverable allocation errors, if querying an image column
-    """
-    table = "AllocationError"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (my_image Image)"')
-
-    query = f"SELECT * FROM {table}"
-
-    with raises(Error, match="Column buffer is too large to be allocated."):
-        reader = read_arrow_batches_from_odbc(
-            query=query,
-            batch_size=1000,
-            # Deactivate size limit, so we have an easier time triggering allocation errors
-            max_bytes_per_batch=None,
-            connection_string=MSSQL,
-            falliable_allocations=True,
-        )
-
-
 def test_image():
     """
     Avoids error allocating image column by using casts.
     """
     table = "Image"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (my_image Image)"')
-
-    query = f"SELECT CAST(my_image as VARBINARY(2048)) FROM {table}"
+    setup_table(table=table, column_type="Image", values=[])
+    query = f"SELECT CAST(a as VARBINARY(2048)) FROM {table}"
 
     reader = read_arrow_batches_from_odbc(
         query=query,
@@ -639,11 +635,7 @@ def test_support_varchar_max():
     """
     # Given
     table = "SupportVarcharMax"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a VARCHAR(max))"')
-    rows = "a\nHello World!\n"
-    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
-
+    setup_table(table=table, column_type="VARCHAR(max)", values=["Hello, World!"])
     query = f"SELECT (a) FROM {table}"
 
     # When
@@ -655,7 +647,7 @@ def test_support_varchar_max():
 
     # Then
     actual = batch.to_pydict()
-    expected = {"a": ["Hello World!"]}
+    expected = {"a": ["Hello, World!"]}
 
     assert expected == actual
 
@@ -666,10 +658,8 @@ def test_support_varbinary_max():
     bound for the values in it.
     """
     # Given
-    table = "SupportVarcharMax"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a VARBINARY(max))"')
-
+    table = "SupportVarbinaryMax"
+    setup_table(table=table, column_type="VARBINARY(max)", values=[])
     query = f"SELECT (a) FROM {table}"
 
     # When
@@ -740,10 +730,11 @@ def test_insert_batches():
     """
     # Given
     table = "InsertBatches"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(
-        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (id int IDENTITY(1,1), a BIGINT)"'
-    )
+    connection = pyodbc.connect(MSSQL)
+    connection.execute(f"DROP TABLE IF EXISTS {table};")
+    connection.execute(f"CREATE TABLE {table} (id int IDENTITY(1,1), a BIGINT);")
+    connection.commit()
+    connection.close()
     schema = pa.schema([("a", pa.int64())])
 
     def iter_record_batches():
@@ -770,10 +761,11 @@ def test_insert_from_parquet():
     """
     # Given
     table = "InsertFromParquet"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(
-        f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(20) )"'
-    )
+    connection = pyodbc.connect(MSSQL)
+    connection.execute(f"DROP TABLE IF EXISTS {table};")
+    connection.execute(f"CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(20) );")
+    connection.commit()
+    connection.close()
 
     # When
     arrow_table = pq.read_table("./tests/iris.parquet")
