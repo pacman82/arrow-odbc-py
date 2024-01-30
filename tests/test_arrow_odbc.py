@@ -7,7 +7,9 @@ import pyarrow.csv as csv
 import pyarrow.parquet as pq
 
 import pytest
+import pyodbc
 
+from typing import List, Any
 from subprocess import run, check_output
 
 from pytest import raises
@@ -25,6 +27,15 @@ MSSQL = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@T
 
 log_to_stderr()
 enable_odbc_connection_pooling()
+
+def setup_table(table: str, column_type: str, values: List[Any]):
+    connection = pyodbc.connect(MSSQL)
+    connection.execute(f"DROP TABLE IF EXISTS {table};")
+    connection.execute(f"CREATE TABLE {table} (a {column_type});")
+    for value in values:
+        connection.execute(f"INSERT INTO {table} (a) VALUES (?);", value)
+    connection.commit()
+    connection.close()
 
 
 def test_should_report_error_on_invalid_connection_string_reading():
@@ -61,8 +72,7 @@ def test_no_result_set():
     BatchReader should be be empty if no result set can be produced
     """
     table = "EmptyResult"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a int);"')
+    setup_table(table=table, column_type="int", values=[])
 
     # This statement does not produce a result set
     query = f"INSERT INTO {table} (a) VALUES (42);"
@@ -179,8 +189,7 @@ def test_empty_table():
     Should return an empty iterator querying an empty table.
     """
     table = "Empty"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a int);"')
+    setup_table(table=table, column_type="int", values=[])
 
     query = f"SELECT * FROM {table}"
 
@@ -197,10 +206,7 @@ def test_one_row():
     Query a table with one row. Should return one batch
     """
     table = "OneRow"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a int);"')
-    rows = "a\n42"
-    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+    setup_table(table=table, column_type="int", values=["42"])
 
     query = f"SELECT * FROM {table}"
 
@@ -224,10 +230,7 @@ def test_fetch_concurrently():
     Use a concurrent batch reader to fetch one row
     """
     table = "FetchConcurrently"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a int);"')
-    rows = "a\n42"
-    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+    setup_table(table=table, column_type="int", values=["42"])
 
     query = f"SELECT * FROM {table}"
 
@@ -253,10 +256,7 @@ def test_concurrent_reader_into_concurrent():
     leaves the reader valid.
     """
     table = "FetchAlreadyConcurrently"
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "DROP TABLE IF EXISTS {table};"')
-    os.system(f'odbcsv fetch -c "{MSSQL}" -q "CREATE TABLE {table} (a int);"')
-    rows = "a\n42"
-    run(["odbcsv", "insert", "-c", MSSQL, table], input=rows, encoding="ascii")
+    setup_table(table=table, column_type="int", values=["42"])
 
     query = f"SELECT * FROM {table}"
 

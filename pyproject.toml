@@ -14,7 +14,7 @@ dependencies = ["cffi", "pyarrow >= 8.0.0"]
 file = "LICENSE"
 
 [project.optional-dependencies]
-test = ["pytest < 8.0.0"]
+test = ["pytest < 8.0.0", "pyodbc"]
 
 [project.urls]
 repository = "https://github.com/pacman82/arrow-odbc-py"
