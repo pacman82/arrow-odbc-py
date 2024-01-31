@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.0
+
+- Removed parameter `driver_returns_memory_garbage_for_indicators` from `read_arrow_batches_from_odbc` as it was intended as a workaround for IBM/DB2 drivers. Turns out IBM offers drivers which work correctly with 64Bit driver managers. Look for file names ending in 'o'.
+
 ## 3.0.1
 
 - Updated Rust dependencies. This includes an update to `odbc-api` which fixes a bug in decimal parsing. Decimal values with a magnitude smaller 1 and negative sign would have been interpreted as positive without this fix.

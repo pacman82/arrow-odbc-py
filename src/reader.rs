@@ -10,7 +10,7 @@ use std::{
 };
 
 use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema};
-use arrow_odbc::{OdbcReaderBuilder, Quirks};
+use arrow_odbc::OdbcReaderBuilder;
 use log::debug;
 
 use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, OdbcConnection};
@@ -50,21 +50,13 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     connection: NonNull<OdbcConnection>,
     query_buf: *const u8,
     query_len: usize,
-    max_num_rows_per_batch: usize,
-    max_bytes_per_batch: usize,
     parameters: *const *mut ArrowOdbcParameter,
     parameters_len: usize,
-    max_text_size: usize,
-    max_binary_size: usize,
-    fallibale_allocations: bool,
-    schema: *mut c_void,
-    driver_returns_memory_garbage_for_indicators: bool,
     reader_out: *mut *mut ArrowOdbcReader,
 ) -> *mut ArrowOdbcError {
     // Transtlate C Args into more idiomatic rust representations
     let query = slice::from_raw_parts(query_buf, query_len);
     let query = str::from_utf8(query).unwrap();
-    let schema = take_schema(schema);
 
     let connection = *Box::from_raw(connection.as_ptr());
 
@@ -77,28 +69,13 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
             .collect()
     };
 
-    let mut reader_builder = reader_builder_from_c_args(
-        max_text_size,
-        max_binary_size,
-        max_num_rows_per_batch,
-        max_bytes_per_batch,
-        fallibale_allocations,
-        schema,
-    );
-
     // Use database managment system name to see if we need to apply workarounds
     let dbms_name = try_!(connection.0.database_management_system_name());
     debug!("Database managment system name as reported by ODBC: {dbms_name}");
-    let quirks = Quirks {
-        indicators_returned_from_bulk_fetch_are_memory_garbage:
-            driver_returns_memory_garbage_for_indicators,
-    };
-    reader_builder.with_shims(quirks);
 
     let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
     let reader = if let Some(cursor) = maybe_cursor {
-        let mut reader = ArrowOdbcReader::new(cursor);
-        reader
+        ArrowOdbcReader::new(cursor)
     } else {
         ArrowOdbcReader::empty()
     };

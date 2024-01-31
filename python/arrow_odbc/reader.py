@@ -284,7 +284,6 @@ def read_arrow_batches_from_odbc(
     max_binary_size: Optional[int] = None,
     falliable_allocations: bool = False,
     login_timeout_sec: Optional[int] = None,
-    driver_returns_memory_garbage_for_indicators: bool = False,
     schema: Optional[Schema] = None,
 ) -> BatchReader:
     """
@@ -375,12 +374,6 @@ def read_arrow_batches_from_odbc(
         make sense to decide the type based on what you want to do with it, rather than its source.
         E.g. if you simply want to put everything into a CSV file it can make perfect sense to fetch
         everything as string independent of its source type.
-    :param driver_returns_memory_garbage_for_indicators:  The IBM DB2 Linux ODBC drivers have been
-        reported to return memory garbage instead of indicators for the string length. Setting this
-        flag will cause ``arrow-odbc`` to rely on terminating zeroes, instead of indicators. This
-        prevents ``arrow-odbc`` from disambiguating between empty strings and `NULL``. As a side
-        effect of this workaround empty might be mapped to NULL. Currently this flag has only
-        meaning if the ``arrow-odbc`` is executed on an non-windows platform.
     :return: A ``BatchReader`` is returned, which implements the iterator protocol and iterates over
         individual arrow batches.
     """
@@ -425,8 +418,6 @@ def read_arrow_batches_from_odbc(
     if max_bytes_per_batch is None:
         max_bytes_per_batch = 0
 
-    ptr_schema = _export_schema_to_c(schema)
-
     for p_index in range(0, parameters_len):
         (p_bytes, p_len) = encoded_parameters[p_index]
         parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(p_bytes, p_len)
@@ -437,15 +428,8 @@ def read_arrow_batches_from_odbc(
         connection,
         query_bytes,
         len(query_bytes),
-        batch_size,
-        max_bytes_per_batch,
         parameters_array,
         parameters_len,
-        max_text_size,
-        max_binary_size,
-        falliable_allocations,
-        ptr_schema,
-        driver_returns_memory_garbage_for_indicators,
         reader_out,
     )
 
