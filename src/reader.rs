@@ -98,7 +98,6 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
     let reader = if let Some(cursor) = maybe_cursor {
         let mut reader = ArrowOdbcReader::new(cursor);
-        try_!(reader.next_result_set(reader_builder));
         reader
     } else {
         ArrowOdbcReader::empty()

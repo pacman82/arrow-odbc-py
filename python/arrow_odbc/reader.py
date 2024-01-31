@@ -452,8 +452,21 @@ def read_arrow_batches_from_odbc(
     # See if we managed to execute the query successfully and return an error if not
     raise_on_error(error)
 
+    # We call it reader, but it is still in cursor state, meaning, that we did not bind any buffers
+    # to it, or now how to convert the values into arrow.
     reader = reader_out[0]
     reader = _BatchReaderRaii(reader)
+
+    # Let us transition to reader state
+    reader.more_results(
+        batch_size=batch_size,
+        max_bytes_per_batch=max_bytes_per_batch,
+        max_text_size=max_text_size,
+        max_binary_size=max_binary_size,
+        falliable_allocations=falliable_allocations,
+        schema=schema,
+    )
+
     return BatchReader(reader)
 
 
