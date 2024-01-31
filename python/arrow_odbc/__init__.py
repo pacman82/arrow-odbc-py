@@ -12,5 +12,5 @@ __all__ = [
     "insert_into_table",
     "from_table_to_db",
     "log_to_stderr",
-    "enable_odbc_connection_pooling"
+    "enable_odbc_connection_pooling",
 ]

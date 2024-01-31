@@ -27,8 +27,8 @@ def _schema_from_handle(handle) -> Schema:
 
 class _BatchReaderRaii:
     """
-    Takes ownership of the reader in its various states and makes sure its
-    resources are freed if the object is deleted.
+    Takes ownership of the reader in its various states and makes sure its resources are freed if
+    the object is deleted.
     """
 
     def __init__(self, handle):
@@ -86,8 +86,7 @@ class _BatchReaderRaii:
                 falliable_allocations,
                 ptr_schema,
             )
-            # See if we managed to execute the query successfully and return an
-            # error if not
+            # See if we managed to execute the query successfully and return an error if not
             raise_on_error(error)
 
             has_more_results = has_more_results_c[0] != 0
@@ -102,9 +101,8 @@ class BatchReader:
 
     def __init__(self, reader: _BatchReaderRaii):
         """
-        Low level constructor, users should rather invoke
-        `read_arrow_batches_from_odbc` in order to create instances of
-        `BatchReader`.
+        Low level constructor, users should rather invoke `read_arrow_batches_from_odbc` in order to
+        create instances of `BatchReader`.
         """
         # We take ownership of the corresponding reader written in Rust and keep it alive until
         # `self` is deleted.
@@ -414,8 +412,8 @@ def read_arrow_batches_from_odbc(
 
         parameters_array = ffi.new("ArrowOdbcParameter *[]", len(parameters))
         parameters_len = len(parameters)
-        # Must be kept alive. Within Rust code we only allocate an additional
-        # indicator the string payload is just referenced.
+        # Must be kept alive. Within Rust code we only allocate an additional indicator the string
+        # payload is just referenced.
         encoded_parameters = [to_bytes_and_len(p) for p in parameters]
 
     if max_text_size is None:
@@ -451,8 +449,7 @@ def read_arrow_batches_from_odbc(
         reader_out,
     )
 
-    # See if we managed to execute the query successfully and return an
-    # error if not
+    # See if we managed to execute the query successfully and return an error if not
     raise_on_error(error)
 
     reader = reader_out[0]

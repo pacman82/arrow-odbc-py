@@ -9,7 +9,7 @@ def log_to_stderr(level: int = 1):
 
     :param level: Specifies the log level with which the standard error logger in rust is
         initialized.
-        
+
         * 0 - Error
         * 1 - Warning,
         * 2 - Info

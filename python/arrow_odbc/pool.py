@@ -1,6 +1,7 @@
 from .arrow_odbc import lib, ffi  # type: ignore
 from .error import raise_on_error
 
+
 def enable_odbc_connection_pooling():
     """
     Activates the connection pooling of the ODBC driver manager for the entire process. Best called
