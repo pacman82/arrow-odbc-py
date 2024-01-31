@@ -8,36 +8,46 @@ use arrow::{
     record_batch::RecordBatchReader,
 };
 use arrow_odbc::{
-    arrow_schema_from, odbc_api::{Cursor, CursorImpl, StatementConnection}, ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder
+    arrow_schema_from,
+    odbc_api::{Cursor, CursorImpl, StatementConnection},
+    ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder,
 };
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
 /// type also has ownership of the ODBC Connection handle.
-/// 
+///
 /// Originally this type had been intended soley as an opaque handle to the reader. However the
 /// design that emerged is that this holds the statement and connection handle in various states.
 /// This has several benefits:
-/// 
-/// * It allows statetransitions to happen in the Rust part, which is good, because they actually
+///
+/// * It allows state-transitions to happen in the Rust part, which is good, because they actually
 ///   can be triggered by calls to ODBC.
 /// * We can keep the C-Interface lean, we just hold a handle to this instance, rather than
 ///   modelling a lot of different Python wrappers for various states.
 /// * Since Python does not posses destructive move semantics, we would not be able to represent
-///   the transitions in the Python part well anyway.
+///   the state transitions in the Python type system anyway.
 pub enum ArrowOdbcReader {
     /// The last result set has been extracted from the cursor. There is nothing more to fetch and
     /// all associated resources have been deallocated
     NoMoreResultSets,
+    /// We can not read batches in cursor state yet. We still would need to figure out the schema
+    /// of the source data and (usually) infer the arrow schema from it. So in earlier versions
+    /// we created everything directly in `Reader` state. However, if we want the user to be able
+    /// to create a custom schema which is based on the source schema, then we need this
+    /// intermediate step. Since the cursor state is not able to perform the most import operations
+    /// like e.g. read batch we do not want our end users directly interacting with this state, yet
+    /// the Python layer above should be able to make use of this in order to implement the schema
+    /// mapping functionality.
     Cursor(CursorImpl<StatementConnection<'static>>),
     Reader(OdbcReader<CursorImpl<StatementConnection<'static>>>),
     ConcurrentReader(ConcurrentOdbcReader<CursorImpl<StatementConnection<'static>>>),
 }
 
 impl ArrowOdbcReader {
-    pub fn new(
-        reader: OdbcReader<CursorImpl<StatementConnection<'static>>>,
-    ) -> Self {
-        Self::Reader(reader)
+
+    /// Creates a new reader in Cursor state.
+    pub fn new(cursor: CursorImpl<StatementConnection<'static>>) -> Self {
+        Self::Cursor(cursor)
     }
 
     pub fn empty() -> Self {
@@ -48,7 +58,10 @@ impl ArrowOdbcReader {
         &mut self,
     ) -> Result<Option<(FFI_ArrowArray, FFI_ArrowSchema)>, ArrowOdbcError> {
         let next = match self {
-            ArrowOdbcReader::NoMoreResultSets | ArrowOdbcReader::Cursor(_) => None, 
+            ArrowOdbcReader::NoMoreResultSets => None,
+            ArrowOdbcReader::Cursor(_) => {
+                unreachable!("Python code must not allow to call next_batch from cursor state")
+            }
             ArrowOdbcReader::Reader(reader) => reader.next().transpose()?,
             ArrowOdbcReader::ConcurrentReader(reader) => reader.next().transpose()?,
         };
@@ -65,18 +78,22 @@ impl ArrowOdbcReader {
         Ok(next)
     }
 
-    pub fn more_results(&mut self, builder: OdbcReaderBuilder) -> Result<bool, ArrowOdbcError> {
+    /// After this method call we will be in the `Reader` state or `NoMoreResultSets`, in case we
+    /// already consumed the last result set. In this case this method returns `false`.
+    pub fn next_result_set(&mut self, builder: OdbcReaderBuilder) -> Result<bool, ArrowOdbcError> {
         // Move self into a temporary instance we own, in order to take ownership of the inner
         // reader and move it to a different typestate.
         let mut tmp_self = ArrowOdbcReader::NoMoreResultSets;
         swap(self, &mut tmp_self);
         let cursor = match tmp_self {
-            ArrowOdbcReader::NoMoreResultSets => return Ok(false),
-            ArrowOdbcReader::Cursor(cursor) => cursor,
-            ArrowOdbcReader::Reader(inner) => inner.into_cursor()?,
-            ArrowOdbcReader::ConcurrentReader(inner) => inner.into_cursor()?,
+            ArrowOdbcReader::NoMoreResultSets => None,
+            ArrowOdbcReader::Cursor(cursor) => Some(cursor),
+            ArrowOdbcReader::Reader(inner) => inner.into_cursor()?.more_results()?,
+            ArrowOdbcReader::ConcurrentReader(inner) => inner.into_cursor()?.more_results()?,
         };
-        if let Some(cursor) = cursor.more_results()? {
+        // Okay we have at least already consumed one result set. Otherwise we would have exited
+        // early. We need to call ODBCs `more_results` in order to get the next one.
+        if let Some(cursor) = cursor {
             // There is another result set. Let us create a new reader
             let reader = builder.build(cursor)?;
             *self = ArrowOdbcReader::Reader(reader);
@@ -125,10 +142,9 @@ impl ArrowOdbcReader {
         *self = match tmp_self {
             // Nothing to do. There is nothing left to fetch.
             ArrowOdbcReader::NoMoreResultSets => ArrowOdbcReader::NoMoreResultSets,
-            // This should not happen, need to think about what should happen in order to come up
-            // up with a good implementation. For now this is a no-op. This could make users think
-            // they use concurrency, than in fact they do not though.
-            ArrowOdbcReader::Cursor(inner) => ArrowOdbcReader::Cursor(inner),
+            ArrowOdbcReader::Cursor(_) => {
+                unreachable!("Python code must not allow to call into_concurrent from cursor state")
+            }
             // Nothing to do. Reader is already concurrent,
             ArrowOdbcReader::ConcurrentReader(inner) => ArrowOdbcReader::ConcurrentReader(inner),
             ArrowOdbcReader::Reader(inner) => {

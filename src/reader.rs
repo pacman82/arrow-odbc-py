@@ -97,8 +97,9 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
 
     let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
     let reader = if let Some(cursor) = maybe_cursor {
-        let reader = try_!(reader_builder.build(cursor));
-        ArrowOdbcReader::new(reader)
+        let mut reader = ArrowOdbcReader::new(cursor);
+        try_!(reader.next_result_set(reader_builder));
+        reader
     } else {
         ArrowOdbcReader::empty()
     };
@@ -164,7 +165,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
 ///   overwritten with an empty one. This means the Python code, must only deallocate the memory
 ///   directly pointed to by `schema`, but not freeing the resources of the passed schema.
 #[no_mangle]
-pub unsafe extern "C" fn arrow_odbc_reader_more_results(
+pub unsafe extern "C" fn arrow_odbc_reader_next_result_set(
     mut reader: NonNull<ArrowOdbcReader>,
     has_more_results: *mut bool,
     max_num_rows_per_batch: usize,
@@ -185,7 +186,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
         schema,
     );
     // Move cursor to the next result set.
-    *has_more_results = try_!(reader.as_mut().more_results(reader_builder));
+    *has_more_results = try_!(reader.as_mut().next_result_set(reader_builder));
     null_mut()
 }
 
