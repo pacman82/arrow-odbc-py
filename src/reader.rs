@@ -192,12 +192,12 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
 /// Retrieve the associated schema from a reader.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_schema(
-    reader: NonNull<ArrowOdbcReader>,
+    mut reader: NonNull<ArrowOdbcReader>,
     out_schema: *mut c_void,
 ) -> *mut ArrowOdbcError {
     let out_schema = out_schema as *mut FFI_ArrowSchema;
 
-    let schema_ffi = try_!(reader.as_ref().schema());
+    let schema_ffi = try_!(reader.as_mut().schema());
     *out_schema = schema_ffi;
     null_mut()
 }

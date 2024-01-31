@@ -8,8 +8,7 @@ use arrow::{
     record_batch::RecordBatchReader,
 };
 use arrow_odbc::{
-    odbc_api::{Cursor, CursorImpl, StatementConnection},
-    ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder,
+    arrow_schema_from, odbc_api::{Cursor, CursorImpl, StatementConnection}, ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder
 };
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
@@ -29,6 +28,7 @@ pub enum ArrowOdbcReader {
     /// The last result set has been extracted from the cursor. There is nothing more to fetch and
     /// all associated resources have been deallocated
     NoMoreResultSets,
+    Cursor(CursorImpl<StatementConnection<'static>>),
     Reader(OdbcReader<CursorImpl<StatementConnection<'static>>>),
     ConcurrentReader(ConcurrentOdbcReader<CursorImpl<StatementConnection<'static>>>),
 }
@@ -48,7 +48,7 @@ impl ArrowOdbcReader {
         &mut self,
     ) -> Result<Option<(FFI_ArrowArray, FFI_ArrowSchema)>, ArrowOdbcError> {
         let next = match self {
-            ArrowOdbcReader::NoMoreResultSets => None,
+            ArrowOdbcReader::NoMoreResultSets | ArrowOdbcReader::Cursor(_) => None, 
             ArrowOdbcReader::Reader(reader) => reader.next().transpose()?,
             ArrowOdbcReader::ConcurrentReader(reader) => reader.next().transpose()?,
         };
@@ -72,6 +72,7 @@ impl ArrowOdbcReader {
         swap(self, &mut tmp_self);
         let cursor = match tmp_self {
             ArrowOdbcReader::NoMoreResultSets => return Ok(false),
+            ArrowOdbcReader::Cursor(cursor) => cursor,
             ArrowOdbcReader::Reader(inner) => inner.into_cursor()?,
             ArrowOdbcReader::ConcurrentReader(inner) => inner.into_cursor()?,
         };
@@ -85,12 +86,16 @@ impl ArrowOdbcReader {
         }
     }
 
-    pub fn schema(&self) -> Result<FFI_ArrowSchema, ArrowOdbcError> {
+    pub fn schema(&mut self) -> Result<FFI_ArrowSchema, ArrowOdbcError> {
         let schema_ffi = match self {
             ArrowOdbcReader::NoMoreResultSets => {
                 // A schema with no columns. Different from FFI_ArrowSchema empty, which can not be
                 // imported into pyarrow
                 let schema = Schema::empty();
+                schema.try_into()?
+            }
+            ArrowOdbcReader::Cursor(inner) => {
+                let schema = arrow_schema_from(inner)?;
                 schema.try_into()?
             }
             ArrowOdbcReader::Reader(inner) => {
@@ -120,6 +125,10 @@ impl ArrowOdbcReader {
         *self = match tmp_self {
             // Nothing to do. There is nothing left to fetch.
             ArrowOdbcReader::NoMoreResultSets => ArrowOdbcReader::NoMoreResultSets,
+            // This should not happen, need to think about what should happen in order to come up
+            // up with a good implementation. For now this is a no-op. This could make users think
+            // they use concurrency, than in fact they do not though.
+            ArrowOdbcReader::Cursor(inner) => ArrowOdbcReader::Cursor(inner),
             // Nothing to do. Reader is already concurrent,
             ArrowOdbcReader::ConcurrentReader(inner) => ArrowOdbcReader::ConcurrentReader(inner),
             ArrowOdbcReader::Reader(inner) => {
