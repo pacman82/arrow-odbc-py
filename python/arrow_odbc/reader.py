@@ -22,39 +22,27 @@ def _schema_from_handle(handle) -> Schema:
         raise_on_error(error)
         ptr_schema = int(ffi.cast("uintptr_t", schema_out))
         return Schema._import_from_c(ptr_schema)
+    
 
-
-class BatchReader:
+class _BatchReaderRaii:
     """
-    Iterates over Arrow batches from an ODBC data source
+    Takes ownership of the reader in its various states and makes sure its
+    resources are freed if the object is deleted.
     """
-
     def __init__(self, handle):
-        """
-        Low level constructor, users should rather invoke
-        `read_arrow_batches_from_odbc` in order to create instances of
-        `BatchReader`.
-        """
-
         # We take ownership of the corresponding reader written in Rust and keep it alive until
         # `self` is deleted.
         self.handle = handle
-
-        # If this raises `__del__` will be invoked and free the handle, so we do not leak
-        # resources here.
-        self.schema = _schema_from_handle(self.handle)
 
     def __del__(self):
         # Free the resources associated with this handle.
         lib.arrow_odbc_reader_free(self.handle)
 
-    def __iter__(self):
-        # Implement iterable protocol so reader can be used in for loops.
-        return self
+    def schema(self):
+        lib._schema_from_handle(self.handle)
 
-    def __next__(self) -> RecordBatch:
-        # Implement iterator protocol
 
+    def next_batch(self):
         array = arrow_ffi.new("struct ArrowArray *")
         schema = arrow_ffi.new("struct ArrowSchema *")
 
@@ -64,12 +52,50 @@ class BatchReader:
         raise_on_error(error)
 
         if has_next_out[0] == 0:
-            raise StopIteration()
+            return None
         else:
             array_ptr = int(ffi.cast("uintptr_t", array))
             schema_ptr = int(ffi.cast("uintptr_t", schema))
             struct_array = Array._import_from_c(array_ptr, schema_ptr)
             return RecordBatch.from_struct_array(struct_array)
+        
+    def into_concurrent(self):
+        error = lib.arrow_odbc_reader_into_concurrent(self.handle)
+        raise_on_error(error)
+
+
+
+class BatchReader:
+    """
+    Iterates over Arrow batches from an ODBC data source
+    """
+
+    def __init__(self, reader: _BatchReaderRaii):
+        """
+        Low level constructor, users should rather invoke
+        `read_arrow_batches_from_odbc` in order to create instances of
+        `BatchReader`.
+        """
+
+        # We take ownership of the corresponding reader written in Rust and keep it alive until
+        # `self` is deleted.
+        self.reader = reader
+
+        # This is the schema of the batches returned by reader. We take care to keep it in sync in
+        # case the state of reader changes.
+        self.schema = self.reader.schema()
+
+    def __iter__(self):
+        # Implement iterable protocol so reader can be used in for loops.
+        return self
+
+    def __next__(self) -> RecordBatch:
+        # Implement iterator protocol
+        batch = self.reader.next_batch()
+        if batch is None:
+            raise StopIteration()
+        else:
+            return batch
 
     def more_results(
         self,
@@ -161,7 +187,7 @@ class BatchReader:
 
         with ffi.new("bool *") as has_more_results_c:
             error = lib.arrow_odbc_reader_more_results(
-                self.handle,
+                self.reader.handle,
                 has_more_results_c,
                 batch_size,
                 max_bytes_per_batch,
@@ -177,7 +203,7 @@ class BatchReader:
             has_more_results = has_more_results_c[0] != 0
 
         # Every result set can have its own schema, so we must update our member
-        self.schema = _schema_from_handle(self.handle)
+        self.schema = _schema_from_handle(self.reader.handle)
 
         return has_more_results
 
@@ -218,17 +244,20 @@ class BatchReader:
                 df = batch.to_pandas()
                 # ...
         """
-        error = lib.arrow_odbc_reader_into_concurrent(self.handle)
-
-        # Making a reader concurrent will not change its schema, yet if there is an error the reader
-        # is destroyed and its schema is empty. The if is a slight optimization.
-        # self.schema == _schema_from_handle(self.handle)
-        # should always be true and so asigning it never would make the code incorrect. Yet we only
-        # need to do so if it actually changes.
+        try:
+            error = lib.arrow_odbc_reader_into_concurrent(self.handle)
+        except:
+            # Making a reader concurrent will not change its schema, yet if there is an error the
+            # reader is destroyed and its schema is empty.
+            # self.schema == self.reader.schema()
+            # should always be true and so asigning it never would make the code incorrect. Yet we
+            # only need to do so if it actually changes.
+            self.schema = self.reader.schema()
+        
         if error != ffi.NULL:
             self.schema = _schema_from_handle(self.handle)
 
-        raise_on_error(error)
+        
 
 
 def read_arrow_batches_from_odbc(
@@ -413,6 +442,7 @@ def read_arrow_batches_from_odbc(
     raise_on_error(error)
 
     reader = reader_out[0]
+    reader = _BatchReaderRaii(reader)
     return BatchReader(reader)
 
 
