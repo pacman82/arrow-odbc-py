@@ -28,6 +28,7 @@ MSSQL = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@T
 log_to_stderr()
 enable_odbc_connection_pooling()
 
+
 def setup_table(table: str, column_type: str, values: List[Any]):
     connection = pyodbc.connect(MSSQL)
     connection.execute(f"DROP TABLE IF EXISTS {table};")
@@ -138,7 +139,7 @@ def test_custom_schema_for_second_result_set():
     schema = pa.schema([pa.field("a", pa.string())])
     reader.more_results(batch_size=1, schema=schema)
     batch = next(iter(reader))
-    
+
     expected = pa.RecordBatch.from_pydict({"a": ["2"]}, schema)
     assert batch == expected
 
@@ -264,7 +265,7 @@ def test_concurrent_reader_into_concurrent():
         query=query, batch_size=100, connection_string=MSSQL
     )
     reader.fetch_concurrently()
-    reader.fetch_concurrently() # Transforming already concurrent reader into concurrent reader
+    reader.fetch_concurrently()  # Transforming already concurrent reader into concurrent reader
     it = iter(reader)
 
     actual = next(it)
@@ -323,7 +324,9 @@ def test_timestamp_us():
     Query a table with one row. Should return one batch
     """
     table = "TimestampUs"
-    setup_table(table=table, column_type="DATETIME2(6)", values=["2014-04-14 21:25:42.074841"])
+    setup_table(
+        table=table, column_type="DATETIME2(6)", values=["2014-04-14 21:25:42.074841"]
+    )
 
     query = f"SELECT * FROM {table}"
     reader = read_arrow_batches_from_odbc(
@@ -347,7 +350,9 @@ def test_timestamp_ns():
     Query a table with one row. Should return one batch
     """
     table = "TimestampNs"
-    setup_table(table=table, column_type="DATETIME2(7)", values=["2014-04-14 21:25:42.0748412"])
+    setup_table(
+        table=table, column_type="DATETIME2(7)", values=["2014-04-14 21:25:42.0748412"]
+    )
 
     query = f"SELECT * FROM {table}"
     reader = read_arrow_batches_from_odbc(
@@ -371,7 +376,9 @@ def test_out_of_range_timestamp_ns():
     Query a table with one row. Should return one batch
     """
     table = "OutOfRangeTimestampNs"
-    setup_table(table=table, column_type="DATETIME2(7)", values=["2300-04-14 21:25:42.0748412"])
+    setup_table(
+        table=table, column_type="DATETIME2(7)", values=["2300-04-14 21:25:42.0748412"]
+    )
 
     query = f"SELECT * FROM {table}"
 
@@ -474,7 +481,9 @@ def test_query_zero_sized_column():
     characters.
     """
     query = "SELECT CAST('a' AS VARCHAR(MAX)) as a"
-    with raises(Error, match="ODBC driver did not specify a sensible upper bound for the column"):
+    with raises(
+        Error, match="ODBC driver did not specify a sensible upper bound for the column"
+    ):
         read_arrow_batches_from_odbc(
             query=query, batch_size=100, connection_string=MSSQL
         )
@@ -489,7 +498,9 @@ def test_query_with_string_parameter():
     connection = pyodbc.connect(MSSQL)
     connection.execute(f"DROP TABLE IF EXISTS {table};")
     connection.execute(f"CREATE TABLE {table} (a CHAR(1), b INTEGER);")
-    connection.execute(f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);")
+    connection.execute(
+        f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);"
+    )
     connection.commit()
     connection.close()
     query = f"SELECT b FROM {table} WHERE a=?;"
@@ -518,7 +529,9 @@ def test_query_with_none_parameter():
     connection = pyodbc.connect(MSSQL)
     connection.execute(f"DROP TABLE IF EXISTS {table};")
     connection.execute(f"CREATE TABLE {table} (a CHAR(1), b INTEGER);")
-    connection.execute(f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);")
+    connection.execute(
+        f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);"
+    )
     connection.commit()
     connection.close()
 
@@ -541,7 +554,9 @@ def test_query_with_int_parameter():
     connection = pyodbc.connect(MSSQL)
     connection.execute(f"DROP TABLE IF EXISTS {table};")
     connection.execute(f"CREATE TABLE {table} (a CHAR(1), b INTEGER);")
-    connection.execute(f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);")
+    connection.execute(
+        f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);"
+    )
     connection.commit()
     connection.close()
 
@@ -569,7 +584,7 @@ def test_query_timestamp_as_date():
     batch = next(it)
     value = batch.to_pydict()
 
-    assert value == { "a": [datetime.date(2023, 12, 24)] }
+    assert value == {"a": [datetime.date(2023, 12, 24)]}
 
 
 def test_allocation_erros():
@@ -676,6 +691,44 @@ def test_support_varbinary_max():
         next(it)
 
 
+def test_map_f32_to_f64():
+    """
+    ODBC drivers for PostgreSQL seem to have some trouble reporting the precision of floating point
+    types correctly. Using schema mapping users of this wheel which know this quirk can adopt to it
+    while still staying generic over the database schema.
+
+    See issue: https://github.com/pacman82/arrow-odbc-py/issues/73
+    """
+    # Given
+    table = "MapF32ToF64"
+    # MS driver is pretty good, so we actually create a 32Bit float by setting precision to 17. This
+    # way we simulate a driver reporting a too small floating point.
+    setup_table(table=table, column_type="Float(17)", values=[])
+    query = f"SELECT (a) FROM {table}"
+
+    # When
+    map_schema = lambda schema: pa.schema(
+        [
+            (
+                name,
+                (
+                    pa.float64()
+                    if schema.field(name).type == pa.float32()
+                    else schema.field(name).type
+                ),
+            )
+            for name in schema.names
+        ]
+    )
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=1, connection_string=MSSQL, map_schema=map_schema
+    )
+
+    # Then
+    expected = pa.schema([("a", pa.float64())])
+    assert expected == reader.schema
+
+
 def test_insert_should_raise_on_invalid_connection_string():
     """
     Insert should raise on invalid connection string
@@ -763,7 +816,9 @@ def test_insert_from_parquet():
     table = "InsertFromParquet"
     connection = pyodbc.connect(MSSQL)
     connection.execute(f"DROP TABLE IF EXISTS {table};")
-    connection.execute(f"CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(20) );")
+    connection.execute(
+        f"CREATE TABLE {table} (sepal_length REAL, sepal_width REAL, petal_length REAL, petal_width REAL, variety VARCHAR(20) );"
+    )
     connection.commit()
     connection.close()
 
@@ -805,7 +860,16 @@ def test_insert_large_string():
 
     # Then
     actual = check_output(
-        ["odbcsv", "fetch", "-c", MSSQL, "--max-str-len", "2000","-q", f"SELECT a FROM {table}"]
+        [
+            "odbcsv",
+            "fetch",
+            "-c",
+            MSSQL,
+            "--max-str-len",
+            "2000",
+            "-q",
+            f"SELECT a FROM {table}",
+        ]
     )
     assert f"a\n{large_string}\n" == actual.decode("utf8")
 

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Callable
 from cffi.api import FFI  # type: ignore
 
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
@@ -40,7 +40,7 @@ class _BatchReaderRaii:
         # Free the resources associated with this handle.
         lib.arrow_odbc_reader_free(self.handle)
 
-    def schema(self):
+    def schema(self) -> Schema:
         return _schema_from_handle(self.handle)
 
     def next_batch(self):
@@ -72,7 +72,11 @@ class _BatchReaderRaii:
         max_binary_size: int,
         falliable_allocations: bool = False,
         schema: Optional[Schema] = None,
+        map_schema: Optional[Callable[[Schema], Schema]] = None,
     ):
+        if map_schema is not None:
+            schema = map_schema(self.schema())
+
         ptr_schema = _export_schema_to_c(schema)
 
         error = lib.arrow_odbc_reader_bind_buffers(
@@ -144,6 +148,7 @@ class BatchReader:
         max_binary_size: Optional[int] = None,
         falliable_allocations: bool = False,
         schema: Optional[Schema] = None,
+        map_schema: Optional[Callable[[Schema], Schema]] = None,
     ) -> bool:
         """
         Move the reader to the next result set returned by the data source.
@@ -231,6 +236,7 @@ class BatchReader:
             max_binary_size=max_binary_size,
             falliable_allocations=falliable_allocations,
             schema=schema,
+            map_schema=map_schema,
         )
 
         # Every result set can have its own schema, so we must update our member
@@ -299,6 +305,7 @@ def read_arrow_batches_from_odbc(
     falliable_allocations: bool = False,
     login_timeout_sec: Optional[int] = None,
     schema: Optional[Schema] = None,
+    map_schema: Optional[Callable[[Schema], Schema]] = None,
 ) -> BatchReader:
     """
     Execute the query and read the result as an iterator over Arrow batches.
@@ -388,6 +395,11 @@ def read_arrow_batches_from_odbc(
         make sense to decide the type based on what you want to do with it, rather than its source.
         E.g. if you simply want to put everything into a CSV file it can make perfect sense to fetch
         everything as string independent of its source type.
+    :param map_schema: Allows you to provide a custom schema based on the schema inferred from the
+        metainformation of the query. This would allow you to e.g. map every column type to string
+        or replace any float32 with a float64, or anything else you might want to customize, for
+        various reasons while still staying generic over the input schema. If both ``map_schema``
+        and ``schema`` are specified ``map_schema`` takes priority.
     :return: A ``BatchReader`` is returned, which implements the iterator protocol and iterates over
         individual arrow batches.
     """
@@ -463,6 +475,7 @@ def read_arrow_batches_from_odbc(
         max_binary_size=max_binary_size,
         falliable_allocations=falliable_allocations,
         schema=schema,
+        map_schema=map_schema,
     )
 
     return BatchReader(reader)

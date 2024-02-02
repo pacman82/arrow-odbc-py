@@ -1,8 +1,9 @@
 # Changelog
 
-## 4.0.0 (next)
+## 4.0.0
 
 - Removed parameter `driver_returns_memory_garbage_for_indicators` from `read_arrow_batches_from_odbc` as it was intended as a workaround for IBM/DB2 drivers. Turns out IBM offers drivers which work correctly with 64Bit driver managers. Look for file names ending in 'o'.
+- Add support for mapping inferred schemas via the `map_schema` parameter. It accepts a callable taking and returning an Arrow Schema. This allows you to avoid data types which are not supported in downstream operations and map them e.g. to string. It also enables you to work around quirks of your ODBC driver and map float 32 to float 64 if precisions inferred by the driver are too small.
 
 ## 3.0.1
 
