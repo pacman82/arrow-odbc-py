@@ -64,7 +64,6 @@ class _BatchReaderRaii:
         error = lib.arrow_odbc_reader_into_concurrent(self.handle)
         raise_on_error(error)
 
-
     def bind_buffers(
         self,
         batch_size: int,
@@ -97,12 +96,22 @@ class _BatchReaderRaii:
         falliable_allocations: bool = False,
         schema: Optional[Schema] = None,
     ) -> bool:
-        ptr_schema = _export_schema_to_c(schema)
 
         with ffi.new("bool *") as has_more_results_c:
-            error = lib.arrow_odbc_reader_next_result_set(
+            error = lib.arrow_odbc_reader_more_results(
                 self.handle,
                 has_more_results_c,
+            )
+            # See if we managed to execute the query successfully and return an error if not
+            raise_on_error(error)
+            # Remember wether there is a new result set in a boolean
+            has_more_results = has_more_results_c[0] != 0
+
+            # We moved to the next result set, but are still only in cursor state. We need to still
+            # provide an arrow schema and bind the buffers to the cursor
+            ptr_schema = _export_schema_to_c(schema)
+            error = lib.arrow_odbc_reader_bind_buffers(
+                self.handle,
                 batch_size,
                 max_bytes_per_batch,
                 max_text_size,
@@ -110,10 +119,7 @@ class _BatchReaderRaii:
                 falliable_allocations,
                 ptr_schema,
             )
-            # See if we managed to execute the query successfully and return an error if not
             raise_on_error(error)
-
-            has_more_results = has_more_results_c[0] != 0
 
         return has_more_results
 

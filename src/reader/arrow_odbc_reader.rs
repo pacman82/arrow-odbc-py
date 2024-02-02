@@ -86,8 +86,10 @@ impl ArrowOdbcReader {
         let mut tmp_self = ArrowOdbcReader::NoMoreResultSets;
         swap(self, &mut tmp_self);
         let cursor = match tmp_self {
+            // In case there has been a query without a result set, we could be in an empty state.
+            // Let's just keep it, there is simply nothing to bind a buffer to.
+            ArrowOdbcReader::NoMoreResultSets => return Ok(()),
             ArrowOdbcReader::Cursor(cursor) => cursor,
-            ArrowOdbcReader::NoMoreResultSets
             | ArrowOdbcReader::Reader(_)
             | ArrowOdbcReader::ConcurrentReader(_) => {
                 unreachable!("Python part must ensure to only promote cursors to readers.")
