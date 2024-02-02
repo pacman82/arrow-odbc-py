@@ -99,25 +99,22 @@ impl ArrowOdbcReader {
         Ok(())
     }
 
-    /// After this method call we will be in the `Reader` state or `NoMoreResultSets`, in case we
+    /// After this method call we will be in the `Cursor` state or `NoMoreResultSets`, in case we
     /// already consumed the last result set. In this case this method returns `false`.
-    pub fn next_result_set(&mut self, builder: OdbcReaderBuilder) -> Result<bool, ArrowOdbcError> {
+    pub fn more_results(&mut self) -> Result<bool, ArrowOdbcError> {
         // Move self into a temporary instance we own, in order to take ownership of the inner
         // reader and move it to a different typestate.
         let mut tmp_self = ArrowOdbcReader::NoMoreResultSets;
         swap(self, &mut tmp_self);
         let cursor = match tmp_self {
-            ArrowOdbcReader::NoMoreResultSets => None,
-            ArrowOdbcReader::Cursor(cursor) => Some(cursor),
-            ArrowOdbcReader::Reader(inner) => inner.into_cursor()?.more_results()?,
-            ArrowOdbcReader::ConcurrentReader(inner) => inner.into_cursor()?.more_results()?,
+            ArrowOdbcReader::NoMoreResultSets => return Ok(false),
+            ArrowOdbcReader::Cursor(cursor) => cursor,
+            ArrowOdbcReader::Reader(inner) => inner.into_cursor()?,
+            ArrowOdbcReader::ConcurrentReader(inner) => inner.into_cursor()?,
         };
-        // Okay we have at least already consumed one result set. Otherwise we would have exited
-        // early. We need to call ODBCs `more_results` in order to get the next one.
-        if let Some(cursor) = cursor {
-            // There is another result set. Let us create a new reader
-            let reader = builder.build(cursor)?;
-            *self = ArrowOdbcReader::Reader(reader);
+        // We need to call ODBCs `more_results` in order to get the next one.
+        if let Some(cursor) = cursor.more_results()? {
+            *self = ArrowOdbcReader::Cursor(cursor);
             Ok(true)
         } else {
             Ok(false)
