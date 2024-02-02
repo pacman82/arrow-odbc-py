@@ -76,7 +76,7 @@ class _BatchReaderRaii:
         ptr_schema = _export_schema_to_c(schema)
 
         with ffi.new("bool *") as has_more_results_c:
-            error = lib.arrow_odbc_reader_next_result_set(
+            error = lib.arrow_odbc_reader_bind_buffers(
                 self.handle,
                 has_more_results_c,
                 batch_size,
