@@ -89,12 +89,6 @@ class _BatchReaderRaii:
 
     def more_results(
         self,
-        batch_size: int,
-        max_bytes_per_batch: int,
-        max_text_size: int,
-        max_binary_size: int,
-        falliable_allocations: bool = False,
-        schema: Optional[Schema] = None,
     ) -> bool:
 
         with ffi.new("bool *") as has_more_results_c:
@@ -106,20 +100,6 @@ class _BatchReaderRaii:
             raise_on_error(error)
             # Remember wether there is a new result set in a boolean
             has_more_results = has_more_results_c[0] != 0
-
-            # We moved to the next result set, but are still only in cursor state. We need to still
-            # provide an arrow schema and bind the buffers to the cursor
-            ptr_schema = _export_schema_to_c(schema)
-            error = lib.arrow_odbc_reader_bind_buffers(
-                self.handle,
-                batch_size,
-                max_bytes_per_batch,
-                max_text_size,
-                max_binary_size,
-                falliable_allocations,
-                ptr_schema,
-            )
-            raise_on_error(error)
 
         return has_more_results
 
@@ -135,7 +115,9 @@ class BatchReader:
         create instances of `BatchReader`.
         """
         # We take ownership of the corresponding reader written in Rust and keep it alive until
-        # `self` is deleted.
+        # `self` is deleted. We also take care to keep this reader either in empty or reader state,
+        # meaning we always have it ready to produce batches, or we consumed everything. We avoid
+        # exposing the intermediate cursor state directly to users.
         self.reader = reader
 
         # This is the schema of the batches returned by reader. We take care to keep it in sync in
@@ -240,7 +222,9 @@ class BatchReader:
         if max_binary_size is None:
             max_binary_size = 0
 
-        has_more_results = self.reader.more_results(
+        has_more_results = self.reader.more_results()
+
+        self.reader.bind_buffers(
             batch_size=batch_size,
             max_bytes_per_batch=max_bytes_per_batch,
             max_text_size=max_text_size,
