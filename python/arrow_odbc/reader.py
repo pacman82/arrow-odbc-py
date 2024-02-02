@@ -64,7 +64,8 @@ class _BatchReaderRaii:
         error = lib.arrow_odbc_reader_into_concurrent(self.handle)
         raise_on_error(error)
 
-    def more_results(
+
+    def bind_buffers(
         self,
         batch_size: int,
         max_bytes_per_batch: int,
@@ -77,6 +78,35 @@ class _BatchReaderRaii:
 
         with ffi.new("bool *") as has_more_results_c:
             error = lib.arrow_odbc_reader_bind_buffers(
+                self.handle,
+                has_more_results_c,
+                batch_size,
+                max_bytes_per_batch,
+                max_text_size,
+                max_binary_size,
+                falliable_allocations,
+                ptr_schema,
+            )
+            # See if we managed to execute the query successfully and return an error if not
+            raise_on_error(error)
+
+            has_more_results = has_more_results_c[0] != 0
+
+        return has_more_results
+
+    def more_results(
+        self,
+        batch_size: int,
+        max_bytes_per_batch: int,
+        max_text_size: int,
+        max_binary_size: int,
+        falliable_allocations: bool = False,
+        schema: Optional[Schema] = None,
+    ) -> bool:
+        ptr_schema = _export_schema_to_c(schema)
+
+        with ffi.new("bool *") as has_more_results_c:
+            error = lib.arrow_odbc_reader_next_result_set(
                 self.handle,
                 has_more_results_c,
                 batch_size,

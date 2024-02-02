@@ -177,7 +177,6 @@ pub unsafe extern "C" fn arrow_odbc_reader_next_result_set(
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_bind_buffers(
     mut reader: NonNull<ArrowOdbcReader>,
-    has_more_results: *mut bool,
     max_num_rows_per_batch: usize,
     max_bytes_per_batch: usize,
     max_text_size: usize,
@@ -196,7 +195,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_bind_buffers(
         schema,
     );
     // Move cursor to the next result set.
-    *has_more_results = try_!(reader.as_mut().next_result_set(reader_builder));
+    try_!(reader.as_mut().next_result_set(reader_builder));
     null_mut()
 }
 

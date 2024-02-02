@@ -44,7 +44,6 @@ pub enum ArrowOdbcReader {
 }
 
 impl ArrowOdbcReader {
-
     /// Creates a new reader in Cursor state.
     pub fn new(cursor: CursorImpl<StatementConnection<'static>>) -> Self {
         Self::Cursor(cursor)
@@ -76,6 +75,28 @@ impl ArrowOdbcReader {
         };
 
         Ok(next)
+    }
+
+    /// Promotes `Cursor` to `Reader` state. I.e. we take the raw cursor which represents the
+    /// result set, bind buffers to it so we can fetch in bulk and provide all information needed
+    /// to convert the row groups into Arrow record batches.
+    pub fn promote_to_reader(&mut self, builder: OdbcReaderBuilder) -> Result<(), ArrowOdbcError> {
+        // Move self into a temporary instance we own, in order to take ownership of the inner
+        // reader and move it to a different typestate.
+        let mut tmp_self = ArrowOdbcReader::NoMoreResultSets;
+        swap(self, &mut tmp_self);
+        let cursor = match tmp_self {
+            ArrowOdbcReader::Cursor(cursor) => cursor,
+            ArrowOdbcReader::NoMoreResultSets
+            | ArrowOdbcReader::Reader(_)
+            | ArrowOdbcReader::ConcurrentReader(_) => {
+                unreachable!("Python part must ensure to only promote cursors to readers.")
+            }
+        };
+        // There is another result set. Let us create a new reader
+        let reader = builder.build(cursor)?;
+        *self = ArrowOdbcReader::Reader(reader);
+        Ok(())
     }
 
     /// After this method call we will be in the `Reader` state or `NoMoreResultSets`, in case we
