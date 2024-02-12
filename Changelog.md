@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.1.0
+
+- Release wheel also for MacOS ARM 64 architectures to PyPi. Thanks to [FlyCI ](https://www.flyci.net/) for their free tier!
+
 ## 4.0.0
 
 - Removed parameter `driver_returns_memory_garbage_for_indicators` from `read_arrow_batches_from_odbc` as it was intended as a workaround for IBM/DB2 drivers. Turns out IBM offers drivers which work correctly with 64Bit driver managers. Look for file names ending in 'o'.
