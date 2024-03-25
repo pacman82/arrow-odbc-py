@@ -1,6 +1,8 @@
 from typing import List, Optional, Callable
 from cffi.api import FFI  # type: ignore
 
+import pyarrow
+
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
 from pyarrow import RecordBatch, Schema, Array  # type: ignore
 
@@ -243,6 +245,18 @@ class BatchReader:
         self.schema = self.reader.schema()
 
         return has_more_results
+    
+    def into_pyarrow_record_batch_reader(self):
+        """
+        Converts the ``arrow-odbc`` ``BatchReader`` into a ``pyarrow`` ``RecordBatchReader``
+
+        ``arrow-odbc``s BatchReader interface offers some functionality specific to ODBC
+        datasources. E.g. the ability to move to the next result set of a stored procedure. You may
+        not need this extra functionality and would rather like to integrate the ``BatchReader``
+        with other libraries like e.g. DuckDB. In order to do this you can use this method to
+        convert the ``arrow-odbc`` BatchReader into a ``pyarrow`` ``RecordBatchReader``.
+        """
+        return pyarrow.RecordBatchReader.from_batches(self.schema, self)
 
     def fetch_concurrently(self):
         """
