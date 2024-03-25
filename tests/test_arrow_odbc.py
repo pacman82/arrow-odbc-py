@@ -6,6 +6,7 @@ import pyarrow as pa
 import pyarrow.csv as csv
 import pyarrow.parquet as pq
 
+import duckdb
 import pytest
 import pyodbc
 
@@ -884,6 +885,27 @@ def test_reinitalizing_logger_should_raise():
         match=r"attempted to set a logger after the logging system was already initialized",
     ):
         log_to_stderr()
+
+
+def test_odbc_to_duckdb():
+    """
+    We want to see how arrow odbc links into the Arrow Record Batch Reader interface. To do so we
+    look at integrating it with DuckDB which utilizes that interface and knowns nothing about
+    arrow-odbc.
+    """
+    # Given an arrow record batch reader
+    arrow_reader = read_arrow_batches_from_odbc(query="SELECT 42 as a", connection_string=MSSQL)
+
+    # When we transform the arrow record batch reader into a pyarrow record batch reader
+    pyarrow_reader = pa.RecordBatchReader.from_batches(arrow_reader.schema, arrow_reader)
+
+    # Then we can consume the pyarrow record batch reader with duckdb and expect the resulting
+    # table to mirror the contents of the original query.
+    with duckdb.connect(":memory:") as db:
+        db.from_arrow(pyarrow_reader).create("my_table")
+        table = db.sql("SELECT * FROM my_table").to_arrow_table()
+    expected = {"a": [42]}
+    assert expected == table.to_pydict()
 
 
 @pytest.mark.slow
