@@ -427,16 +427,6 @@ def read_arrow_batches_from_odbc(
     """
     query_bytes = query.encode("utf-8")
 
-    connection = connect_to_database(
-        connection_string, user, password, login_timeout_sec
-    )
-
-    # Connecting to the database has been successful. Note that connection does not truly take
-    # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
-    # connection would not be closed and its associated resources would not be freed.
-    # However, this is fine since everything from here on out until we call arrow_odbc_reader_make
-    # is infalliable. arrow_odbc_reader_make will truly take ownership of the connection. Even if it
-    # should fail, it will be closed correctly.
 
     if parameters is None:
         parameters_array = FFI.NULL
@@ -456,6 +446,17 @@ def read_arrow_batches_from_odbc(
         # Must be kept alive. Within Rust code we only allocate an additional indicator the string
         # payload is just referenced.
         encoded_parameters = [to_bytes_and_len(p) for p in parameters]
+
+    connection = connect_to_database(
+        connection_string, user, password, login_timeout_sec
+    )
+
+    # Connecting to the database has been successful. Note that connection does not truly take
+    # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
+    # connection would not be closed and its associated resources would not be freed.
+    # However, this is fine since everything from here on out until we call arrow_odbc_reader_make
+    # is infalliable. arrow_odbc_reader_make will truly take ownership of the connection. Even if it
+    # should fail, it will be closed correctly.
 
     if max_text_size is None:
         max_text_size = 0

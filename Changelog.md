@@ -1,5 +1,10 @@
 # Changelog
 
+## 5.0.0
+
+- Fix: Database connection have not been cleaned up in case the parameters caused a type error.
+- Changend `BatchReader.to_pyarrow_record_batch_reader` into `BatchReader.into_pyarrow_record_batch_reader`. The new method fully passes ownership and leaves self empty.
+
 ## 4.2.0
 
 - Adds `BatchReader.to_pyarrow_record_batch_reader` in order to avoid for conviniently create a PyArrow `RecordBatchReader` which can be consumed by other libraries like DuckDB.
