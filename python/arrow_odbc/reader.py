@@ -248,7 +248,8 @@ class BatchReader:
     
     def into_pyarrow_record_batch_reader(self):
         """
-        Converts the ``arrow-odbc`` ``BatchReader`` into a ``pyarrow`` ``RecordBatchReader``
+        Converts the ``arrow-odbc`` ``BatchReader`` into a ``pyarrow`` ``RecordBatchReader``. This
+        method fully passes ownership to the new reader and leaves ``self`` empty.
 
         ``arrow-odbc``s BatchReader interface offers some functionality specific to ODBC
         datasources. E.g. the ability to move to the next result set of a stored procedure. You may
