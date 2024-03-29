@@ -894,7 +894,9 @@ def test_odbc_to_duckdb():
     arrow-odbc.
     """
     # Given an arrow record batch reader
-    arrow_reader = read_arrow_batches_from_odbc(query="SELECT 42 as a", connection_string=MSSQL)
+    arrow_reader = read_arrow_batches_from_odbc(
+        query="SELECT 42 as a", connection_string=MSSQL
+    )
 
     # When we transform the arrow record batch reader into a pyarrow record batch reader
     pyarrow_reader = arrow_reader.into_pyarrow_record_batch_reader()
@@ -915,8 +917,10 @@ def test_into_pyarrow_record_batch_reader_transfers_ownership():
     the new type. Since there are no destructive move semantics in Python we express this as the
     original instance being in an empty state.
     """
-        # Given an arrow record batch reader
-    arrow_reader = read_arrow_batches_from_odbc(query="SELECT 42 as a", connection_string=MSSQL)
+    # Given an arrow record batch reader
+    arrow_reader = read_arrow_batches_from_odbc(
+        query="SELECT 42 as a", connection_string=MSSQL
+    )
 
     # When we transform the arrow record batch reader into a pyarrow record batch reader
     _ = arrow_reader.into_pyarrow_record_batch_reader()

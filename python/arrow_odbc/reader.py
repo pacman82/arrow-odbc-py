@@ -32,6 +32,77 @@ class _BatchReaderRaii:
     Takes ownership of the reader in its various states and makes sure its resources are freed if
     the object is deleted.
     """
+    @staticmethod
+    def make_empty():
+        reader_out = ffi.new("ArrowOdbcReader **")
+        lib.arrow_odbc_reader_make_empty(reader_out)
+        return _BatchReaderRaii(reader_out[0])
+
+    @staticmethod
+    def make_cursor(
+        query: str,
+        connection_string: str,
+        user: Optional[str],
+        password: Optional[str],
+        parameters: Optional[List[Optional[str]]],
+        login_timeout_sec: int,
+    ):
+        query_bytes = query.encode("utf-8")
+
+        if parameters is None:
+            parameters_array = FFI.NULL
+            parameters_len = 0
+            encoded_parameters = []
+        else:
+            # Check precondition in order to save users some debugging, in case they directly pass a
+            # non-string argument and do not use a type linter.
+            if not all([p is None or hasattr(p, "encode") for p in parameters]):
+                raise TypeError(
+                    "read_arrow_batches_from_odbc only supports string arguments for SQL query "
+                    "parameters"
+                )
+
+            parameters_array = ffi.new("ArrowOdbcParameter *[]", len(parameters))
+            parameters_len = len(parameters)
+            # Must be kept alive. Within Rust code we only allocate an additional indicator the string
+            # payload is just referenced.
+            encoded_parameters = [to_bytes_and_len(p) for p in parameters]
+
+        connection = connect_to_database(
+            connection_string, user, password, login_timeout_sec
+        )
+
+        # Connecting to the database has been successful. Note that connection does not truly take
+        # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
+        # connection would not be closed and its associated resources would not be freed.
+        # However, this is fine since everything from here on out until we call arrow_odbc_reader_make
+        # is infalliable. arrow_odbc_reader_make will truly take ownership of the connection. Even if it
+        # should fail, it will be closed correctly.
+
+        for p_index in range(0, parameters_len):
+            (p_bytes, p_len) = encoded_parameters[p_index]
+            parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(
+                p_bytes, p_len
+            )
+
+        reader_out = ffi.new("ArrowOdbcReader **")
+
+        error = lib.arrow_odbc_reader_make(
+            connection,
+            query_bytes,
+            len(query_bytes),
+            parameters_array,
+            parameters_len,
+            reader_out,
+        )
+
+        # See if we managed to execute the query successfully and return an error if not
+        raise_on_error(error)
+
+        # We call it reader, but it is still in cursor state, meaning, that we did not bind any buffers
+        # to it, or now how to convert the values into arrow.
+        reader = reader_out[0]
+        return _BatchReaderRaii(reader)
 
     def __init__(self, handle):
         # We take ownership of the corresponding reader written in Rust and keep it alive until
@@ -245,7 +316,7 @@ class BatchReader:
         self.schema = self.reader.schema()
 
         return has_more_results
-    
+
     def into_pyarrow_record_batch_reader(self):
         """
         Converts the ``arrow-odbc`` ``BatchReader`` into a ``pyarrow`` ``RecordBatchReader``. This
@@ -258,9 +329,7 @@ class BatchReader:
         convert the ``arrow-odbc`` BatchReader into a ``pyarrow`` ``RecordBatchReader``.
         """
         # Move self to tmp
-        reader_out = ffi.new("struct ArrowOdbcReader **")
-        lib.arrow_odbc_reader_make_empty(reader_out)
-        reader = _BatchReaderRaii(reader_out[0])
+        reader = _BatchReaderRaii.make_empty()
         tmp = BatchReader(reader)
         tmp.reader, self.reader = self.reader, tmp.reader
         tmp.schema, self.schema = self.schema, tmp.schema
@@ -425,70 +494,21 @@ def read_arrow_batches_from_odbc(
     :return: A ``BatchReader`` is returned, which implements the iterator protocol and iterates over
         individual arrow batches.
     """
-    query_bytes = query.encode("utf-8")
-
-
-    if parameters is None:
-        parameters_array = FFI.NULL
-        parameters_len = 0
-        encoded_parameters = []
-    else:
-        # Check precondition in order to save users some debugging, in case they directly pass a
-        # non-string argument and do not use a type linter.
-        if not all([p is None or hasattr(p, "encode") for p in parameters]):
-            raise TypeError(
-                "read_arrow_batches_from_odbc only supports string arguments for SQL query "
-                "parameters"
-            )
-
-        parameters_array = ffi.new("ArrowOdbcParameter *[]", len(parameters))
-        parameters_len = len(parameters)
-        # Must be kept alive. Within Rust code we only allocate an additional indicator the string
-        # payload is just referenced.
-        encoded_parameters = [to_bytes_and_len(p) for p in parameters]
-
-    connection = connect_to_database(
-        connection_string, user, password, login_timeout_sec
+    reader = _BatchReaderRaii.make_cursor(
+        query=query,
+        connection_string=connection_string,
+        user=user,
+        password=password,
+        parameters=parameters,
+        login_timeout_sec=login_timeout_sec,
     )
-
-    # Connecting to the database has been successful. Note that connection does not truly take
-    # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
-    # connection would not be closed and its associated resources would not be freed.
-    # However, this is fine since everything from here on out until we call arrow_odbc_reader_make
-    # is infalliable. arrow_odbc_reader_make will truly take ownership of the connection. Even if it
-    # should fail, it will be closed correctly.
 
     if max_text_size is None:
         max_text_size = 0
-
     if max_binary_size is None:
         max_binary_size = 0
-
     if max_bytes_per_batch is None:
         max_bytes_per_batch = 0
-
-    for p_index in range(0, parameters_len):
-        (p_bytes, p_len) = encoded_parameters[p_index]
-        parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(p_bytes, p_len)
-
-    reader_out = ffi.new("ArrowOdbcReader **")
-
-    error = lib.arrow_odbc_reader_make(
-        connection,
-        query_bytes,
-        len(query_bytes),
-        parameters_array,
-        parameters_len,
-        reader_out,
-    )
-
-    # See if we managed to execute the query successfully and return an error if not
-    raise_on_error(error)
-
-    # We call it reader, but it is still in cursor state, meaning, that we did not bind any buffers
-    # to it, or now how to convert the values into arrow.
-    reader = reader_out[0]
-    reader = _BatchReaderRaii(reader)
 
     # Let us transition to reader state
     reader.bind_buffers(
