@@ -32,14 +32,43 @@ class _BatchReaderRaii:
     Takes ownership of the reader in its various states and makes sure its resources are freed if
     the object is deleted.
     """
-    @staticmethod
-    def make_empty():
+    def __init__(self):
         reader_out = ffi.new("ArrowOdbcReader **")
         lib.arrow_odbc_reader_make_empty(reader_out)
-        return _BatchReaderRaii(reader_out[0])
+        # We take ownership of the corresponding reader written in Rust and keep it alive until
+        # `self` is deleted.
+        self.handle = reader_out[0]
 
-    @staticmethod
-    def make_cursor(
+    def __del__(self):
+        # Free the resources associated with this handle.
+        lib.arrow_odbc_reader_free(self.handle)
+
+    def schema(self) -> Schema:
+        return _schema_from_handle(self.handle)
+
+    def next_batch(self):
+        array = arrow_ffi.new("struct ArrowArray *")
+        schema = arrow_ffi.new("struct ArrowSchema *")
+
+        has_next_out = ffi.new("int*")
+
+        error = lib.arrow_odbc_reader_next(self.handle, array, schema, has_next_out)
+        raise_on_error(error)
+
+        if has_next_out[0] == 0:
+            return None
+        else:
+            array_ptr = int(ffi.cast("uintptr_t", array))
+            schema_ptr = int(ffi.cast("uintptr_t", schema))
+            struct_array = Array._import_from_c(array_ptr, schema_ptr)
+            return RecordBatch.from_struct_array(struct_array)
+
+    def into_concurrent(self):
+        error = lib.arrow_odbc_reader_into_concurrent(self.handle)
+        raise_on_error(error)
+
+    def query(
+        self,
         query: str,
         connection_string: str,
         user: Optional[str],
@@ -75,9 +104,9 @@ class _BatchReaderRaii:
         # Connecting to the database has been successful. Note that connection does not truly take
         # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
         # connection would not be closed and its associated resources would not be freed.
-        # However, this is fine since everything from here on out until we call arrow_odbc_reader_make
-        # is infalliable. arrow_odbc_reader_make will truly take ownership of the connection. Even if it
-        # should fail, it will be closed correctly.
+        # However, this is fine since everything from here on out until we call
+        # arrow_odbc_reader_make is infalliable. arrow_odbc_reader_query will truly take ownership
+        # of the connection. Even if it should fail, it will be closed correctly.
 
         for p_index in range(0, parameters_len):
             (p_bytes, p_len) = encoded_parameters[p_index]
@@ -85,56 +114,16 @@ class _BatchReaderRaii:
                 p_bytes, p_len
             )
 
-        reader_out = ffi.new("ArrowOdbcReader **")
-
-        error = lib.arrow_odbc_reader_make(
+        error = lib.arrow_odbc_reader_query(
+            self.handle,
             connection,
             query_bytes,
             len(query_bytes),
             parameters_array,
             parameters_len,
-            reader_out,
         )
 
         # See if we managed to execute the query successfully and return an error if not
-        raise_on_error(error)
-
-        # We call it reader, but it is still in cursor state, meaning, that we did not bind any buffers
-        # to it, or now how to convert the values into arrow.
-        reader = reader_out[0]
-        return _BatchReaderRaii(reader)
-
-    def __init__(self, handle):
-        # We take ownership of the corresponding reader written in Rust and keep it alive until
-        # `self` is deleted.
-        self.handle = handle
-
-    def __del__(self):
-        # Free the resources associated with this handle.
-        lib.arrow_odbc_reader_free(self.handle)
-
-    def schema(self) -> Schema:
-        return _schema_from_handle(self.handle)
-
-    def next_batch(self):
-        array = arrow_ffi.new("struct ArrowArray *")
-        schema = arrow_ffi.new("struct ArrowSchema *")
-
-        has_next_out = ffi.new("int*")
-
-        error = lib.arrow_odbc_reader_next(self.handle, array, schema, has_next_out)
-        raise_on_error(error)
-
-        if has_next_out[0] == 0:
-            return None
-        else:
-            array_ptr = int(ffi.cast("uintptr_t", array))
-            schema_ptr = int(ffi.cast("uintptr_t", schema))
-            struct_array = Array._import_from_c(array_ptr, schema_ptr)
-            return RecordBatch.from_struct_array(struct_array)
-
-    def into_concurrent(self):
-        error = lib.arrow_odbc_reader_into_concurrent(self.handle)
         raise_on_error(error)
 
     def bind_buffers(
@@ -329,7 +318,7 @@ class BatchReader:
         convert the ``arrow-odbc`` BatchReader into a ``pyarrow`` ``RecordBatchReader``.
         """
         # Move self to tmp
-        reader = _BatchReaderRaii.make_empty()
+        reader = _BatchReaderRaii()
         tmp = BatchReader(reader)
         tmp.reader, self.reader = self.reader, tmp.reader
         tmp.schema, self.schema = self.schema, tmp.schema
@@ -494,7 +483,9 @@ def read_arrow_batches_from_odbc(
     :return: A ``BatchReader`` is returned, which implements the iterator protocol and iterates over
         individual arrow batches.
     """
-    reader = _BatchReaderRaii.make_cursor(
+    reader = _BatchReaderRaii()
+
+    reader.query(
         query=query,
         connection_string=connection_string,
         user=user,

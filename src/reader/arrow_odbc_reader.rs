@@ -90,8 +90,7 @@ impl ArrowOdbcReader {
             // Let's just keep it, there is simply nothing to bind a buffer to.
             ArrowOdbcReader::NoMoreResultSets => return Ok(()),
             ArrowOdbcReader::Cursor(cursor) => cursor,
-            | ArrowOdbcReader::Reader(_)
-            | ArrowOdbcReader::ConcurrentReader(_) => {
+            ArrowOdbcReader::Reader(_) | ArrowOdbcReader::ConcurrentReader(_) => {
                 unreachable!("Python part must ensure to only promote cursors to readers.")
             }
         };
@@ -99,6 +98,18 @@ impl ArrowOdbcReader {
         let reader = builder.build(cursor)?;
         *self = ArrowOdbcReader::Reader(reader);
         Ok(())
+    }
+
+    pub fn promote_to_cursor(&mut self, cursor: CursorImpl<StatementConnection<'static>>) {
+        match self {
+            ArrowOdbcReader::NoMoreResultSets => (),
+            ArrowOdbcReader::Cursor(_)
+            | ArrowOdbcReader::Reader(_)
+            | ArrowOdbcReader::ConcurrentReader(_) => {
+                unreachable!("Python part must ensure to only promote empty readers to cursors.")
+            }
+        }
+        *self = ArrowOdbcReader::Cursor(cursor);
     }
 
     /// After this method call we will be in the `Cursor` state or `NoMoreResultSets`, in case we
