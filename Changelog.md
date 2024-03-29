@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.2.0
+
+- Adds `BatchReader.to_pyarrow_record_batch_reader` in order to avoid for conviniently create a PyArrow `RecordBatchReader` which can be consumed by other libraries like DuckDB.
+
 ## 4.1.0
 
 - Release wheel also for MacOS ARM 64 architectures to PyPi. Thanks to [FlyCI ](https://www.flyci.net/) for their free tier!
