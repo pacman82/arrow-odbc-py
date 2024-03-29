@@ -246,7 +246,7 @@ class BatchReader:
 
         return has_more_results
     
-    def into_pyarrow_record_batch_reader(self):
+    def to_pyarrow_record_batch_reader(self):
         """
         Converts the ``arrow-odbc`` ``BatchReader`` into a ``pyarrow`` ``RecordBatchReader``
 

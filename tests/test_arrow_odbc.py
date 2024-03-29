@@ -897,7 +897,7 @@ def test_odbc_to_duckdb():
     arrow_reader = read_arrow_batches_from_odbc(query="SELECT 42 as a", connection_string=MSSQL)
 
     # When we transform the arrow record batch reader into a pyarrow record batch reader
-    pyarrow_reader = arrow_reader.into_pyarrow_record_batch_reader()
+    pyarrow_reader = arrow_reader.to_pyarrow_record_batch_reader()
 
     # Then we can consume the pyarrow record batch reader with duckdb and expect the resulting
     # table to mirror the contents of the original query.
