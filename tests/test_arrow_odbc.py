@@ -897,7 +897,7 @@ def test_odbc_to_duckdb():
     arrow_reader = read_arrow_batches_from_odbc(query="SELECT 42 as a", connection_string=MSSQL)
 
     # When we transform the arrow record batch reader into a pyarrow record batch reader
-    pyarrow_reader = arrow_reader.to_pyarrow_record_batch_reader()
+    pyarrow_reader = arrow_reader.into_pyarrow_record_batch_reader()
 
     # Then we can consume the pyarrow record batch reader with duckdb and expect the resulting
     # table to mirror the contents of the original query.
@@ -906,6 +906,24 @@ def test_odbc_to_duckdb():
         table = db.sql("SELECT * FROM my_table").to_arrow_table()
     expected = {"a": [42]}
     assert expected == table.to_pydict()
+
+
+def test_into_pyarrow_record_batch_reader_transfers_ownership():
+    """
+    In order to avoid the created instance of ```PyArrow RecordBatchReader``` to be suprisingly
+    influenced by calls to the original Record batch reader we want to fully transfer ownership to
+    the new type. Since there are no destructive move semantics in Python we express this as the
+    original instance being in an empty state.
+    """
+        # Given an arrow record batch reader
+    arrow_reader = read_arrow_batches_from_odbc(query="SELECT 42 as a", connection_string=MSSQL)
+
+    # When we transform the arrow record batch reader into a pyarrow record batch reader
+    _ = arrow_reader.into_pyarrow_record_batch_reader()
+
+    # Then the original record batch reader is empty. I.e. it behaves like a consumed arrow_reader
+    with raises(StopIteration):
+        next(iter(arrow_reader))
 
 
 @pytest.mark.slow

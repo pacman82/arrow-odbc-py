@@ -246,7 +246,7 @@ class BatchReader:
 
         return has_more_results
     
-    def to_pyarrow_record_batch_reader(self):
+    def into_pyarrow_record_batch_reader(self):
         """
         Converts the ``arrow-odbc`` ``BatchReader`` into a ``pyarrow`` ``RecordBatchReader``
 
@@ -256,7 +256,14 @@ class BatchReader:
         with other libraries like e.g. DuckDB. In order to do this you can use this method to
         convert the ``arrow-odbc`` BatchReader into a ``pyarrow`` ``RecordBatchReader``.
         """
-        return pyarrow.RecordBatchReader.from_batches(self.schema, self)
+        # Move self to tmp
+        reader_out = ffi.new("struct ArrowOdbcReader **")
+        lib.arrow_odbc_reader_make_empty(reader_out)
+        reader = _BatchReaderRaii(reader_out[0])
+        tmp = BatchReader(reader)
+        tmp.reader, self.reader = self.reader, tmp.reader
+        tmp.schema, self.schema = self.schema, tmp.schema
+        return pyarrow.RecordBatchReader.from_batches(tmp.schema, tmp)
 
     def fetch_concurrently(self):
         """

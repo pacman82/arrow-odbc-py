@@ -83,6 +83,19 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     null_mut() // Ok(())
 }
 
+/// Creates an empty Arrow ODBC reader instance. Useful for passing ownership of the reader in
+/// Python code. The previous owner can use this to express the move by holding an empty instance.
+///
+/// # Parameters
+///
+/// * `reader_out` will point to an instance of `ArrowOdbcReader`. Ownership is transferred to the
+///   caller.
+#[no_mangle]
+pub unsafe extern "C" fn arrow_odbc_reader_make_empty(reader_out: *mut *mut ArrowOdbcReader) {
+    let reader = ArrowOdbcReader::empty();
+    *reader_out = Box::into_raw(Box::new(reader));
+}
+
 /// Frees the resources associated with an ArrowOdbcReader
 ///
 /// # Safety
