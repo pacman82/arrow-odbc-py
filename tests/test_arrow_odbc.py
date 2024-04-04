@@ -886,6 +886,25 @@ def test_reinitalizing_logger_should_raise():
     ):
         log_to_stderr()
 
+def test_umlaut_in_column_name():
+    """
+    Query a row with an umlaut in it. The column name should be unchanged in the arrow schema
+    """
+    table = "umlaut_in_column_name"
+    setup_table(table=table, column_type="INT", values=[])
+    query = f"SELECT 1 AS hällo"
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL
+    )
+    it = iter(reader)
+    actual = next(it)
+
+    expected = pa.schema([("hällo", pa.int32(), False)])
+    assert expected == actual.schema
+
+    with raises(StopIteration):
+        next(it)
+
 
 def test_odbc_to_duckdb():
     """
