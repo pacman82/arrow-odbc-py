@@ -886,7 +886,7 @@ def test_reinitalizing_logger_should_raise():
     ):
         log_to_stderr()
 
-pytest.xfail(reason="Bug in MS driver cutting column name with umlaut one letter short.")
+@pytest.mark.xfail(reason="Bug in MS driver cutting column name with umlaut one letter short.")
 def test_umlaut_in_column_name():
     """
     Query a row with an umlaut in it. The column name should be unchanged in the arrow schema
