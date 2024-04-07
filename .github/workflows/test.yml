@@ -39,7 +39,11 @@ jobs:
         shell: sudo bash {0}
       - name: Print odbcinst.ini
         run: cat /etc/odbcinst.ini
-        # odbcsv tool is used by the tests to setup tables
+      # odbcsv tool is used by the tests to setup tables
+      # selecting a toolchain either by action or manual `rustup` calls should happen
+      # before the plugin, as the cache uses the current rustc version as its cache key
+      - name: Rust build cache
+        uses: Swatinem/rust-cache@v2
       - name: Install odbcsv
         run: cargo install odbcsv
       - name: Test
