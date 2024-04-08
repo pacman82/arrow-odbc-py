@@ -26,3 +26,8 @@ bindings = "cffi"
 python-source = "python"
 # Not sure what the default would be, best be sure and make release profile explicit
 profile = "release"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.format]
