@@ -32,6 +32,7 @@ class _BatchReaderRaii:
     Takes ownership of the reader in its various states and makes sure its resources are freed if
     the object is deleted.
     """
+
     def __init__(self):
         reader_out = ffi.new("ArrowOdbcReader **")
         lib.arrow_odbc_reader_make_empty(reader_out)
@@ -74,7 +75,8 @@ class _BatchReaderRaii:
         user: Optional[str],
         password: Optional[str],
         parameters: Optional[List[Optional[str]]],
-        login_timeout_sec: int,
+        login_timeout_sec: Optional[int],
+        packet_size: Optional[int],
     ):
         query_bytes = query.encode("utf-8")
 
@@ -98,7 +100,7 @@ class _BatchReaderRaii:
             encoded_parameters = [to_bytes_and_len(p) for p in parameters]
 
         connection = connect_to_database(
-            connection_string, user, password, login_timeout_sec
+            connection_string, user, password, login_timeout_sec, packet_size
         )
 
         # Connecting to the database has been successful. Note that connection does not truly take
@@ -110,9 +112,7 @@ class _BatchReaderRaii:
 
         for p_index in range(0, parameters_len):
             (p_bytes, p_len) = encoded_parameters[p_index]
-            parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(
-                p_bytes, p_len
-            )
+            parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(p_bytes, p_len)
 
         error = lib.arrow_odbc_reader_query(
             self.handle,
@@ -156,7 +156,6 @@ class _BatchReaderRaii:
     def more_results(
         self,
     ) -> bool:
-
         with ffi.new("bool *") as has_more_results_c:
             error = lib.arrow_odbc_reader_more_results(
                 self.handle,
@@ -384,6 +383,7 @@ def read_arrow_batches_from_odbc(
     max_binary_size: Optional[int] = None,
     falliable_allocations: bool = False,
     login_timeout_sec: Optional[int] = None,
+    packet_size: Optional[int] = None,
     schema: Optional[Schema] = None,
     map_schema: Optional[Callable[[Schema], Schema]] = None,
 ) -> BatchReader:
@@ -468,6 +468,11 @@ def read_arrow_batches_from_odbc(
         disabled and a connection attempt will wait indefinitely. If the specified timeout exceeds
         the maximum login timeout in the data source, the driver substitutes that value and uses
         that instead.
+    :param packet_size: Specifying the network packet size in bytes. Many ODBC drivers do not
+        support this option. If the specified size exceeds the maximum packet size or is smaller
+        than the minimum packet size, the driver substitutes that value and returns SQLSTATE 01S02
+        (Option value changed).You may want to enable logging to standard error using
+        ``log_to_stderr``.
     :param schema: Allows you to overwrite the automatically detected schema with one supplied by
         the application. Reasons for doing so include domain knowledge you have about the data which
         is not reflected in the schema information. E.g. you happen to know a field of timestamps
@@ -492,6 +497,7 @@ def read_arrow_batches_from_odbc(
         password=password,
         parameters=parameters,
         login_timeout_sec=login_timeout_sec,
+        packet_size=packet_size,
     )
 
     if max_text_size is None:

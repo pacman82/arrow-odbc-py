@@ -1,5 +1,9 @@
 # Changelog
 
+## 5.1.0
+
+- Support for passing desired packet size to the ODBC driver. This may help with packet loss on fragile connections if the ODBC driver supports it.
+
 ## 5.0.0
 
 - Fix: Database connection have not been cleaned up in case the parameters caused a type error.

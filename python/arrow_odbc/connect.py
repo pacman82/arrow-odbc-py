@@ -23,18 +23,25 @@ def connect_to_database(
     user: Optional[str],
     password: Optional[str],
     login_timeout_sec: Optional[int],
+    packet_size: Optional[int],
 ) -> Any:
-
     connection_string_bytes = connection_string.encode("utf-8")
 
     (user_bytes, user_len) = to_bytes_and_len(user)
     (password_bytes, password_len) = to_bytes_and_len(password)
 
+    # We use a pointer to pass the login time, so NULL can represent None
     if login_timeout_sec is None:
         login_timeout_sec_ptr = FFI.NULL
     else:
         login_timeout_sec_ptr = ffi.new("uint32_t *")
         login_timeout_sec_ptr[0] = login_timeout_sec
+
+    if packet_size is None:
+        packet_size_ptr = FFI.NULL
+    else:
+        packet_size_ptr = ffi.new("uint32_t *")
+        packet_size_ptr[0] = packet_size
 
     connection_out = ffi.new("OdbcConnection **")
 
@@ -47,6 +54,7 @@ def connect_to_database(
         password_bytes,
         password_len,
         login_timeout_sec_ptr,
+        packet_size_ptr,
         connection_out,
     )
     # See if we connected successfully and return an error if not

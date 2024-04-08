@@ -61,6 +61,7 @@ def insert_into_table(
     user: Optional[str] = None,
     password: Optional[str] = None,
     login_timeout_sec: Optional[int] = None,
+    packet_size: Optional[int] = None,
 ):
     """
     Consume the batches in the reader and insert them into a table on the database.
@@ -106,6 +107,11 @@ def insert_into_table(
         disabled and a connection attempt will wait indefinitely. If the specified timeout exceeds
         the maximum login timeout in the data source, the driver substitutes that value and uses
         that instead.
+    :param packet_size: Specifying the network packet size in bytes. Many ODBC drivers do not
+        support this option. If the specified size exceeds the maximum packet size or is smaller
+        than the minimum packet size, the driver substitutes that value and returns SQLSTATE 01S02
+        (Option value changed).You may want to enable logging to standard error using
+        ``log_to_stderr``.
     """
     table_bytes = table.encode("utf-8")
 
@@ -119,7 +125,7 @@ def insert_into_table(
         reader.schema._export_to_c(c_schema_ptr)
 
         connection = connect_to_database(
-            connection_string, user, password, login_timeout_sec
+            connection_string, user, password, login_timeout_sec, packet_size
         )
 
         # Connecting to the database has been successful. Note that connection does not truly take

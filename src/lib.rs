@@ -43,6 +43,7 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
     password: *const u8,
     password_len: usize,
     login_timeout_sec_ptr: *const u32,
+    packet_size_ptr: *const u32,
     connection_out: *mut *mut OdbcConnection,
 ) -> *mut ArrowOdbcError {
     let env = if let Some(env) = ENV.get() {
@@ -66,9 +67,15 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
         Some(*login_timeout_sec_ptr)
     };
 
+    let packet_size = if packet_size_ptr.is_null() {
+        None
+    } else {
+        Some(*packet_size_ptr)
+    };
+
     let connection = try_!(env.connect_with_connection_string(
         &connection_string,
-        ConnectionOptions { login_timeout_sec }
+        ConnectionOptions { login_timeout_sec, packet_size }
     ));
 
     *connection_out = Box::into_raw(Box::new(OdbcConnection(connection)));

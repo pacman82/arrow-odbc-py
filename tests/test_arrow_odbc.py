@@ -40,6 +40,16 @@ def setup_table(table: str, column_type: str, values: List[Any]):
     connection.close()
 
 
+def test_connection_options():
+    """
+    Just a smoke test, that we did not mess up passing the arguments for the connections over the
+    c-interface.
+    """
+    read_arrow_batches_from_odbc(
+        query="SELECT 1 AS a", connection_string=MSSQL, login_timeout_sec=2, packet_size=4096
+    )
+
+
 def test_should_report_error_on_invalid_connection_string_reading():
     """
     We want to forward the original ODBC errors to the end user. Of course foo
@@ -64,9 +74,7 @@ def test_should_report_error_on_invalid_query():
     query = "SELECT * FROM Foo"
 
     with raises(Error, match="Invalid object name 'Foo'"):
-        read_arrow_batches_from_odbc(
-            query=query, batch_size=100, connection_string=MSSQL
-        )
+        read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
 
 def test_no_result_set():
@@ -78,9 +86,7 @@ def test_no_result_set():
 
     # This statement does not produce a result set
     query = f"INSERT INTO {table} (a) VALUES (42);"
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
     assert reader.schema == pa.schema([])
     with raises(StopIteration):
@@ -94,9 +100,7 @@ def test_skip_to_second_result_set():
     # This statement produces two result sets
     query = f"SELECT 1 AS a; SELECT 2 AS b;"
 
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
     # Skip to second result set
     reader.more_results(batch_size=100)
@@ -118,9 +122,7 @@ def test_more_results_return_should_indicate_if_there_is_a_result_set():
     # This statement produces two result sets
     query = f"SELECT 1 AS a; SELECT 2 AS b;"
 
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
     assert reader.more_results(batch_size=100)
     assert not reader.more_results(batch_size=100)
@@ -133,9 +135,7 @@ def test_custom_schema_for_second_result_set():
     # This statement produces two result sets
     query = f"SELECT 1 AS a; SELECT 2 AS a;"
 
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=1, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=1, connection_string=MSSQL)
     # Ignore first result and use second straight away
     schema = pa.schema([pa.field("a", pa.string())])
     reader.more_results(batch_size=1, schema=schema)
@@ -153,9 +153,7 @@ def test_advancing_past_last_result_set_leaves_empty_reader():
     # This statement produces one result
     query = f"SELECT 1 AS a;"
 
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     # Move to a second result set, which does not exist
     reader.more_results(batch_size=100)
 
@@ -172,9 +170,7 @@ def test_making_an_empty_reader_concurrent_is_no_error():
     # This statement produces one result
     query = f"SELECT 1 AS a;"
 
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     # Move to a second result set, which does not exist
     reader.more_results(batch_size=100)
     # Fetch the non-existing result set concurrently. This should leave the reader unchanged
@@ -195,9 +191,7 @@ def test_empty_table():
 
     query = f"SELECT * FROM {table}"
 
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
     with raises(StopIteration):
         next(iter(reader))
@@ -212,9 +206,7 @@ def test_one_row():
 
     query = f"SELECT * FROM {table}"
 
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     it = iter(reader)
 
     actual = next(it)
@@ -236,9 +228,7 @@ def test_fetch_concurrently():
 
     query = f"SELECT * FROM {table}"
 
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     reader.fetch_concurrently()
     it = iter(reader)
 
@@ -262,9 +252,7 @@ def test_concurrent_reader_into_concurrent():
 
     query = f"SELECT * FROM {table}"
 
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     reader.fetch_concurrently()
     reader.fetch_concurrently()  # Transforming already concurrent reader into concurrent reader
     it = iter(reader)
@@ -291,9 +279,7 @@ def test_schema():
     connection.close()
 
     query = f"SELECT * FROM {table}"
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
     expected = pa.schema([("a", pa.int32()), ("b", pa.string())])
     assert expected == reader.schema
@@ -311,9 +297,7 @@ def test_schema_from_concurrent_reader():
     connection.close()
 
     query = f"SELECT * FROM {table}"
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     reader.fetch_concurrently()
 
     expected = pa.schema([("a", pa.int32()), ("b", pa.string())])
@@ -325,14 +309,10 @@ def test_timestamp_us():
     Query a table with one row. Should return one batch
     """
     table = "TimestampUs"
-    setup_table(
-        table=table, column_type="DATETIME2(6)", values=["2014-04-14 21:25:42.074841"]
-    )
+    setup_table(table=table, column_type="DATETIME2(6)", values=["2014-04-14 21:25:42.074841"])
 
     query = f"SELECT * FROM {table}"
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     it = iter(reader)
     actual = next(it)
 
@@ -351,14 +331,10 @@ def test_timestamp_ns():
     Query a table with one row. Should return one batch
     """
     table = "TimestampNs"
-    setup_table(
-        table=table, column_type="DATETIME2(7)", values=["2014-04-14 21:25:42.0748412"]
-    )
+    setup_table(table=table, column_type="DATETIME2(7)", values=["2014-04-14 21:25:42.0748412"])
 
     query = f"SELECT * FROM {table}"
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     it = iter(reader)
     actual = next(it)
 
@@ -377,9 +353,7 @@ def test_out_of_range_timestamp_ns():
     Query a table with one row. Should return one batch
     """
     table = "OutOfRangeTimestampNs"
-    setup_table(
-        table=table, column_type="DATETIME2(7)", values=["2300-04-14 21:25:42.0748412"]
-    )
+    setup_table(table=table, column_type="DATETIME2(7)", values=["2300-04-14 21:25:42.0748412"])
 
     query = f"SELECT * FROM {table}"
 
@@ -387,9 +361,7 @@ def test_out_of_range_timestamp_ns():
         Error,
         match="Timestamp is not representable in arrow: 2300-04-14 21:25:42.074841200",
     ):
-        reader = read_arrow_batches_from_odbc(
-            query=query, batch_size=100, connection_string=MSSQL
-        )
+        reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
         it = iter(reader)
         it.__next__()
 
@@ -427,9 +399,7 @@ def test_query_char():
     """
     # 'ab' is char(2) => 2 bytes on database. Yet, only one UTF-16 character can fit into 2 bytes.
     query = "SELECT 'ab' as a"
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
     it = iter(reader)
     batch = next(it)
@@ -446,9 +416,7 @@ def test_query_wchar():
     """
     # '™' is 3 bytes in UTF-8, but only 2 bytes in UTF-16
     query = "SELECT CAST('™' AS NCHAR(1)) as a"
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
     it = iter(reader)
     batch = next(it)
@@ -464,9 +432,7 @@ def test_query_umlaut():
     characters.
     """
     query = "SELECT CAST('Ü' AS VARCHAR(1)) as a"
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
     it = iter(reader)
     batch = next(it)
@@ -482,12 +448,8 @@ def test_query_zero_sized_column():
     characters.
     """
     query = "SELECT CAST('a' AS VARCHAR(MAX)) as a"
-    with raises(
-        Error, match="ODBC driver did not specify a sensible upper bound for the column"
-    ):
-        read_arrow_batches_from_odbc(
-            query=query, batch_size=100, connection_string=MSSQL
-        )
+    with raises(Error, match="ODBC driver did not specify a sensible upper bound for the column"):
+        read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
 
 def test_query_with_string_parameter():
@@ -499,9 +461,7 @@ def test_query_with_string_parameter():
     connection = pyodbc.connect(MSSQL)
     connection.execute(f"DROP TABLE IF EXISTS {table};")
     connection.execute(f"CREATE TABLE {table} (a CHAR(1), b INTEGER);")
-    connection.execute(
-        f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);"
-    )
+    connection.execute(f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);")
     connection.commit()
     connection.close()
     query = f"SELECT b FROM {table} WHERE a=?;"
@@ -530,9 +490,7 @@ def test_query_with_none_parameter():
     connection = pyodbc.connect(MSSQL)
     connection.execute(f"DROP TABLE IF EXISTS {table};")
     connection.execute(f"CREATE TABLE {table} (a CHAR(1), b INTEGER);")
-    connection.execute(
-        f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);"
-    )
+    connection.execute(f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);")
     connection.commit()
     connection.close()
 
@@ -555,9 +513,7 @@ def test_query_with_int_parameter():
     connection = pyodbc.connect(MSSQL)
     connection.execute(f"DROP TABLE IF EXISTS {table};")
     connection.execute(f"CREATE TABLE {table} (a CHAR(1), b INTEGER);")
-    connection.execute(
-        f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);"
-    )
+    connection.execute(f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);")
     connection.commit()
     connection.close()
 
@@ -621,9 +577,7 @@ def test_iris():
 
     query = f"SELECT * FROM {table}"
 
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
     for batch in reader:
         df = batch.to_pydict()
@@ -798,9 +752,7 @@ def test_insert_batches():
     reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
 
     # When
-    insert_into_table(
-        connection_string=MSSQL, chunk_size=20, table=table, reader=reader
-    )
+    insert_into_table(connection_string=MSSQL, chunk_size=20, table=table, reader=reader)
 
     # Then
     actual = check_output(
@@ -855,9 +807,7 @@ def test_insert_large_string():
     reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
 
     # When
-    insert_into_table(
-        connection_string=MSSQL, chunk_size=20, table=table, reader=reader
-    )
+    insert_into_table(connection_string=MSSQL, chunk_size=20, table=table, reader=reader)
 
     # Then
     actual = check_output(
@@ -886,15 +836,14 @@ def test_reinitalizing_logger_should_raise():
     ):
         log_to_stderr()
 
+
 @pytest.mark.xfail(reason="Bug in MS driver cutting column name with umlaut one letter short.")
 def test_umlaut_in_column_name():
     """
     Query a row with an umlaut in it. The column name should be unchanged in the arrow schema
     """
     query = f"SELECT a AS hällo"
-    reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL
-    )
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     it = iter(reader)
     actual = next(it)
 
@@ -912,9 +861,7 @@ def test_odbc_to_duckdb():
     arrow-odbc.
     """
     # Given an arrow record batch reader
-    arrow_reader = read_arrow_batches_from_odbc(
-        query="SELECT 42 as a", connection_string=MSSQL
-    )
+    arrow_reader = read_arrow_batches_from_odbc(query="SELECT 42 as a", connection_string=MSSQL)
 
     # When we transform the arrow record batch reader into a pyarrow record batch reader
     pyarrow_reader = arrow_reader.into_pyarrow_record_batch_reader()
@@ -936,9 +883,7 @@ def test_into_pyarrow_record_batch_reader_transfers_ownership():
     original instance being in an empty state.
     """
     # Given an arrow record batch reader
-    arrow_reader = read_arrow_batches_from_odbc(
-        query="SELECT 42 as a", connection_string=MSSQL
-    )
+    arrow_reader = read_arrow_batches_from_odbc(query="SELECT 42 as a", connection_string=MSSQL)
 
     # When we transform the arrow record batch reader into a pyarrow record batch reader
     _ = arrow_reader.into_pyarrow_record_batch_reader()
