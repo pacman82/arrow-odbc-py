@@ -3,6 +3,7 @@
 ## 6.0.0
 
 - Support for passing desired packet size to the ODBC driver. This may help with packet loss on fragile connections if the ODBC driver supports it.
+- `insert_into_table` will now wrap column names in double quotes then creating the statement, if the column name is not a valid identifier in transact SQL.
 
 ## 5.0.0
 
