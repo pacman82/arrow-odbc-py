@@ -1,6 +1,6 @@
 # Changelog
 
-## 5.1.0
+## 6.0.0
 
 - Support for passing desired packet size to the ODBC driver. This may help with packet loss on fragile connections if the ODBC driver supports it.
 
