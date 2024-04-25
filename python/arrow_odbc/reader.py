@@ -362,13 +362,14 @@ class BatchReader:
         """
         try:
             self.reader.into_concurrent()
-        except:
+        except Exception:
             # Making a reader concurrent will not change its schema, yet if there is an error the
             # reader is destroyed and its schema is empty.
             # self.schema == self.reader.schema()
             # should always be true and so asigning it never would make the code incorrect. Yet we
             # only need to do so if it actually changes.
             self.schema = self.reader.schema()
+            raise
 
 
 def read_arrow_batches_from_odbc(
