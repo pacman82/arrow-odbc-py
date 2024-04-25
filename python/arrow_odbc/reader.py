@@ -316,9 +316,10 @@ class BatchReader:
         with other libraries like e.g. DuckDB. In order to do this you can use this method to
         convert the ``arrow-odbc`` BatchReader into a ``pyarrow`` ``RecordBatchReader``.
         """
-        # Move self to tmp
+        # New empty tmp reader
         reader = _BatchReaderRaii()
         tmp = BatchReader(reader)
+        # Swap self and tmp
         tmp.reader, self.reader = self.reader, tmp.reader
         tmp.schema, self.schema = self.schema, tmp.schema
         return pyarrow.RecordBatchReader.from_batches(tmp.schema, tmp)
