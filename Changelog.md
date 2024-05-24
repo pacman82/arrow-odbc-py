@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.0.0
+
+- unsigned TinyInt is now mapped to `UInt8`.
+
 ## 6.0.0
 
 - Support for passing desired packet size to the ODBC driver. This may help with packet loss on fragile connections if the ODBC driver supports it.

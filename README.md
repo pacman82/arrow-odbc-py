@@ -143,7 +143,8 @@ There is no ready made wheel for the platform you want to target? Do not worry, 
 | Timestamp(p: 4..6)       | TimestampMicroSecond |
 | Timestamp(p >= 7 )       | TimestampNanoSecond  |
 | BigInt                   | Int64                |
-| TinyInt                  | Int8                 |
+| TinyInt Signed           | Int8                 |
+| TinyInt Unsigned         | UInt8                |
 | Bit                      | Boolean              |
 | Varbinary                | Binary               |
 | Binary                   | FixedSizedBinary     |
