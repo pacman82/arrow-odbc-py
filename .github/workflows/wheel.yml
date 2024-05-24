@@ -33,9 +33,9 @@ jobs:
         pip install twine
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
 
-  os-x-wheel:
+  osx_13_x86:
 
-    runs-on: macos-latest
+    runs-on: macos_x86_wheel
 
     steps:
     - uses: actions/checkout@v4
@@ -65,7 +65,7 @@ jobs:
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
 
 
-  macos-wheel:
+  macos-wheel-m1:
 
     runs-on: flyci-macos-14-m1
 

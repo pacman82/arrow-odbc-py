@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.0.1
+
+- Build wheel for MacOS 13 x86
+
 ## 7.0.0
 
 - unsigned TinyInt is now mapped to `UInt8`.
