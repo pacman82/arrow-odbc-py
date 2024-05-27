@@ -16,9 +16,23 @@ on:
 
 jobs:
   windows-wheel:
-
     runs-on: windows-latest
-
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - name: Publish package
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install build
+        python -m build
+        pip install twine
+        twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
+        
+  macos-x86-wheel:
+    runs-on: macos_x86_wheel
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
@@ -33,29 +47,8 @@ jobs:
         pip install twine
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
 
-  # Workers seem to not pick this up
-  # osx_13_x86:
-
-  #   runs-on: macos_x86_wheel
-
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #   - name: Set up Python
-  #     uses: actions/setup-python@v5
-  #     with:
-  #       python-version: '3.x'
-  #   - name: Publish package
-  #     run: |
-  #       python -m pip install --upgrade pip
-  #       python -m pip install build
-  #       python -m build
-  #       pip install twine
-  #       twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
-
   manylinux-wheel:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
     - name: Build Manylinux wheel
@@ -67,9 +60,7 @@ jobs:
 
 
   macos-wheel-m1:
-
     runs-on: flyci-macos-14-m1
-
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
@@ -82,12 +73,10 @@ jobs:
         toolchain: stable
         default: true
         override: true
-
     - name: Install Unix ODBC
       run: |
         brew install unixodbc
         sudo ln -s /opt/homebrew/lib ~/lib
-
     - name: Publish package
       run: |
         python -m pip install --upgrade pip
