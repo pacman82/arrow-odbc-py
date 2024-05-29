@@ -32,7 +32,7 @@ jobs:
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
         
   macos-x86-wheel:
-    runs-on: osx_13_x86
+    runs-on: macos-12
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
