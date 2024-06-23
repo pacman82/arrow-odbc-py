@@ -1,9 +1,7 @@
 import datetime
-import gc
 import os
 
 import pyarrow as pa
-import pyarrow.csv as csv
 import pyarrow.parquet as pq
 
 import duckdb
@@ -11,7 +9,7 @@ import pytest
 import pyodbc
 
 from typing import List, Any
-from subprocess import run, check_output
+from subprocess import check_output
 
 from pytest import raises
 
@@ -98,7 +96,7 @@ def test_skip_to_second_result_set():
     Calling `more_results` should allow to consume the next result set
     """
     # This statement produces two result sets
-    query = f"SELECT 1 AS a; SELECT 2 AS b;"
+    query = "SELECT 1 AS a; SELECT 2 AS b;"
 
     reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
@@ -120,7 +118,7 @@ def test_more_results_return_should_indicate_if_there_is_a_result_set():
     not to be extracted
     """
     # This statement produces two result sets
-    query = f"SELECT 1 AS a; SELECT 2 AS b;"
+    query = "SELECT 1 AS a; SELECT 2 AS b;"
 
     reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
@@ -133,7 +131,7 @@ def test_custom_schema_for_second_result_set():
     Generate two result sets. Fetch the second of the two as text using a custom schema.
     """
     # This statement produces two result sets
-    query = f"SELECT 1 AS a; SELECT 2 AS a;"
+    query = "SELECT 1 AS a; SELECT 2 AS a;"
 
     reader = read_arrow_batches_from_odbc(query=query, batch_size=1, connection_string=MSSQL)
     # Ignore first result and use second straight away
@@ -151,7 +149,7 @@ def test_advancing_past_last_result_set_leaves_empty_reader():
     batches.
     """
     # This statement produces one result
-    query = f"SELECT 1 AS a;"
+    query = "SELECT 1 AS a;"
 
     reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     # Move to a second result set, which does not exist
@@ -168,7 +166,7 @@ def test_making_an_empty_reader_concurrent_is_no_error():
     Making an empty reader, which has been moved past the last result set, concurrent has no effect.
     """
     # This statement produces one result
-    query = f"SELECT 1 AS a;"
+    query = "SELECT 1 AS a;"
 
     reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     # Move to a second result set, which does not exist
@@ -371,7 +369,7 @@ def test_specify_user_and_password_separatly():
     Query a table with one row. Should return one batch
     """
 
-    query = f"SELECT 42 as a;"
+    query = "SELECT 42 as a;"
 
     # Connection string without credentials
     connection_string = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;"
@@ -554,7 +552,7 @@ def test_allocation_erros():
     query = f"SELECT * FROM {table}"
 
     with raises(Error, match="Column buffer is too large to be allocated."):
-        reader = read_arrow_batches_from_odbc(
+        _reader = read_arrow_batches_from_odbc(
             query=query,
             batch_size=1000,
             # Deactivate size limit, so we have an easier time triggering allocation errors
@@ -580,7 +578,7 @@ def test_iris():
     reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
 
     for batch in reader:
-        df = batch.to_pydict()
+        _df = batch.to_pydict()
 
 
 def test_image():
@@ -591,7 +589,7 @@ def test_image():
     setup_table(table=table, column_type="Image", values=[])
     query = f"SELECT CAST(a as VARBINARY(2048)) FROM {table}"
 
-    reader = read_arrow_batches_from_odbc(
+    _reader = read_arrow_batches_from_odbc(
         query=query,
         batch_size=1000,
         connection_string=MSSQL,
@@ -662,19 +660,21 @@ def test_map_f32_to_f64():
     query = f"SELECT (a) FROM {table}"
 
     # When
-    map_schema = lambda schema: pa.schema(
-        [
-            (
-                name,
+    def map_schema(schema):
+        return pa.schema(
+            [
                 (
-                    pa.float64()
-                    if schema.field(name).type == pa.float32()
-                    else schema.field(name).type
-                ),
-            )
-            for name in schema.names
-        ]
-    )
+                    name,
+                    (
+                        pa.float64()
+                        if schema.field(name).type == pa.float32()
+                        else schema.field(name).type
+                    ),
+                )
+                for name in schema.names
+            ]
+        )
+
     reader = read_arrow_batches_from_odbc(
         query=query, batch_size=1, connection_string=MSSQL, map_schema=map_schema
     )
@@ -842,7 +842,7 @@ def test_umlaut_in_column_name():
     """
     Query a row with an umlaut in it. The column name should be unchanged in the arrow schema
     """
-    query = f"SELECT a AS hällo"
+    query = "SELECT a AS hällo"
     reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     it = iter(reader)
     actual = next(it)
