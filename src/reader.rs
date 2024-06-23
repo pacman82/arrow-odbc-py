@@ -135,10 +135,6 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
             .collect()
     };
 
-    // Use database managment system name to see if we need to apply workarounds
-    let dbms_name = try_!(connection.0.database_management_system_name());
-    debug!("Database managment system name as reported by ODBC: {dbms_name}");
-
     let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
     if let Some(cursor) = maybe_cursor {
         reader.as_mut().promote_to_cursor(cursor);

@@ -11,6 +11,7 @@ use std::{borrow::Cow, ptr::null_mut, slice, str, sync::OnceLock};
 use arrow_odbc::odbc_api::{escape_attribute_value, Connection, ConnectionOptions, Environment};
 
 pub use error::{arrow_odbc_error_free, arrow_odbc_error_message, ArrowOdbcError};
+use log::debug;
 pub use logging::arrow_odbc_log_to_stderr;
 pub use reader::{
     arrow_odbc_reader_free, arrow_odbc_reader_make, arrow_odbc_reader_next, ArrowOdbcReader,
@@ -77,6 +78,10 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
         &connection_string,
         ConnectionOptions { login_timeout_sec, packet_size }
     ));
+
+    // Log dbms name to ease debugging of issues.
+    let dbms_name = try_!(connection.database_management_system_name());
+    debug!("Database managment system name as reported by ODBC: {dbms_name}");
 
     *connection_out = Box::into_raw(Box::new(OdbcConnection(connection)));
     null_mut()
