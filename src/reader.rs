@@ -135,10 +135,9 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
             .collect()
     };
 
-    let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
-    if let Some(cursor) = maybe_cursor {
-        reader.as_mut().promote_to_cursor(cursor);
-    };
+    reader.as_mut().set_connection(connection.0);
+    try_!(reader.as_mut().promote_to_cursor(query, &parameters[..]));
+
     null_mut() // Ok(())
 }
 
