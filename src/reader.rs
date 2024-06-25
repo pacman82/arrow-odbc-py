@@ -73,12 +73,8 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(
     let dbms_name = try_!(connection.0.database_management_system_name());
     debug!("Database managment system name as reported by ODBC: {dbms_name}");
 
-    let maybe_cursor = try_!(connection.0.into_cursor(query, &parameters[..]));
-    let reader = if let Some(cursor) = maybe_cursor {
-        ArrowOdbcReader::new(cursor)
-    } else {
-        ArrowOdbcReader::empty()
-    };
+    let mut reader = ArrowOdbcReader::new(connection.0);
+    try_!(reader.promote_to_cursor(query, &parameters[..]));
     *reader_out = Box::into_raw(Box::new(reader));
     null_mut() // Ok(())
 }
