@@ -46,9 +46,9 @@ pub enum ArrowOdbcReader {
 }
 
 impl ArrowOdbcReader {
-    /// Creates a new reader in Cursor state.
-    pub fn new(cursor: CursorImpl<StatementConnection<'static>>) -> Self {
-        Self::Cursor(cursor)
+    /// Creates a new reader in Connection state.
+    pub fn new(connection: Connection<'static>) -> Self {
+        Self::Connection(connection)
     }
 
     pub fn empty() -> Self {
@@ -108,8 +108,8 @@ impl ArrowOdbcReader {
         *self = ArrowOdbcReader::Connection(connection)
     }
 
-    /// Promote Connection to cursor state. If this operation fails, the reader will be in empty
-    /// state.
+    /// Promote Connection to cursor state. If this operation fails, the reader will stay in
+    /// connection state.
     pub fn promote_to_cursor(&mut self, query: &str, params: impl ParameterCollectionRef) -> Result<(), ArrowOdbcError> {
         // Move self into a temporary instance we own, in order to take ownership of the inner
         // reader and move it to a different state.
@@ -125,8 +125,15 @@ impl ArrowOdbcReader {
             }
         };
 
-        if let Some(cursor) = conn.into_cursor(query, params)? {
-            *self = ArrowOdbcReader::Cursor(cursor);
+        match conn.into_cursor(query, params) {
+            Ok(None) => (),
+            Ok(Some(cursor)) => {
+                *self = ArrowOdbcReader::Cursor(cursor);
+            },
+            Err(error) => {
+                *self = ArrowOdbcReader::Connection(error.connection);
+                return Err(error.error.into())
+            },
         }
         Ok(())
     }
