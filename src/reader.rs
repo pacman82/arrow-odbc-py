@@ -17,6 +17,24 @@ use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, OdbcConnection}
 pub use self::arrow_odbc_reader::ArrowOdbcReader;
 
 
+/// Set a reader into connection state
+///
+/// # Safety
+///
+/// * `reader` must point to a valid reader in empty state.
+/// * `connection` must point to a valid OdbcConnection. This function takes ownership of the
+///   connection, even in case of an error. So The connection must not be freed explicitly
+///   afterwards.
+
+#[no_mangle]
+pub unsafe extern "C" fn arrow_odbc_reader_set_connection(
+    mut reader: NonNull<ArrowOdbcReader>,
+    connection: NonNull<OdbcConnection>,
+) {
+    let connection = *Box::from_raw(connection.as_ptr());
+    reader.as_mut().set_connection(connection.0);
+}
+
 /// Creates an Arrow ODBC reader instance.
 ///
 /// Executes the SQL Query and moves the reader into cursor state.
@@ -48,7 +66,6 @@ pub use self::arrow_odbc_reader::ArrowOdbcReader;
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_query(
     mut reader: NonNull<ArrowOdbcReader>,
-    connection: NonNull<OdbcConnection>,
     query_buf: *const u8,
     query_len: usize,
     parameters: *const *mut ArrowOdbcParameter,
@@ -57,8 +74,6 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
     // Transtlate C Args into more idiomatic rust representations
     let query = slice::from_raw_parts(query_buf, query_len);
     let query = str::from_utf8(query).unwrap();
-
-    let connection = *Box::from_raw(connection.as_ptr());
 
     let parameters = if parameters.is_null() {
         Vec::new()
@@ -69,7 +84,6 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
             .collect()
     };
 
-    reader.as_mut().set_connection(connection.0);
     try_!(reader.as_mut().promote_to_cursor(query, &parameters[..]));
 
     null_mut() // Ok(())
@@ -83,7 +97,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
 /// * `reader_out` will point to an instance of `ArrowOdbcReader`. Ownership is transferred to the
 ///   caller.
 #[no_mangle]
-pub unsafe extern "C" fn arrow_odbc_reader_make_empty(reader_out: *mut *mut ArrowOdbcReader) {
+pub unsafe extern "C" fn arrow_odbc_reader_make(reader_out: *mut *mut ArrowOdbcReader) {
     let reader = ArrowOdbcReader::empty();
     *reader_out = Box::into_raw(Box::new(reader));
 }

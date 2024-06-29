@@ -35,7 +35,7 @@ class _BatchReaderRaii:
 
     def __init__(self):
         reader_out = ffi.new("ArrowOdbcReader **")
-        lib.arrow_odbc_reader_make_empty(reader_out)
+        lib.arrow_odbc_reader_make(reader_out)
         # We take ownership of the corresponding reader written in Rust and keep it alive until
         # `self` is deleted.
         self.handle = reader_out[0]
@@ -68,15 +68,31 @@ class _BatchReaderRaii:
         error = lib.arrow_odbc_reader_into_concurrent(self.handle)
         raise_on_error(error)
 
-    def query(
+    def connect(
         self,
-        query: str,
         connection_string: str,
         user: Optional[str],
         password: Optional[str],
-        parameters: Optional[List[Optional[str]]],
         login_timeout_sec: Optional[int],
         packet_size: Optional[int],
+    ):
+        connection = connect_to_database(
+            connection_string, user, password, login_timeout_sec, packet_size
+        )
+
+        # Connecting to the database has been successful. Note that connection does not truly take
+        # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
+        # connection would not be closed and its associated resources would not be freed.
+        # However, this is fine since everything from here on out until we call
+        # arrow_odbc_reader_set_connection is infalliable. arrow_odbc_reader_connection will truly
+        # take ownership of the connection.
+
+        lib.arrow_odbc_reader_set_connection(self.handle, connection)
+
+    def query(
+        self,
+        query: str,
+        parameters: Optional[List[Optional[str]]],
     ):
         query_bytes = query.encode("utf-8")
 
@@ -99,24 +115,12 @@ class _BatchReaderRaii:
             # payload is just referenced.
             encoded_parameters = [to_bytes_and_len(p) for p in parameters]
 
-        connection = connect_to_database(
-            connection_string, user, password, login_timeout_sec, packet_size
-        )
-
-        # Connecting to the database has been successful. Note that connection does not truly take
-        # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
-        # connection would not be closed and its associated resources would not be freed.
-        # However, this is fine since everything from here on out until we call
-        # arrow_odbc_reader_make is infalliable. arrow_odbc_reader_query will truly take ownership
-        # of the connection. Even if it should fail, it will be closed correctly.
-
         for p_index in range(0, parameters_len):
             (p_bytes, p_len) = encoded_parameters[p_index]
             parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(p_bytes, p_len)
 
         error = lib.arrow_odbc_reader_query(
             self.handle,
-            connection,
             query_bytes,
             len(query_bytes),
             parameters_array,
@@ -492,14 +496,17 @@ def read_arrow_batches_from_odbc(
     """
     reader = _BatchReaderRaii()
 
-    reader.query(
-        query=query,
+    reader.connect(
         connection_string=connection_string,
         user=user,
         password=password,
-        parameters=parameters,
         login_timeout_sec=login_timeout_sec,
         packet_size=packet_size,
+    )
+
+    reader.query(
+        query=query,
+        parameters=parameters,
     )
 
     if max_text_size is None:
