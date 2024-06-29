@@ -11,73 +11,11 @@ use std::{
 
 use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema};
 use arrow_odbc::OdbcReaderBuilder;
-use log::debug;
 
 use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, OdbcConnection};
 
 pub use self::arrow_odbc_reader::ArrowOdbcReader;
 
-/// Creates an Arrow ODBC reader instance.
-///
-/// Takes ownership of connection even in case of an error.
-///
-/// # Safety
-///
-/// * `connection` must point to a valid OdbcConnection. This function takes ownership of the
-///   connection, even in case of an error. So The connection must not be freed explicitly
-///   afterwards.
-/// * `query_buf` must point to a valid utf-8 string
-/// * `query_len` describes the len of `query_buf` in bytes.
-/// * `parameters` must contain only valid pointers. This function takes ownership of all of them
-///   independent if the function succeeds or not. Yet it does not take ownership of the array
-///   itself.
-/// * `parameters_len` number of elements in parameters.
-/// * `max_text_size` optional upper bound for the size of text columns. Use `0` to indicate that no
-///   uppper bound applies.
-/// * `max_binary_size` optional upper bound for the size of binary columns. Use `0` to indicate
-///   that no uppper bound applies.
-/// * `fallibale_allocations`: `TRUE` if allocations should return an error, `FALSE` if it is fine
-///   to abort the process. Enabling might have a performance overhead, so it might be desirable to
-///   disable it, if you know there is enough memory available.
-/// * `schema`: Optional input arrow schema. NULL means no input schema is supplied. Should a
-///   schema be supplied `schema` Rust will take ownership of it an the `schema` will be
-///   overwritten with an empty one. This means the Python code, must only deallocate the memory
-///   directly pointed to by `schema`, but not freeing the resources of the passed schema.
-/// * `reader_out` in case of success this will point to an instance of `ArrowOdbcReader`.
-///   Ownership is transferred to the caller.
-#[no_mangle]
-pub unsafe extern "C" fn arrow_odbc_reader_make(
-    connection: NonNull<OdbcConnection>,
-    query_buf: *const u8,
-    query_len: usize,
-    parameters: *const *mut ArrowOdbcParameter,
-    parameters_len: usize,
-    reader_out: *mut *mut ArrowOdbcReader,
-) -> *mut ArrowOdbcError {
-    // Transtlate C Args into more idiomatic rust representations
-    let query = slice::from_raw_parts(query_buf, query_len);
-    let query = str::from_utf8(query).unwrap();
-
-    let connection = *Box::from_raw(connection.as_ptr());
-
-    let parameters = if parameters.is_null() {
-        Vec::new()
-    } else {
-        slice::from_raw_parts(parameters, parameters_len)
-            .iter()
-            .map(|&p| Box::from_raw(p).unwrap())
-            .collect()
-    };
-
-    // Use database managment system name to see if we need to apply workarounds
-    let dbms_name = try_!(connection.0.database_management_system_name());
-    debug!("Database managment system name as reported by ODBC: {dbms_name}");
-
-    let mut reader = ArrowOdbcReader::new(connection.0);
-    try_!(reader.promote_to_cursor(query, &parameters[..]));
-    *reader_out = Box::into_raw(Box::new(reader));
-    null_mut() // Ok(())
-}
 
 /// Creates an Arrow ODBC reader instance.
 ///

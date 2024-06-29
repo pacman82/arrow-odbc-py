@@ -13,9 +13,7 @@ use arrow_odbc::odbc_api::{escape_attribute_value, Connection, ConnectionOptions
 pub use error::{arrow_odbc_error_free, arrow_odbc_error_message, ArrowOdbcError};
 use log::debug;
 pub use logging::arrow_odbc_log_to_stderr;
-pub use reader::{
-    arrow_odbc_reader_free, arrow_odbc_reader_make, arrow_odbc_reader_next, ArrowOdbcReader,
-};
+pub use reader::{arrow_odbc_reader_free, arrow_odbc_reader_next, ArrowOdbcReader};
 pub use writer::{
     arrow_odbc_writer_free, arrow_odbc_writer_make, arrow_odbc_writer_write_batch, ArrowOdbcWriter,
 };
@@ -76,7 +74,10 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
 
     let connection = try_!(env.connect_with_connection_string(
         &connection_string,
-        ConnectionOptions { login_timeout_sec, packet_size }
+        ConnectionOptions {
+            login_timeout_sec,
+            packet_size
+        }
     ));
 
     // Log dbms name to ease debugging of issues.
