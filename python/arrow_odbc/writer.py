@@ -2,7 +2,7 @@ from typing import Optional, Any
 
 from pyarrow import RecordBatchReader
 from pyarrow.cffi import ffi as arrow_ffi
-from arrow_odbc.connect import connect_to_database
+from arrow_odbc.connect import ConnectionRaii
 
 from .arrow_odbc import ffi, lib  # type: ignore
 from .error import raise_on_error
@@ -124,7 +124,7 @@ def insert_into_table(
         # Export the schema to the C Data structures.
         reader.schema._export_to_c(c_schema_ptr)
 
-        connection = connect_to_database(
+        connection = ConnectionRaii(
             connection_string, user, password, login_timeout_sec, packet_size
         )
 
@@ -136,7 +136,7 @@ def insert_into_table(
 
         writer_out = ffi.new("ArrowOdbcWriter **")
         error = lib.arrow_odbc_writer_make(
-            connection,
+            connection._arrow_odbc_connection(),
             table_bytes,
             len(table_bytes),
             chunk_size,

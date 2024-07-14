@@ -12,7 +12,7 @@ use std::{
 use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema};
 use arrow_odbc::OdbcReaderBuilder;
 
-use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, OdbcConnection};
+use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, ArrowOdbcConnection};
 
 pub use self::arrow_odbc_reader::ArrowOdbcReader;
 
@@ -29,10 +29,9 @@ pub use self::arrow_odbc_reader::ArrowOdbcReader;
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_set_connection(
     mut reader: NonNull<ArrowOdbcReader>,
-    connection: NonNull<OdbcConnection>,
+    mut connection: NonNull<ArrowOdbcConnection>,
 ) {
-    let connection = *Box::from_raw(connection.as_ptr());
-    reader.as_mut().set_connection(connection.take());
+    reader.as_mut().set_connection(connection.as_mut().take());
 }
 
 /// Creates an Arrow ODBC reader instance.

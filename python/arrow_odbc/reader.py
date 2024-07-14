@@ -6,7 +6,7 @@ import pyarrow
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
 from pyarrow import RecordBatch, Schema, Array  # type: ignore
 
-from arrow_odbc.connect import to_bytes_and_len, connect_to_database  # type: ignore
+from arrow_odbc.connect import to_bytes_and_len, ConnectionRaii  # type: ignore
 
 from .arrow_odbc import ffi, lib  # type: ignore
 from .error import raise_on_error
@@ -76,18 +76,10 @@ class _BatchReaderRaii:
         login_timeout_sec: Optional[int],
         packet_size: Optional[int],
     ):
-        connection = connect_to_database(
+        connection = ConnectionRaii(
             connection_string, user, password, login_timeout_sec, packet_size
         )
-
-        # Connecting to the database has been successful. Note that connection does not truly take
-        # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
-        # connection would not be closed and its associated resources would not be freed.
-        # However, this is fine since everything from here on out until we call
-        # arrow_odbc_reader_set_connection is infalliable. arrow_odbc_reader_connection will truly
-        # take ownership of the connection.
-
-        lib.arrow_odbc_reader_set_connection(self.handle, connection)
+        lib.arrow_odbc_reader_set_connection(self.handle, connection._arrow_odbc_connection())
 
     def query(
         self,

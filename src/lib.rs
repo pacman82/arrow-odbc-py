@@ -12,7 +12,7 @@ use std::sync::OnceLock;
 use arrow_odbc::odbc_api::Environment;
 
 pub use self::{
-    connection::{arrow_odbc_connect_with_connection_string, OdbcConnection},
+    connection::{arrow_odbc_connection_make, ArrowOdbcConnection},
     error::{arrow_odbc_error_free, arrow_odbc_error_message, ArrowOdbcError},
     logging::arrow_odbc_log_to_stderr,
     reader::{arrow_odbc_reader_free, arrow_odbc_reader_next, ArrowOdbcReader},

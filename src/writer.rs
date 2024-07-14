@@ -11,7 +11,7 @@ use arrow_odbc::{
     OdbcWriter,
 };
 
-use crate::{try_, ArrowOdbcError, OdbcConnection};
+use crate::{try_, ArrowOdbcError, ArrowOdbcConnection};
 
 /// Opaque type holding all the state associated with an ODBC writer implementation in Rust. This
 /// type also has ownership of the ODBC Connection handle.
@@ -43,15 +43,14 @@ pub unsafe extern "C" fn arrow_odbc_writer_free(writer: NonNull<ArrowOdbcWriter>
 ///   is transferred to the caller.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_writer_make(
-    connection: NonNull<OdbcConnection>,
+    mut connection: NonNull<ArrowOdbcConnection>,
     table_buf: *const u8,
     table_len: usize,
     chunk_size: usize,
     schema: *const c_void,
     writer_out: *mut *mut ArrowOdbcWriter,
 ) -> *mut ArrowOdbcError {
-    let connection = *Box::from_raw(connection.as_ptr());
-    let connection = connection.take();
+    let connection = connection.as_mut().take();
 
     let table = slice::from_raw_parts(table_buf, table_len);
     let table = str::from_utf8(table).unwrap();
