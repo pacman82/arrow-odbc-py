@@ -6,7 +6,14 @@ use log::debug;
 use crate::{try_, ArrowOdbcError, ENV};
 
 /// Opaque type to transport connection to an ODBC Datasource over language boundry
-pub struct OdbcConnection(pub Connection<'static>);
+pub struct OdbcConnection(Connection<'static>);
+
+impl OdbcConnection {
+    /// Take the inner connection out of its wrapper
+    pub fn take(self) -> Connection<'static> {
+        self.0
+    }
+}
 
 /// Allocate and open an ODBC connection using the specified connection string. In case of an error
 /// this function returns a NULL pointer.

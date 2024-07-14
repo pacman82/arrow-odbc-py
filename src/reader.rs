@@ -32,7 +32,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_set_connection(
     connection: NonNull<OdbcConnection>,
 ) {
     let connection = *Box::from_raw(connection.as_ptr());
-    reader.as_mut().set_connection(connection.0);
+    reader.as_mut().set_connection(connection.take());
 }
 
 /// Creates an Arrow ODBC reader instance.

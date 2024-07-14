@@ -51,7 +51,7 @@ pub unsafe extern "C" fn arrow_odbc_writer_make(
     writer_out: *mut *mut ArrowOdbcWriter,
 ) -> *mut ArrowOdbcError {
     let connection = *Box::from_raw(connection.as_ptr());
-    let connection = connection.0;
+    let connection = connection.take();
 
     let table = slice::from_raw_parts(table_buf, table_len);
     let table = str::from_utf8(table).unwrap();
