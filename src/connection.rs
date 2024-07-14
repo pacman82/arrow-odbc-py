@@ -9,6 +9,10 @@ use crate::{try_, ArrowOdbcError, ENV};
 pub struct OdbcConnection(Connection<'static>);
 
 impl OdbcConnection {
+    pub fn new(connection: Connection<'static>) -> Self {
+        OdbcConnection(connection)
+    }
+
     /// Take the inner connection out of its wrapper
     pub fn take(self) -> Connection<'static> {
         self.0
@@ -74,7 +78,7 @@ pub unsafe extern "C" fn arrow_odbc_connect_with_connection_string(
     let dbms_name = try_!(connection.database_management_system_name());
     debug!("Database managment system name as reported by ODBC: {dbms_name}");
 
-    *connection_out = Box::into_raw(Box::new(OdbcConnection(connection)));
+    *connection_out = Box::into_raw(Box::new(OdbcConnection::new(connection)));
     null_mut()
 }
 
