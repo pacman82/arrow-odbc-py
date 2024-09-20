@@ -22,7 +22,8 @@ from arrow_odbc import (
     Error,
 )
 
-MSSQL = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;"
+MSSQL = "Driver={ODBC Driver 18 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;\
+    TrustServerCertificate=yes;"
 
 log_to_stderr()
 enable_odbc_connection_pooling()
