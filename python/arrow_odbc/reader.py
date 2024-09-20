@@ -6,7 +6,7 @@ import pyarrow
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
 from pyarrow import RecordBatch, Schema, Array  # type: ignore
 
-from arrow_odbc.connect import to_bytes_and_len, ConnectionRaii  # type: ignore
+from arrow_odbc.connect import to_bytes_and_len, connect  # type: ignore
 
 from .arrow_odbc import ffi, lib  # type: ignore
 from .error import raise_on_error
@@ -76,9 +76,7 @@ class _BatchReaderRaii:
         login_timeout_sec: Optional[int],
         packet_size: Optional[int],
     ):
-        connection = ConnectionRaii(
-            connection_string, user, password, login_timeout_sec, packet_size
-        )
+        connection = connect(connection_string, user, password, login_timeout_sec, packet_size)
         lib.arrow_odbc_reader_set_connection(self.handle, connection._arrow_odbc_connection())
 
     def query(

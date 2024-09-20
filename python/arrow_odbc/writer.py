@@ -2,7 +2,7 @@ from typing import Optional, Any
 
 from pyarrow import RecordBatchReader
 from pyarrow.cffi import ffi as arrow_ffi
-from arrow_odbc.connect import ConnectionRaii
+from arrow_odbc.connect import connect
 
 from .arrow_odbc import ffi, lib  # type: ignore
 from .error import raise_on_error
@@ -124,9 +124,7 @@ def insert_into_table(
         # Export the schema to the C Data structures.
         reader.schema._export_to_c(c_schema_ptr)
 
-        connection = ConnectionRaii(
-            connection_string, user, password, login_timeout_sec, packet_size
-        )
+        connection = connect(connection_string, user, password, login_timeout_sec, packet_size)
 
         # Connecting to the database has been successful. Note that connection does not truly take
         # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
