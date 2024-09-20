@@ -36,7 +36,6 @@ class ConnectionRaii:
 
 
 def connect(
-    self,
     connection_string: str,
     user: Optional[str],
     password: Optional[str],
