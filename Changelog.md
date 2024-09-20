@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.0.5
+
+- Updated Rust dependencies
+
 ## 7.0.1-4
 
 - Build wheel for MacOS 13 x86
