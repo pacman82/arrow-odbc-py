@@ -29,9 +29,6 @@ use arrow_odbc::{
 pub enum ArrowOdbcReader {
     /// Either a freshly created instance, or all our resources have been moved to another instance.
     Empty,
-    /// Either a connection freshly generated, or we have fully consumed the result set, and there
-    /// is nothing more to fetch.
-    Connection(Connection<'static>),
     /// We can not read batches in cursor state yet. We still would need to figure out the schema
     /// of the source data and (usually) infer the arrow schema from it. So in earlier versions
     /// we created everything directly in `Reader` state. However, if we want the user to be able
@@ -54,7 +51,7 @@ impl ArrowOdbcReader {
         &mut self,
     ) -> Result<Option<(FFI_ArrowArray, FFI_ArrowSchema)>, ArrowOdbcError> {
         let next = match self {
-            ArrowOdbcReader::Empty | ArrowOdbcReader::Connection(_) => None,
+            ArrowOdbcReader::Empty => None,
             ArrowOdbcReader::Cursor(_) => {
                 unreachable!("Python code must not allow to call next_batch from cursor state")
             }
@@ -85,7 +82,7 @@ impl ArrowOdbcReader {
         let cursor = match tmp_self {
             // In case there has been a query without a result set, we could be in an empty state.
             // Let's just keep it, there is simply nothing to bind a buffer to.
-            ArrowOdbcReader::Empty | ArrowOdbcReader::Connection(_) => return Ok(()),
+            ArrowOdbcReader::Empty => return Ok(()),
             ArrowOdbcReader::Cursor(cursor) => cursor,
             ArrowOdbcReader::Reader(_) | ArrowOdbcReader::ConcurrentReader(_) => {
                 unreachable!("Python part must ensure to only promote cursors to readers.")
@@ -97,16 +94,11 @@ impl ArrowOdbcReader {
         Ok(())
     }
 
-    /// Take ownership of `connection` and set reader to connection state. All resources which
-    /// previously might have been associated with `self` would be deallocated.
-    pub fn set_connection(&mut self, connection: Connection<'static>) {
-        *self = ArrowOdbcReader::Connection(connection)
-    }
-
     /// Promote Connection to cursor state. If this operation fails, the reader will stay in
     /// connection state.
     pub fn promote_to_cursor(
         &mut self,
+        conn: Connection<'static>,
         query: &str,
         params: impl ParameterCollectionRef,
     ) -> Result<(), ArrowOdbcError> {
@@ -114,15 +106,6 @@ impl ArrowOdbcReader {
         // reader and move it to a different state.
         let mut tmp_self = ArrowOdbcReader::Empty;
         swap(self, &mut tmp_self);
-        let conn = match tmp_self {
-            ArrowOdbcReader::Connection(conn) => conn,
-            ArrowOdbcReader::Empty
-            | ArrowOdbcReader::Cursor(_)
-            | ArrowOdbcReader::Reader(_)
-            | ArrowOdbcReader::ConcurrentReader(_) => {
-                unreachable!("Python part must ensure to only connections to cursors.")
-            }
-        };
 
         match conn.into_cursor(query, params) {
             Ok(None) => (),
@@ -130,7 +113,6 @@ impl ArrowOdbcReader {
                 *self = ArrowOdbcReader::Cursor(cursor);
             }
             Err(error) => {
-                *self = ArrowOdbcReader::Connection(error.connection);
                 return Err(error.error.into());
             }
         }
@@ -145,7 +127,7 @@ impl ArrowOdbcReader {
         let mut tmp_self = ArrowOdbcReader::Empty;
         swap(self, &mut tmp_self);
         let cursor = match tmp_self {
-            ArrowOdbcReader::Empty | ArrowOdbcReader::Connection(_) => return Ok(false),
+            ArrowOdbcReader::Empty => return Ok(false),
             ArrowOdbcReader::Cursor(cursor) => cursor,
             ArrowOdbcReader::Reader(inner) => inner.into_cursor()?,
             ArrowOdbcReader::ConcurrentReader(inner) => inner.into_cursor()?,
@@ -161,7 +143,7 @@ impl ArrowOdbcReader {
 
     pub fn schema(&mut self) -> Result<FFI_ArrowSchema, ArrowOdbcError> {
         let schema_ffi = match self {
-            ArrowOdbcReader::Empty | ArrowOdbcReader::Connection(_) => {
+            ArrowOdbcReader::Empty => {
                 // A schema with no columns. Different from FFI_ArrowSchema empty, which can not be
                 // imported into pyarrow
                 let schema = Schema::empty();
@@ -197,7 +179,7 @@ impl ArrowOdbcReader {
 
         *self = match tmp_self {
             // Nothing to do. There is nothing left to fetch.
-            reader @ (ArrowOdbcReader::Empty | ArrowOdbcReader::Connection(_)) => reader,
+            ArrowOdbcReader::Empty => ArrowOdbcReader::Empty,
             ArrowOdbcReader::Cursor(_) => {
                 unreachable!("Python code must not allow to call into_concurrent from cursor state")
             }

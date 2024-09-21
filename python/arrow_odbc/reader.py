@@ -6,7 +6,7 @@ import pyarrow
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
 from pyarrow import RecordBatch, Schema, Array  # type: ignore
 
-from arrow_odbc.connect import to_bytes_and_len, connect  # type: ignore
+from arrow_odbc.connect import to_bytes_and_len, connect, ConnectionRaii  # type: ignore
 
 from .arrow_odbc import ffi, lib  # type: ignore
 from .error import raise_on_error
@@ -68,19 +68,9 @@ class _BatchReaderRaii:
         error = lib.arrow_odbc_reader_into_concurrent(self.handle)
         raise_on_error(error)
 
-    def connect(
-        self,
-        connection_string: str,
-        user: Optional[str],
-        password: Optional[str],
-        login_timeout_sec: Optional[int],
-        packet_size: Optional[int],
-    ):
-        connection = connect(connection_string, user, password, login_timeout_sec, packet_size)
-        lib.arrow_odbc_reader_set_connection(self.handle, connection._arrow_odbc_connection())
-
     def query(
         self,
+        connection: ConnectionRaii,
         query: str,
         parameters: Optional[List[Optional[str]]],
     ):
@@ -111,6 +101,7 @@ class _BatchReaderRaii:
 
         error = lib.arrow_odbc_reader_query(
             self.handle,
+            connection._arrow_odbc_connection(),
             query_bytes,
             len(query_bytes),
             parameters_array,
@@ -486,7 +477,7 @@ def read_arrow_batches_from_odbc(
     """
     reader = _BatchReaderRaii()
 
-    reader.connect(
+    connection = connect(
         connection_string=connection_string,
         user=user,
         password=password,
@@ -495,6 +486,7 @@ def read_arrow_batches_from_odbc(
     )
 
     reader.query(
+        connection=connection,
         query=query,
         parameters=parameters,
     )

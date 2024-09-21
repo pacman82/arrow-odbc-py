@@ -17,10 +17,7 @@ def to_bytes_and_len(value: Optional[str]) -> Tuple[bytes, int]:
 
 
 class ConnectionRaii:
-    def __init__(
-        self,
-        handle: Any
-    ) -> None:
+    def __init__(self, handle: Any) -> None:
         self.handle = handle
 
     def _arrow_odbc_connection(self) -> Any:
