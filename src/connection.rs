@@ -30,6 +30,11 @@ impl ArrowOdbcConnection {
             "Connection seem to already be in use, by some other reader or inserter.",
         ))
     }
+
+    pub fn give_back(&mut self, conn: Connection<'static>) {
+        let old = self.0.lock().unwrap().replace(conn);
+        debug_assert!(old.is_none())
+    }
 }
 
 /// Frees the resources associated with an ArrowOdbcConnection
