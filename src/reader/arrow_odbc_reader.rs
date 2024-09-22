@@ -40,8 +40,12 @@ pub enum ArrowOdbcReader {
     Cursor {
         cursor: CursorImpl<StatementConnection<'static>>,
     },
-    Reader(OdbcReader<CursorImpl<StatementConnection<'static>>>),
-    ConcurrentReader(ConcurrentOdbcReader<CursorImpl<StatementConnection<'static>>>),
+    Reader {
+        reader: OdbcReader<CursorImpl<StatementConnection<'static>>>,
+    },
+    ConcurrentReader {
+        reader: ConcurrentOdbcReader<CursorImpl<StatementConnection<'static>>>,
+    },
 }
 
 impl ArrowOdbcReader {
@@ -57,8 +61,8 @@ impl ArrowOdbcReader {
             ArrowOdbcReader::Cursor { .. } => {
                 unreachable!("Python code must not allow to call next_batch from cursor state")
             }
-            ArrowOdbcReader::Reader(reader) => reader.next().transpose()?,
-            ArrowOdbcReader::ConcurrentReader(reader) => reader.next().transpose()?,
+            ArrowOdbcReader::Reader { reader } => reader.next().transpose()?,
+            ArrowOdbcReader::ConcurrentReader { reader } => reader.next().transpose()?,
         };
         let next = if let Some(batch) = next {
             let struct_array: StructArray = batch.into();
@@ -86,13 +90,13 @@ impl ArrowOdbcReader {
             // Let's just keep it, there is simply nothing to bind a buffer to.
             ArrowOdbcReader::Empty => return Ok(()),
             ArrowOdbcReader::Cursor { cursor } => cursor,
-            ArrowOdbcReader::Reader(_) | ArrowOdbcReader::ConcurrentReader(_) => {
+            ArrowOdbcReader::Reader { .. } | ArrowOdbcReader::ConcurrentReader { .. } => {
                 unreachable!("Python part must ensure to only promote cursors to readers.")
             }
         };
         // There is another result set. Let us create a new reader
         let reader = builder.build(cursor)?;
-        *self = ArrowOdbcReader::Reader(reader);
+        *self = ArrowOdbcReader::Reader { reader };
         Ok(())
     }
 
@@ -131,8 +135,8 @@ impl ArrowOdbcReader {
         let cursor = match tmp_self {
             ArrowOdbcReader::Empty => return Ok(false),
             ArrowOdbcReader::Cursor { cursor } => cursor,
-            ArrowOdbcReader::Reader(inner) => inner.into_cursor()?,
-            ArrowOdbcReader::ConcurrentReader(inner) => inner.into_cursor()?,
+            ArrowOdbcReader::Reader { reader } => reader.into_cursor()?,
+            ArrowOdbcReader::ConcurrentReader { reader } => reader.into_cursor()?,
         };
         // We need to call ODBCs `more_results` in order to get the next one.
         if let Some(cursor) = cursor.more_results()? {
@@ -155,8 +159,8 @@ impl ArrowOdbcReader {
                 let schema = arrow_schema_from(cursor, false)?;
                 schema.try_into()?
             }
-            ArrowOdbcReader::Reader(inner) => {
-                let schema_ref = inner.schema();
+            ArrowOdbcReader::Reader { reader } => {
+                let schema_ref = reader.schema();
                 let schema = &*schema_ref;
                 schema.try_into()?
             }
@@ -164,8 +168,8 @@ impl ArrowOdbcReader {
             // reader. Every state change that would change it is performed on a sequential reader.
             // Yet the operation can be defined nicely, so we will do it despite this being
             // unreachable for now.
-            ArrowOdbcReader::ConcurrentReader(inner) => {
-                let schema_ref = inner.schema();
+            ArrowOdbcReader::ConcurrentReader { reader } => {
+                let schema_ref = reader.schema();
                 let schema = &*schema_ref;
                 schema.try_into()?
             }
@@ -186,10 +190,12 @@ impl ArrowOdbcReader {
                 unreachable!("Python code must not allow to call into_concurrent from cursor state")
             }
             // Nothing to do. Reader is already concurrent,
-            ArrowOdbcReader::ConcurrentReader(inner) => ArrowOdbcReader::ConcurrentReader(inner),
-            ArrowOdbcReader::Reader(inner) => {
-                let reader = inner.into_concurrent()?;
-                ArrowOdbcReader::ConcurrentReader(reader)
+            ArrowOdbcReader::ConcurrentReader { reader } => {
+                ArrowOdbcReader::ConcurrentReader { reader }
+            }
+            ArrowOdbcReader::Reader { reader } => {
+                let reader = reader.into_concurrent()?;
+                ArrowOdbcReader::ConcurrentReader { reader }
             }
         };
         Ok(())

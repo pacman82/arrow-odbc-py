@@ -16,7 +16,10 @@ pub use self::{
     error::{arrow_odbc_error_free, arrow_odbc_error_message, ArrowOdbcError},
     logging::arrow_odbc_log_to_stderr,
     reader::{arrow_odbc_reader_free, arrow_odbc_reader_next, ArrowOdbcReader},
-    writer::{arrow_odbc_writer_free, arrow_odbc_writer_make, arrow_odbc_writer_write_batch, ArrowOdbcWriter},
+    writer::{
+        arrow_odbc_writer_free, arrow_odbc_writer_make, arrow_odbc_writer_write_batch,
+        ArrowOdbcWriter,
+    },
 };
 
 /// Using an ODBC environment with static lifetime eases our work with concurrent fetching, as we

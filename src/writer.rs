@@ -11,7 +11,7 @@ use arrow_odbc::{
     OdbcWriter,
 };
 
-use crate::{try_, ArrowOdbcError, ArrowOdbcConnection};
+use crate::{try_, ArrowOdbcConnection, ArrowOdbcError};
 
 /// Opaque type holding all the state associated with an ODBC writer implementation in Rust. This
 /// type also has ownership of the ODBC Connection handle.

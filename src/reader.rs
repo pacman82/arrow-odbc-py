@@ -12,10 +12,9 @@ use std::{
 use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema};
 use arrow_odbc::OdbcReaderBuilder;
 
-use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcError, ArrowOdbcConnection};
+use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcConnection, ArrowOdbcError};
 
 pub use self::arrow_odbc_reader::ArrowOdbcReader;
-
 
 /// Creates an Arrow ODBC reader instance.
 ///
@@ -68,7 +67,9 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
             .collect()
     };
 
-    try_!(reader.as_mut().promote_to_cursor(connection, query, &parameters[..]));
+    try_!(reader
+        .as_mut()
+        .promote_to_cursor(connection, query, &parameters[..]));
 
     null_mut() // Ok(())
 }
