@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     ptr::{null_mut, NonNull},
-    slice, str,
+    slice, str, sync::{Arc, Mutex},
 };
 
 use arrow_odbc::odbc_api::{escape_attribute_value, Connection, ConnectionOptions, Environment};
@@ -10,16 +10,22 @@ use log::debug;
 use crate::{try_, ArrowOdbcError, ENV};
 
 /// Opaque type to transport connection to an ODBC Datasource over language boundry
-pub struct ArrowOdbcConnection(Option<Connection<'static>>);
+pub struct ArrowOdbcConnection(
+    // In order to support multiple consequtives inserts and reads, using the same connection we
+    // pass ownership of the "true" connection between inserter, reader and this instance. The idea
+    // is that e.g. the reader takes the connection from the option and returns it, once it is done
+    // with it.
+    Arc<Mutex<Option<Connection<'static>>>>
+);
 
 impl ArrowOdbcConnection {
     pub fn new(connection: Connection<'static>) -> Self {
-        ArrowOdbcConnection(Some(connection))
+        ArrowOdbcConnection(Arc::new(Mutex::new(Some(connection))))
     }
 
     /// Take the inner connection out of its wrapper
     pub fn take(&mut self) -> Connection<'static> {
-        self.0.take().unwrap()
+        self.0.lock().unwrap().take().unwrap()
     }
 }
 
