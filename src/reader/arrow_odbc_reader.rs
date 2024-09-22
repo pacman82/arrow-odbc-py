@@ -1,6 +1,6 @@
 use std::mem::swap;
 
-use crate::error::ArrowOdbcError;
+use crate::{error::ArrowOdbcError, ArrowOdbcConnection};
 use arrow::{
     array::{Array, StructArray},
     datatypes::Schema,
@@ -9,7 +9,7 @@ use arrow::{
 };
 use arrow_odbc::{
     arrow_schema_from,
-    odbc_api::{Connection, Cursor, CursorImpl, ParameterCollectionRef, StatementConnection},
+    odbc_api::{Cursor, CursorImpl, ParameterCollectionRef, StatementConnection},
     ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder,
 };
 
@@ -38,12 +38,15 @@ pub enum ArrowOdbcReader {
     /// the Python layer above should be able to make use of this in order to implement the schema
     /// mapping functionality.
     Cursor {
+        connection: ArrowOdbcConnection,
         cursor: CursorImpl<StatementConnection<'static>>,
     },
     Reader {
+        connection: ArrowOdbcConnection,
         reader: OdbcReader<CursorImpl<StatementConnection<'static>>>,
     },
     ConcurrentReader {
+        connection: ArrowOdbcConnection,
         reader: ConcurrentOdbcReader<CursorImpl<StatementConnection<'static>>>,
     },
 }
@@ -61,8 +64,8 @@ impl ArrowOdbcReader {
             ArrowOdbcReader::Cursor { .. } => {
                 unreachable!("Python code must not allow to call next_batch from cursor state")
             }
-            ArrowOdbcReader::Reader { reader } => reader.next().transpose()?,
-            ArrowOdbcReader::ConcurrentReader { reader } => reader.next().transpose()?,
+            ArrowOdbcReader::Reader { reader, .. } => reader.next().transpose()?,
+            ArrowOdbcReader::ConcurrentReader { reader, .. } => reader.next().transpose()?,
         };
         let next = if let Some(batch) = next {
             let struct_array: StructArray = batch.into();
@@ -85,18 +88,18 @@ impl ArrowOdbcReader {
         // reader and move it to a different state.
         let mut tmp_self = ArrowOdbcReader::Empty;
         swap(self, &mut tmp_self);
-        let cursor = match tmp_self {
+        let (cursor, connection) = match tmp_self {
             // In case there has been a query without a result set, we could be in an empty state.
             // Let's just keep it, there is simply nothing to bind a buffer to.
             ArrowOdbcReader::Empty => return Ok(()),
-            ArrowOdbcReader::Cursor { cursor } => cursor,
+            ArrowOdbcReader::Cursor { cursor, connection } => (cursor, connection),
             ArrowOdbcReader::Reader { .. } | ArrowOdbcReader::ConcurrentReader { .. } => {
                 unreachable!("Python part must ensure to only promote cursors to readers.")
             }
         };
         // There is another result set. Let us create a new reader
         let reader = builder.build(cursor)?;
-        *self = ArrowOdbcReader::Reader { reader };
+        *self = ArrowOdbcReader::Reader { reader, connection };
         Ok(())
     }
 
@@ -104,10 +107,12 @@ impl ArrowOdbcReader {
     /// connection state.
     pub fn promote_to_cursor(
         &mut self,
-        conn: Connection<'static>,
+        connection: ArrowOdbcConnection,
         query: &str,
         params: impl ParameterCollectionRef,
     ) -> Result<(), ArrowOdbcError> {
+        let conn = connection.take()?;
+
         // Move self into a temporary instance we own, in order to take ownership of the inner
         // reader and move it to a different state.
         let mut tmp_self = ArrowOdbcReader::Empty;
@@ -116,7 +121,7 @@ impl ArrowOdbcReader {
         match conn.into_cursor(query, params) {
             Ok(None) => (),
             Ok(Some(cursor)) => {
-                *self = ArrowOdbcReader::Cursor { cursor };
+                *self = ArrowOdbcReader::Cursor { cursor, connection };
             }
             Err(error) => {
                 return Err(error.error.into());
@@ -132,15 +137,17 @@ impl ArrowOdbcReader {
         // reader and move it to a different typestate.
         let mut tmp_self = ArrowOdbcReader::Empty;
         swap(self, &mut tmp_self);
-        let cursor = match tmp_self {
+        let (cursor, connection) = match tmp_self {
             ArrowOdbcReader::Empty => return Ok(false),
-            ArrowOdbcReader::Cursor { cursor } => cursor,
-            ArrowOdbcReader::Reader { reader } => reader.into_cursor()?,
-            ArrowOdbcReader::ConcurrentReader { reader } => reader.into_cursor()?,
+            ArrowOdbcReader::Cursor { cursor, connection } => (cursor, connection),
+            ArrowOdbcReader::Reader { reader, connection } => (reader.into_cursor()?, connection),
+            ArrowOdbcReader::ConcurrentReader { reader, connection } => {
+                (reader.into_cursor()?, connection)
+            }
         };
         // We need to call ODBCs `more_results` in order to get the next one.
         if let Some(cursor) = cursor.more_results()? {
-            *self = ArrowOdbcReader::Cursor { cursor };
+            *self = ArrowOdbcReader::Cursor { cursor, connection };
             Ok(true)
         } else {
             Ok(false)
@@ -155,11 +162,17 @@ impl ArrowOdbcReader {
                 let schema = Schema::empty();
                 schema.try_into()?
             }
-            ArrowOdbcReader::Cursor { cursor } => {
+            ArrowOdbcReader::Cursor {
+                cursor,
+                connection: _,
+            } => {
                 let schema = arrow_schema_from(cursor, false)?;
                 schema.try_into()?
             }
-            ArrowOdbcReader::Reader { reader } => {
+            ArrowOdbcReader::Reader {
+                reader,
+                connection: _,
+            } => {
                 let schema_ref = reader.schema();
                 let schema = &*schema_ref;
                 schema.try_into()?
@@ -168,7 +181,10 @@ impl ArrowOdbcReader {
             // reader. Every state change that would change it is performed on a sequential reader.
             // Yet the operation can be defined nicely, so we will do it despite this being
             // unreachable for now.
-            ArrowOdbcReader::ConcurrentReader { reader } => {
+            ArrowOdbcReader::ConcurrentReader {
+                reader,
+                connection: _,
+            } => {
                 let schema_ref = reader.schema();
                 let schema = &*schema_ref;
                 schema.try_into()?
@@ -190,12 +206,12 @@ impl ArrowOdbcReader {
                 unreachable!("Python code must not allow to call into_concurrent from cursor state")
             }
             // Nothing to do. Reader is already concurrent,
-            ArrowOdbcReader::ConcurrentReader { reader } => {
-                ArrowOdbcReader::ConcurrentReader { reader }
+            ArrowOdbcReader::ConcurrentReader { reader, connection } => {
+                ArrowOdbcReader::ConcurrentReader { reader, connection }
             }
-            ArrowOdbcReader::Reader { reader } => {
+            ArrowOdbcReader::Reader { reader, connection } => {
                 let reader = reader.into_concurrent()?;
-                ArrowOdbcReader::ConcurrentReader { reader }
+                ArrowOdbcReader::ConcurrentReader { reader, connection }
             }
         };
         Ok(())

@@ -17,6 +17,19 @@ use crate::{try_, ArrowOdbcConnection, ArrowOdbcError};
 /// type also has ownership of the ODBC Connection handle.
 pub struct ArrowOdbcWriter(OdbcWriter<StatementConnection<'static>>);
 
+impl ArrowOdbcWriter {
+    pub fn new(
+        connection: ArrowOdbcConnection,
+        table: &str,
+        schema: Schema,
+        chunk_size: usize,
+    ) -> Result<Self, ArrowOdbcError> {
+        let connection = connection.take()?;
+        let writer = OdbcWriter::from_connection(connection, &schema, table, chunk_size)?;
+        Ok(Self(writer))
+    }
+}
+
 /// Frees the resources associated with an ArrowOdbcWriter
 ///
 /// # Safety
@@ -43,14 +56,14 @@ pub unsafe extern "C" fn arrow_odbc_writer_free(writer: NonNull<ArrowOdbcWriter>
 ///   is transferred to the caller.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_writer_make(
-    mut connection: NonNull<ArrowOdbcConnection>,
+    connection: NonNull<ArrowOdbcConnection>,
     table_buf: *const u8,
     table_len: usize,
     chunk_size: usize,
     schema: *const c_void,
     writer_out: *mut *mut ArrowOdbcWriter,
 ) -> *mut ArrowOdbcError {
-    let connection = connection.as_mut().take();
+    let connection = connection.as_ref().clone();
 
     let table = slice::from_raw_parts(table_buf, table_len);
     let table = str::from_utf8(table).unwrap();
@@ -58,10 +71,8 @@ pub unsafe extern "C" fn arrow_odbc_writer_make(
     let schema = schema as *const FFI_ArrowSchema;
     let schema: Schema = try_!((&*schema).try_into());
 
-    let writer = try_!(OdbcWriter::from_connection(
-        connection, &schema, table, chunk_size
-    ));
-    *writer_out = Box::into_raw(Box::new(ArrowOdbcWriter(writer)));
+    let writer = try_!(ArrowOdbcWriter::new(connection, table, schema, chunk_size));
+    *writer_out = Box::into_raw(Box::new(writer));
 
     null_mut() // Ok(())
 }

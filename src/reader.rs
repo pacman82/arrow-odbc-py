@@ -53,7 +53,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
     parameters: *const *mut ArrowOdbcParameter,
     parameters_len: usize,
 ) -> *mut ArrowOdbcError {
-    let connection = connection.as_mut().take();
+    let connection = connection.as_mut().clone();
     // Transtlate C Args into more idiomatic rust representations
     let query = slice::from_raw_parts(query_buf, query_len);
     let query = str::from_utf8(query).unwrap();

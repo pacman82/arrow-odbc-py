@@ -10,6 +10,7 @@ use log::debug;
 use crate::{try_, ArrowOdbcError, ENV};
 
 /// Opaque type to transport connection to an ODBC Datasource over language boundry
+#[derive(Clone)]
 pub struct ArrowOdbcConnection(
     // In order to support multiple consequtives inserts and reads, using the same connection we
     // pass ownership of the "true" connection between inserter, reader and this instance. The idea
@@ -24,8 +25,10 @@ impl ArrowOdbcConnection {
     }
 
     /// Take the inner connection out of its wrapper
-    pub fn take(&mut self) -> Connection<'static> {
-        self.0.lock().unwrap().take().unwrap()
+    pub fn take(&self) -> Result<Connection<'static>, ArrowOdbcError> {
+        self.0.lock().unwrap().take().ok_or(ArrowOdbcError::new(
+            "Connection seem to already be in use, by some other reader or inserter.",
+        ))
     }
 }
 
