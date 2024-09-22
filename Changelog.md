@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.0.7
+
+- Build Mac ARM wheel on M2
+
 ## 7.0.6
 
 - Fix: Typo in connect function, lead to connections not properly established and failing opertions.

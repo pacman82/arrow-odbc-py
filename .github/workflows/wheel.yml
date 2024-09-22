@@ -60,7 +60,7 @@ jobs:
 
 
   macos-wheel-m1:
-    runs-on: flyci-macos-14-m1
+    runs-on: flyci-macos-14-m2
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
