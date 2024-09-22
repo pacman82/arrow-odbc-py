@@ -59,8 +59,8 @@ jobs:
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
 
 
-  macos-wheel-m1:
-    runs-on: flyci-macos-14-m2
+  macos-arm-wheel:
+    runs-on: macos-14
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python

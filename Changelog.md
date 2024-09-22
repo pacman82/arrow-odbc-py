@@ -1,8 +1,8 @@
 # Changelog
 
-## 7.0.7
+## 7.0.7-8
 
-- Build Mac ARM wheel on M2
+- Fix build for Mac ARM wheel. It seems like fly-ci runners do no longer pick up the job, switching to GitHub runners.
 
 ## 7.0.6
 
