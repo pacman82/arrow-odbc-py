@@ -37,7 +37,9 @@ pub enum ArrowOdbcReader {
     /// like e.g. read batch we do not want our end users directly interacting with this state, yet
     /// the Python layer above should be able to make use of this in order to implement the schema
     /// mapping functionality.
-    Cursor(CursorImpl<StatementConnection<'static>>),
+    Cursor {
+        cursor: CursorImpl<StatementConnection<'static>>,
+    },
     Reader(OdbcReader<CursorImpl<StatementConnection<'static>>>),
     ConcurrentReader(ConcurrentOdbcReader<CursorImpl<StatementConnection<'static>>>),
 }
@@ -52,7 +54,7 @@ impl ArrowOdbcReader {
     ) -> Result<Option<(FFI_ArrowArray, FFI_ArrowSchema)>, ArrowOdbcError> {
         let next = match self {
             ArrowOdbcReader::Empty => None,
-            ArrowOdbcReader::Cursor(_) => {
+            ArrowOdbcReader::Cursor { .. } => {
                 unreachable!("Python code must not allow to call next_batch from cursor state")
             }
             ArrowOdbcReader::Reader(reader) => reader.next().transpose()?,
@@ -83,7 +85,7 @@ impl ArrowOdbcReader {
             // In case there has been a query without a result set, we could be in an empty state.
             // Let's just keep it, there is simply nothing to bind a buffer to.
             ArrowOdbcReader::Empty => return Ok(()),
-            ArrowOdbcReader::Cursor(cursor) => cursor,
+            ArrowOdbcReader::Cursor { cursor } => cursor,
             ArrowOdbcReader::Reader(_) | ArrowOdbcReader::ConcurrentReader(_) => {
                 unreachable!("Python part must ensure to only promote cursors to readers.")
             }
@@ -110,7 +112,7 @@ impl ArrowOdbcReader {
         match conn.into_cursor(query, params) {
             Ok(None) => (),
             Ok(Some(cursor)) => {
-                *self = ArrowOdbcReader::Cursor(cursor);
+                *self = ArrowOdbcReader::Cursor { cursor };
             }
             Err(error) => {
                 return Err(error.error.into());
@@ -128,13 +130,13 @@ impl ArrowOdbcReader {
         swap(self, &mut tmp_self);
         let cursor = match tmp_self {
             ArrowOdbcReader::Empty => return Ok(false),
-            ArrowOdbcReader::Cursor(cursor) => cursor,
+            ArrowOdbcReader::Cursor { cursor } => cursor,
             ArrowOdbcReader::Reader(inner) => inner.into_cursor()?,
             ArrowOdbcReader::ConcurrentReader(inner) => inner.into_cursor()?,
         };
         // We need to call ODBCs `more_results` in order to get the next one.
         if let Some(cursor) = cursor.more_results()? {
-            *self = ArrowOdbcReader::Cursor(cursor);
+            *self = ArrowOdbcReader::Cursor { cursor };
             Ok(true)
         } else {
             Ok(false)
@@ -149,8 +151,8 @@ impl ArrowOdbcReader {
                 let schema = Schema::empty();
                 schema.try_into()?
             }
-            ArrowOdbcReader::Cursor(inner) => {
-                let schema = arrow_schema_from(inner, false)?;
+            ArrowOdbcReader::Cursor { cursor } => {
+                let schema = arrow_schema_from(cursor, false)?;
                 schema.try_into()?
             }
             ArrowOdbcReader::Reader(inner) => {
@@ -180,7 +182,7 @@ impl ArrowOdbcReader {
         *self = match tmp_self {
             // Nothing to do. There is nothing left to fetch.
             ArrowOdbcReader::Empty => ArrowOdbcReader::Empty,
-            ArrowOdbcReader::Cursor(_) => {
+            ArrowOdbcReader::Cursor { .. } => {
                 unreachable!("Python code must not allow to call into_concurrent from cursor state")
             }
             // Nothing to do. Reader is already concurrent,
