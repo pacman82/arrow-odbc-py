@@ -13,7 +13,7 @@ version = "7.0.8"
 # cffi: for communicating with Rust
 # pyarrow: to create pyarrow arrays out of the c representation
 # typing_extension: to support deprecation warnings
-dependencies = ["cffi", "pyarrow >= 8.0.0", "typing_extensions"]
+dependencies = ["cffi", "pyarrow >= 8.0.0", "typing_extensions == 4.12"]
 
 [project.license]
 file = "LICENSE"
