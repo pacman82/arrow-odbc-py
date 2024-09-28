@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.1.0
+
+- Deprecate method `fetch_concurrently` in favour of dedicated parameters in `read_arrow_batches_from_odbc` and `more_results`. This is intended to increase discoverability of the feature.
+
 ## 7.0.7-8
 
 - Fix build for Mac ARM wheel. It seems like fly-ci runners do no longer pick up the job, switching to GitHub runners.

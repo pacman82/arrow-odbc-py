@@ -1,4 +1,5 @@
 from typing import List, Optional, Callable
+from typing_extensions import deprecated
 from cffi.api import FFI  # type: ignore
 
 import pyarrow
@@ -195,6 +196,7 @@ class BatchReader:
         falliable_allocations: bool = False,
         schema: Optional[Schema] = None,
         map_schema: Optional[Callable[[Schema], Schema]] = None,
+        fetch_concurrently=False,
     ) -> bool:
         """
         Move the reader to the next result set returned by the data source.
@@ -265,6 +267,13 @@ class BatchReader:
             the source). In case you can test your query against the schema you can safely set this
             to ``False``. The required memory will not depend on the amount of data in the data
             source. Default is ``True`` though, safety first.
+        :param fetch_concurrently: Trade memory for speed. Allocates another transit buffer and use
+            it to fetch row set groups (aka. batches) from the ODBC data source in a dedicated
+            system thread, while the main thread converts the previous batch to arrow arrays and
+            executes the application logic. The transit buffer may be the biggest part of the
+            required memory so if ``True`` ``arrow-odbc`` consumes almost two times the memory as
+            compared to false. On the flipsite the next batch can be fetched from the database
+            immediatly without waiting for the application logic to return control.
         :return: ``True`` in case there is another result set. ``False`` in case that the last
             result set has been processed.
         """
@@ -284,6 +293,9 @@ class BatchReader:
             schema=schema,
             map_schema=map_schema,
         )
+
+        if fetch_concurrently:
+            self.reader.into_concurrent()
 
         # Every result set can have its own schema, so we must update our member
         self.schema = self.reader.schema()
@@ -309,6 +321,10 @@ class BatchReader:
         tmp.schema, self.schema = self.schema, tmp.schema
         return pyarrow.RecordBatchReader.from_batches(tmp.schema, tmp)
 
+    @deprecated(
+        "Please use the fetch_concurrently argument on read_arrow_batches_from_odbc or " \
+        "more_results instead."
+    )
     def fetch_concurrently(self):
         """
         Allocate another transit buffer and use it to fetch row set groups (aka. batches) from the
@@ -373,6 +389,7 @@ def read_arrow_batches_from_odbc(
     packet_size: Optional[int] = None,
     schema: Optional[Schema] = None,
     map_schema: Optional[Callable[[Schema], Schema]] = None,
+    fetch_concurrently=False,
 ) -> BatchReader:
     """
     Execute the query and read the result as an iterator over Arrow batches.
@@ -472,6 +489,15 @@ def read_arrow_batches_from_odbc(
         or replace any float32 with a float64, or anything else you might want to customize, for
         various reasons while still staying generic over the input schema. If both ``map_schema``
         and ``schema`` are specified ``map_schema`` takes priority.
+    :param fetch_concurrently: Trade memory for speed. Allocates another transit buffer and use it
+        to fetch row set groups (aka. batches) from the ODBC data source in a dedicated system
+        thread, while the main thread converts the previous batch to arrow arrays and executes the
+        application logic. The transit buffer may be the biggest part of the required memory so if
+        ``True`` ``arrow-odbc`` consumes almost two times the memory as compared to false. On the
+        flipsite the next batch can be fetched from the database immediatly without waiting for the
+        application logic to return control.
+
+
     :return: A ``BatchReader`` is returned, which implements the iterator protocol and iterates over
         individual arrow batches.
     """
@@ -508,6 +534,9 @@ def read_arrow_batches_from_odbc(
         schema=schema,
         map_schema=map_schema,
     )
+
+    if fetch_concurrently:
+        reader.into_concurrent()
 
     return BatchReader(reader)
 

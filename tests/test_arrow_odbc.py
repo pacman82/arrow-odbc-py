@@ -227,8 +227,9 @@ def test_fetch_concurrently():
 
     query = f"SELECT * FROM {table}"
 
-    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
-    reader.fetch_concurrently()
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL, fetch_concurrently=True
+    )
     it = iter(reader)
 
     actual = next(it)
@@ -251,8 +252,9 @@ def test_concurrent_reader_into_concurrent():
 
     query = f"SELECT * FROM {table}"
 
-    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
-    reader.fetch_concurrently()
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL, fetch_concurrently=True
+    )
     reader.fetch_concurrently()  # Transforming already concurrent reader into concurrent reader
     it = iter(reader)
 
@@ -296,8 +298,9 @@ def test_schema_from_concurrent_reader():
     connection.close()
 
     query = f"SELECT * FROM {table}"
-    reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
-    reader.fetch_concurrently()
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=100, connection_string=MSSQL, fetch_concurrently=True
+    )
 
     expected = pa.schema([("a", pa.int32()), ("b", pa.string())])
     assert expected == reader.schema

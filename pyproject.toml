@@ -10,7 +10,10 @@ authors = [{name = "Markus Klein"}]
 description="Read the data of an ODBC data source as sequence of Apache Arrow record batches."
 readme = "README.md"
 version = "7.0.8"
-dependencies = ["cffi", "pyarrow >= 8.0.0"]
+# cffi: for communicating with Rust
+# pyarrow: to create pyarrow arrays out of the c representation
+# typing_extension: to support deprecation warnings
+dependencies = ["cffi", "pyarrow >= 8.0.0", "typing_extensions"]
 
 [project.license]
 file = "LICENSE"
