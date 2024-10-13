@@ -171,9 +171,7 @@ def test_making_an_empty_reader_concurrent_is_no_error():
 
     reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     # Move to a second result set, which does not exist
-    reader.more_results(batch_size=100)
-    # Fetch the non-existing result set concurrently. This should leave the reader unchanged
-    reader.fetch_concurrently()
+    reader.more_results(batch_size=100, fetch_concurrently=True)
 
     # Assert schema and batches are empty
     assert reader.schema == pa.schema([])
@@ -242,20 +240,18 @@ def test_fetch_concurrently():
         next(it)
 
 
-def test_concurrent_reader_into_concurrent():
+def test_fetch_sequential():
     """
-    Turning an already concurrent reader into a concurrent reader has no additional effect and
-    leaves the reader valid.
+    Use a sequential batch reader to fetch one row
     """
-    table = "FetchAlreadyConcurrently"
+    table = "FetchConcurrently"
     setup_table(table=table, column_type="int", values=["42"])
 
     query = f"SELECT * FROM {table}"
 
     reader = read_arrow_batches_from_odbc(
-        query=query, batch_size=100, connection_string=MSSQL, fetch_concurrently=True
+        query=query, batch_size=100, connection_string=MSSQL, fetch_concurrently=False
     )
-    reader.fetch_concurrently()  # Transforming already concurrent reader into concurrent reader
     it = iter(reader)
 
     actual = next(it)

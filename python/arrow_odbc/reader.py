@@ -1,5 +1,4 @@
 from typing import List, Optional, Callable
-from typing_extensions import deprecated
 from cffi.api import FFI  # type: ignore
 
 import pyarrow
@@ -320,58 +319,6 @@ class BatchReader:
         tmp.reader, self.reader = self.reader, tmp.reader
         tmp.schema, self.schema = self.schema, tmp.schema
         return pyarrow.RecordBatchReader.from_batches(tmp.schema, tmp)
-
-    @deprecated(
-        "Please use the fetch_concurrently argument on read_arrow_batches_from_odbc or " \
-        "more_results instead."
-    )
-    def fetch_concurrently(self):
-        """
-        Allocate another transit buffer and use it to fetch row set groups (aka. batches) from the
-        ODBC data source in a dedicated system thread, while the main thread converts the previous
-        batch to arrow arrays and executes the application logic.
-
-        If you extract more than one result set from the cursor, you need to call these method for
-        each result set you want to extract concurrently. This has been done so it is possible to
-        skip result sets without worrying about the fetching thread to start fetching row groups
-        from a result set you intended to skip.
-
-        Calling this method on an already concurrent reader has no effect.
-
-        Example:
-
-        .. code-block:: python
-
-            from arrow_odbc import read_arrow_batches_from_odbc
-
-            connection_string="Driver={ODBC Driver 17 for SQL Server};Server=localhost;"
-
-            reader = read_arrow_batches_from_odbc(
-                query=f"SELECT * FROM MyTable,
-                connection_string=connection_string,
-                batch_size=1000,
-                user="SA",
-                password="My@Test@Password",
-            )
-            # Trade memory for speed. For the price of an additional transit buffer and a native
-            # system thread we fetch batches now concurrent to our application logic.
-            reader.fetch_concurrently()
-
-            for batch in reader:
-                # Process arrow batches
-                df = batch.to_pandas()
-                # ...
-        """
-        try:
-            self.reader.into_concurrent()
-        except Exception:
-            # Making a reader concurrent will not change its schema, yet if there is an error the
-            # reader is destroyed and its schema is empty.
-            # self.schema == self.reader.schema()
-            # should always be true and so asigning it never would make the code incorrect. Yet we
-            # only need to do so if it actually changes.
-            self.schema = self.reader.schema()
-            raise
 
 
 def read_arrow_batches_from_odbc(
