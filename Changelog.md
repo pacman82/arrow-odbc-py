@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.0.0
+
+- Parameter `fetch_concurrently` now defaults to `True`. This causes `arrow-odbc-py` to use more memory by default, but enables fetching concurrently with the rest of the application logic. You can set this parameter explicitly to `False` to get the old behaviour.
+
 ## 7.1.0
 
 - Deprecate method `fetch_concurrently` in favour of dedicated parameters in `read_arrow_batches_from_odbc` and `more_results`. This is intended to increase discoverability of the feature.

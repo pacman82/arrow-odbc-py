@@ -9,7 +9,7 @@ name = "arrow-odbc"
 authors = [{name = "Markus Klein"}]
 description="Read the data of an ODBC data source as sequence of Apache Arrow record batches."
 readme = "README.md"
-version = "7.0.8"
+version = "8.0.0"
 # cffi: for communicating with Rust
 # pyarrow: to create pyarrow arrays out of the c representation
 # typing_extension: to support deprecation warnings

@@ -196,7 +196,7 @@ class BatchReader:
         falliable_allocations: bool = False,
         schema: Optional[Schema] = None,
         map_schema: Optional[Callable[[Schema], Schema]] = None,
-        fetch_concurrently=False,
+        fetch_concurrently=True,
     ) -> bool:
         """
         Move the reader to the next result set returned by the data source.
@@ -389,7 +389,7 @@ def read_arrow_batches_from_odbc(
     packet_size: Optional[int] = None,
     schema: Optional[Schema] = None,
     map_schema: Optional[Callable[[Schema], Schema]] = None,
-    fetch_concurrently=False,
+    fetch_concurrently=True,
 ) -> BatchReader:
     """
     Execute the query and read the result as an iterator over Arrow batches.

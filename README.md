@@ -33,10 +33,6 @@ reader = read_arrow_batches_from_odbc(
     parameters=["I'm a positional query parameter"],
     user="SA",
     password="My@Test@Password",
-    # Trade memory for speed. For the price of an additional transit buffer and a native system
-    # thread we fetch batches now concurrent to our application logic. Just remove this line, if you
-    # want to fetch sequentially in your main application thread.
-    fetch_concurrently=True,
 )
 
 for batch in reader:
