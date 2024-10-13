@@ -64,10 +64,6 @@ class _BatchReaderRaii:
             struct_array = Array._import_from_c(array_ptr, schema_ptr)
             return RecordBatch.from_struct_array(struct_array)
 
-    def into_concurrent(self):
-        error = lib.arrow_odbc_reader_into_concurrent(self.handle)
-        raise_on_error(error)
-
     def query(
         self,
         connection: ConnectionRaii,
@@ -117,9 +113,10 @@ class _BatchReaderRaii:
         max_bytes_per_batch: int,
         max_text_size: int,
         max_binary_size: int,
-        falliable_allocations: bool = False,
-        schema: Optional[Schema] = None,
-        map_schema: Optional[Callable[[Schema], Schema]] = None,
+        falliable_allocations: bool,
+        schema: Optional[Schema],
+        map_schema: Optional[Callable[[Schema], Schema]],
+        fetch_concurrently: bool
     ):
         if map_schema is not None:
             schema = map_schema(self.schema())
@@ -133,6 +130,7 @@ class _BatchReaderRaii:
             max_text_size,
             max_binary_size,
             falliable_allocations,
+            fetch_concurrently,
             ptr_schema,
         )
         # See if we managed to execute the query successfully and return an error if not
@@ -291,10 +289,8 @@ class BatchReader:
             falliable_allocations=falliable_allocations,
             schema=schema,
             map_schema=map_schema,
+            fetch_concurrently=fetch_concurrently,
         )
-
-        if fetch_concurrently:
-            self.reader.into_concurrent()
 
         # Every result set can have its own schema, so we must update our member
         self.schema = self.reader.schema()
@@ -480,10 +476,8 @@ def read_arrow_batches_from_odbc(
         falliable_allocations=falliable_allocations,
         schema=schema,
         map_schema=map_schema,
+        fetch_concurrently=fetch_concurrently,
     )
-
-    if fetch_concurrently:
-        reader.into_concurrent()
 
     return BatchReader(reader)
 

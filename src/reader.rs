@@ -170,6 +170,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_bind_buffers(
     max_text_size: usize,
     max_binary_size: usize,
     fallibale_allocations: bool,
+    fetch_concurrently: bool,
     schema: *mut c_void,
 ) -> *mut ArrowOdbcError {
     let schema = take_schema(schema);
@@ -184,6 +185,11 @@ pub unsafe extern "C" fn arrow_odbc_reader_bind_buffers(
     );
     // Move cursor to the next result set.
     try_!(reader.as_mut().promote_to_reader(reader_builder));
+
+    if fetch_concurrently {
+        try_!(reader.as_mut().into_concurrent());
+    }
+
     null_mut()
 }
 
