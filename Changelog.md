@@ -49,7 +49,7 @@
 
 ## 4.1.0
 
-- Release wheel also for MacOS ARM 64 architectures to PyPi. Thanks to [FlyCI ](https://www.flyci.net/) for their free tier!
+- Release wheel also for MacOS ARM 64 architectures to PyPi. Thanks to [FlyCI](https://www.flyci.net/) for their free tier!
 
 ## 4.0.0
 
