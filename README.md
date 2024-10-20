@@ -104,7 +104,7 @@ pip install arrow-odbc
 conda install -c conda-forge arrow-odbc
 ```
 
-Thanks to @timkpaine for maintaining the recipie!
+**Warning:** The conan recipie is currently unmaintained. So to install the newest version you need to either install from source or use a wheel deployed via pip.
 
 ### Building wheel from source
 
