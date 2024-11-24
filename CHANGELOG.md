@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.0.2
+
+- Fix: Due to fixes in the upstream `arrow-odbc` Rust crate it is now possible to fetch timestamps before unix-epoch without a panic
+
 ## 8.0.1
 
 - Fix: `typing_extension` has been pinned to strictly, preventing users from updating to the newest version.
