@@ -39,6 +39,18 @@ def setup_table(table: str, column_type: str, values: List[Any]):
     connection.close()
 
 
+def empty_table(table, column_type):
+    """
+    Create an empty table as a precondition for a test. The table will have an identy column (id)
+    and an additional column of the custom type with typename a
+    """
+    connection = pyodbc.connect(MSSQL)
+    connection.execute(f"DROP TABLE IF EXISTS {table};")
+    connection.execute(f"CREATE TABLE {table} (id int IDENTITY(1,1), a {column_type});")
+    connection.commit()
+    connection.close()
+
+
 def test_connection_options():
     """
     Just a smoke test, that we did not mess up passing the arguments for the connections over the
@@ -738,11 +750,7 @@ def test_insert_batches():
     """
     # Given
     table = "InsertBatches"
-    connection = pyodbc.connect(MSSQL)
-    connection.execute(f"DROP TABLE IF EXISTS {table};")
-    connection.execute(f"CREATE TABLE {table} (id int IDENTITY(1,1), a BIGINT);")
-    connection.commit()
-    connection.close()
+    empty_table(table, "BIGINT")
     schema = pa.schema([("a", pa.int64())])
 
     def iter_record_batches():
@@ -891,6 +899,26 @@ def test_into_pyarrow_record_batch_reader_transfers_ownership():
     # Then the original record batch reader is empty. I.e. it behaves like a consumed arrow_reader
     with raises(StopIteration):
         next(iter(arrow_reader))
+
+
+def test_chunked_arrays_of_variable_length_strings():
+    """
+    See issue: <https://github.com/pacman82/arrow-odbc-py/issues/115>
+    """
+    # Given
+    table = "ChunkedArraysOfVariableLengthStrings"
+    empty_table(table, "VARCHAR(3)")
+
+    # When
+    arrow_table = pa.table({"a": pa.chunked_array([["a"], ["bc"]])})
+    from_table_to_db(arrow_table, target=table, connection_string=MSSQL)
+
+    # Then
+    actual = check_output(
+        ["odbcsv", "fetch", "-c", MSSQL, "-q", f"SELECT a FROM {table} ORDER BY id"]
+    )
+    assert "a\na\nbc\n" == actual.decode("utf8")
+
 
 
 @pytest.mark.slow
