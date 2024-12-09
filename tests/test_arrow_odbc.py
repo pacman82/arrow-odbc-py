@@ -769,8 +769,6 @@ def test_insert_batches():
     assert "a\n1\n2\n3\n1\n2\n3\n" == actual.decode("utf8")
 
 
-@pytest.mark.xfail(reason="We do not know why this fails yet, maybe the second batch overwrites "
-                   "values for the first one. We'll try to reproduce it upstream in arrow-odbc")
 def test_insert_multiple_small_batches():
     """
     Insert multiple batches into the database, using one roundtrip.
@@ -934,7 +932,6 @@ def test_into_pyarrow_record_batch_reader_transfers_ownership():
         next(iter(arrow_reader))
 
 
-@pytest.mark.xfail(reason="This likely fails for the same reason as test_multiple_small_batches")
 def test_chunked_arrays_of_variable_length_strings():
     """
     See issue: <https://github.com/pacman82/arrow-odbc-py/issues/115>
