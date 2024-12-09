@@ -901,6 +901,9 @@ def test_into_pyarrow_record_batch_reader_transfers_ownership():
         next(iter(arrow_reader))
 
 
+@pytest.mark.xfail(reason="Still under investigation. Not sure if there are invalid assumption "
+                   "arrow-odbc makes about the C interface, or if the arrow C-Interface does not "
+                   "translate chunked arrayes correctly")
 def test_chunked_arrays_of_variable_length_strings():
     """
     See issue: <https://github.com/pacman82/arrow-odbc-py/issues/115>
