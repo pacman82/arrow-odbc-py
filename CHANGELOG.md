@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.0.7
+
+- Fix: build wheel for Mac OS on x86-64 architecture
+
 ## 8.0.6
 
 - Due to a typo `8.0.3` had been released as `8.0.5`. `8.0.6` releases without any changes, and realigns version number of Changelog, wheel and git tag.

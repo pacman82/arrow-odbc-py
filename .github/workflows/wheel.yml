@@ -32,18 +32,21 @@ jobs:
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
         
   macos-x86-wheel:
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.x'
+      # In order to build for x86_64 we lean into the cross build support of maturin
+    - name: Build wheels
+      uses: PyO3/maturin-action@v1
+      with:
+        target: x86_64
+        args: --release --out dist --find-interpreter
     - name: Publish package
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install build
-        python -m build
         pip install twine
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
 
