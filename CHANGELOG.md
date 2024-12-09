@@ -1,6 +1,10 @@
 # Changelog
 
-## 8.0.3
+## 8.0.6
+
+- Due to a typo `8.0.3` had been released as `8.0.5`. `8.0.6` releases without any changes, and realigns version number of Changelog, wheel and git tag.
+
+## 8.0.3 & 5
 
 - Fix: Update to latest `arrow-odbc 14.0.1`. Inserting multiple small batches now works, even if the second batch triggers rebinding the buffer due to element size. Previously in this scenario not all values already inserted were correctly copied into the new buffer. This caused strings to be replaced with `null` bytes.
 
