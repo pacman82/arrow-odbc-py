@@ -769,6 +769,39 @@ def test_insert_batches():
     assert "a\n1\n2\n3\n1\n2\n3\n" == actual.decode("utf8")
 
 
+@pytest.mark.xfail(reason="We do not know why this fails yet, maybe the second batch overwrites "
+                   "values for the first one. We'll try to reproduce it upstream in arrow-odbc")
+def test_insert_multiple_small_batches():
+    """
+    Insert multiple batches into the database, using one roundtrip.
+
+    For this test we are sending two batches, each containing one string for the same column. The
+    second string is longer than the first one. Is reproduces an issue which occurred in the context
+    of chunked arrays.
+    
+    See issue: https://github.com/pacman82/arrow-odbc-py/issues/115
+    """
+    # Given
+    table = "InsertBatchesMultipleSmallBatches"
+    empty_table(table, "VARCHAR(10)")
+    schema = pa.schema([("a", pa.utf8())])
+
+    def iter_record_batches():
+        yield pa.RecordBatch.from_arrays([pa.array(["a"])], schema=schema)
+        yield pa.RecordBatch.from_arrays([pa.array(["bc"])], schema=schema)
+
+    reader = pa.RecordBatchReader.from_batches(schema, iter_record_batches())
+
+    # When
+    insert_into_table(connection_string=MSSQL, chunk_size=20, table=table, reader=reader)
+
+    # Then
+    actual = check_output(
+        ["odbcsv", "fetch", "-c", MSSQL, "-q", f"SELECT a FROM {table} ORDER BY id"]
+    )
+    assert "a\na\nbc\n" == actual.decode("utf8")
+
+
 def test_insert_from_parquet():
     """
     Insert data into database from a parquet file
@@ -901,9 +934,7 @@ def test_into_pyarrow_record_batch_reader_transfers_ownership():
         next(iter(arrow_reader))
 
 
-@pytest.mark.xfail(reason="Still under investigation. Not sure if there are invalid assumption "
-                   "arrow-odbc makes about the C interface, or if the arrow C-Interface does not "
-                   "translate chunked arrayes correctly")
+@pytest.mark.xfail(reason="This likely fails for the same reason as test_multiple_small_batches")
 def test_chunked_arrays_of_variable_length_strings():
     """
     See issue: <https://github.com/pacman82/arrow-odbc-py/issues/115>
@@ -914,6 +945,7 @@ def test_chunked_arrays_of_variable_length_strings():
 
     # When
     arrow_table = pa.table({"a": pa.chunked_array([["a"], ["bc"]])})
+    # It would work if we would combine the chunks
     from_table_to_db(arrow_table, target=table, connection_string=MSSQL)
 
     # Then
