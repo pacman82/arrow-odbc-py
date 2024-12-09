@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.0.3
+
+- Fix: Update to latest `arrow-odbc 14.0.1`. Inserting multiple small batches now works, even if the second batch triggers rebinding the buffer due to element size. Previously in this scenario not all values already inserted were correctly copied into the new buffer. This caused strings to be replaced with `null` bytes.
+
 ## 8.0.2
 
 - Fix: Due to fixes in the upstream `arrow-odbc` Rust crate it is now possible to fetch timestamps before unix-epoch without a panic
