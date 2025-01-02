@@ -43,7 +43,6 @@ pub use self::arrow_odbc_reader::ArrowOdbcReader;
 ///   schema be supplied `schema` Rust will take ownership of it an the `schema` will be
 ///   overwritten with an empty one. This means the Python code, must only deallocate the memory
 ///   directly pointed to by `schema`, but not freeing the resources of the passed schema.
-
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_query(
     mut reader: NonNull<ArrowOdbcReader>,
