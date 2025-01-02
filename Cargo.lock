@@ -161,9 +161,9 @@ dependencies = [
 
 [[package]]
 name = "arrow-odbc"
-version = "14.0.1"
+version = "14.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "787ca0a52a5f1371a8a5d449a0795d7a7bc02a267ace99a82350a572e73e4e9e"
+checksum = "8f4a474736252062f67128f0434512157d86dec3281be2d64aef3a9a49351a4f"
 dependencies = [
  "arrow",
  "chrono",
