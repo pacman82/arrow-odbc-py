@@ -22,7 +22,7 @@ test = ["pytest < 8.0.0", "pyodbc", "duckdb"]
 
 [project.urls]
 repository = "https://github.com/pacman82/arrow-odbc-py"
-changelog = "https://github.com/pacman82/arrow-odbc-py/blob/main/Changelog.md"
+changelog = "https://github.com/pacman82/arrow-odbc-py/blob/main/CHANGELOG.md"
 
 [tool.maturin]
 # Bindings type
