@@ -384,7 +384,8 @@ def test_specify_user_and_password_separatly():
     query = "SELECT 42 as a;"
 
     # Connection string without credentials
-    connection_string = "Driver={ODBC Driver 17 for SQL Server};Server=localhost;"
+    connection_string = "Driver={ODBC Driver 18 for SQL Server};\
+        Server=localhost;TrustServerCertificate=yes;"
     user = "SA"
     password = "My@Test@Password1"
 

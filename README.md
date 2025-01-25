@@ -25,7 +25,7 @@ Fill Apache Arrow arrays from ODBC data sources. This package is build on top of
 ```python
 from arrow_odbc import read_arrow_batches_from_odbc
 
-connection_string="Driver={ODBC Driver 17 for SQL Server};Server=localhost;"
+connection_string="Driver={ODBC Driver 18 for SQL Server};Server=localhost;TrustServerCertificate=yes;"
 
 reader = read_arrow_batches_from_odbc(
     query=f"SELECT * FROM MyTable WHERE a=?",

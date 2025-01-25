@@ -208,7 +208,7 @@ class BatchReader:
 
             from arrow_odbc import read_arrow_batches_from_odbc
 
-            connection_string="Driver={ODBC Driver 17 for SQL Server};Server=localhost;"
+            connection_string="Driver={ODBC Driver 18 for SQL Server};Server=localhost;TrustServerCertificate=yes;"
             reader = read_arrow_batches_from_odbc(
                 query=f"SELECT * FROM MyTable; SELECT * FROM OtherTable;",
                 connection_string=connection_string,
@@ -343,7 +343,7 @@ def read_arrow_batches_from_odbc(
 
         from arrow_odbc import read_arrow_batches_from_odbc
 
-        connection_string="Driver={ODBC Driver 17 for SQL Server};Server=localhost;"
+        connection_string="Driver={ODBC Driver 18 for SQL Server};Server=localhost;TrustServerCertificate=yes;"
 
         reader = read_arrow_batches_from_odbc(
             query=f"SELECT * FROM MyTable WHERE a=?",
