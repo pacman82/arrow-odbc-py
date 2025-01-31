@@ -23,11 +23,13 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.x'
-    - name: Publish package
+    - name: Build windows wheel
       run: |
         python -m pip install --upgrade pip
         python -m pip install build
         python -m build
+    - name: Publish Windows wheel
+      run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
         
@@ -40,12 +42,12 @@ jobs:
       with:
         python-version: '3.x'
       # In order to build for x86_64 we lean into the cross build support of maturin
-    - name: Build wheels
+    - name: Build Mac OS x86 wheel
       uses: PyO3/maturin-action@v1
       with:
         target: x86_64
         args: --release --out dist --find-interpreter
-    - name: Publish package
+    - name: Publish Mac OS x86 wheel
       run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
@@ -58,6 +60,8 @@ jobs:
       run: |
         docker build -t cargodock ./manylinux
         docker run --rm -v ${PWD}:/io cargodock bash /io/manylinux/build_wheel.sh
+    - name: Publish Manylinux wheel
+      run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
 
@@ -80,10 +84,12 @@ jobs:
       run: |
         brew install unixodbc
         sudo ln -s /opt/homebrew/lib ~/lib
-    - name: Publish package
+    - name: Build Mac OS arm wheel
       run: |
         python -m pip install --upgrade pip
         python -m pip install build
         python -m build
+    - name: Publish Mac OS arm wheel
+      run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
