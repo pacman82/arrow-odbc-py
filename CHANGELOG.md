@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.1.0
+
+- Publish Manylinux wheel for ARM architecture (aarch64) to pypi
+
 ## 8.0.9
 
 - Fix: Licenese metadata in in `pyproject.toml` now states `licenese="MIT"` instead of specifying a file path.
