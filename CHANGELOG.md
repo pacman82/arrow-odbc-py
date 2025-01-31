@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.0.8
+
+- Fix: SHA256 has for WHEEL file in the many-linux wheel dist info had been wrong, due to manually tinkering with the wheel metadata in the build process. The step is no migrated to `auditwheel`. Thanks to @rupurt for spotting the issue.
+
 ## 8.0.7
 
 - Fix: build wheel for Mac OS on x86-64 architecture
