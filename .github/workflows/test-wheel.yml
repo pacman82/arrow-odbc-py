@@ -56,6 +56,20 @@ jobs:
         pip install twine==6.0.1
         twine upload --repository testpypi --skip-existing -u __token__ -p "${{ secrets.TEST_PYPI_API_TOKEN }}" dist/*
 
+    
+  manylinux-wheel-arm:
+    runs-on: ubuntu-24.04-arm
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build Manylinux wheel ARM
+      run: |
+        docker build -t cargodock ./manylinux -f ./manylinux/aarch64.dockerfile
+        docker run --rm -v ${PWD}:/io cargodock bash /io/manylinux/build_wheel.sh
+    - name: Publish Manylinux wheel ARM
+      run: |
+        pip install twine==6.0.1
+        twine upload --repository testpypi --skip-existing -u __token__ -p "${{ secrets.TEST_PYPI_API_TOKEN }}" dist/*
+
 
   macos-arm-wheel:
     runs-on: macos-14
