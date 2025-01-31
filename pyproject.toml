@@ -9,13 +9,11 @@ name = "arrow-odbc"
 authors = [{name = "Markus Klein"}]
 description="Read the data of an ODBC data source as sequence of Apache Arrow record batches."
 readme = "README.md"
+license = "MIT"
 version = "8.0.8"
 # cffi: for communicating with Rust
 # pyarrow: to create pyarrow arrays out of the c representation
 dependencies = ["cffi", "pyarrow >= 8.0.0"]
-
-[project.license]
-file = "LICENSE"
 
 [project.optional-dependencies]
 test = ["pytest < 8.0.0", "pyodbc", "duckdb"]
