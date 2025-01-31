@@ -76,7 +76,7 @@ jobs:
     - name: Publish Manylinux wheel ARM
       run: |
         pip install twine==6.0.1
-        twine upload pypi --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
+        twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
 
   macos-arm-wheel:
     runs-on: macos-14
