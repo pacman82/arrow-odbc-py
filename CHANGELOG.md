@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.1.1
+
+- Fix: Upload for manylinux arm wheel to pypi
+
 ## 8.1.0
 
 - Publish Manylinux wheel for ARM architecture (aarch64) to pypi
