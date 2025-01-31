@@ -35,8 +35,15 @@ do
 
     cp -f /io/manylinux/WHEEL "/wheelhouse/arrow_odbc-${ver}-edit/arrow_odbc-${ver}.dist-info/WHEEL"
 
+    # Calculate the sha256 hash of the new WHEEL file
+    wheel_hash=$(sha256sum "/wheelhouse/arrow_odbc-${ver}-edit/arrow_odbc-${ver}.dist-info/WHEEL" | awk '{print $1}')
+    wheel_size=$(stat -c%s "/wheelhouse/arrow_odbc-${ver}-edit/arrow_odbc-${ver}.dist-info/WHEEL")
+
+    # Update the RECORD file with the new hash value
+    record_file="/wheelhouse/arrow_odbc-${ver}-edit/arrow_odbc-${ver}.dist-info/RECORD"
+    sed -i "s|arrow_odbc-${ver}.dist-info/WHEEL,sha256=.*|arrow_odbc-${ver}.dist-info/WHEEL,sha256-$(echo -n $wheel_hash | xxd -r -p | base64),$wheel_size|" $record_file
+
     cd /wheelhouse/arrow_odbc-${ver}-edit/
     zip -rv /io/dist/arrow_odbc-${ver}-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl .
     cd -
 done
-

@@ -977,3 +977,22 @@ def test_should_not_leak_memory_for_each_batch():
 
         for batch in reader:
             del batch
+
+
+def test_record_file_updated_with_correct_hash():
+    """
+    Test to verify that the RECORD file is updated with the correct sha256 hash of the static WHEEL file.
+    """
+    # Given
+    wheel_file = "/path/to/wheel/file"
+    record_file = "/path/to/record/file"
+
+    # When
+    wheel_hash = check_output(["sha256sum", wheel_file]).split()[0].decode()
+    wheel_size = os.path.getsize(wheel_file)
+
+    with open(record_file, "r") as f:
+        record_content = f.read()
+
+    # Then
+    assert f"{wheel_file},sha256-{wheel_hash},{wheel_size}" in record_content
