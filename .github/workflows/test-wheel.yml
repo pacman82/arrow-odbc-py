@@ -3,7 +3,10 @@
 
 name: Test publishing wheels
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   windows-wheel:
