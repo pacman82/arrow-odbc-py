@@ -953,6 +953,21 @@ def test_chunked_arrays_of_variable_length_strings():
     assert "a\na\nbc\n" == actual.decode("utf8")
 
 
+def test_query_timeout():
+    """
+    """
+    # Given a long running query
+    long_running_query = "WAITFOR DELAY '0:0:03'; SELECT 42 as a"
+
+    # When setting a query timeout of 1 second and fetching data
+    arrow_reader = read_arrow_batches_from_odbc(query=long_running_query, connection_string=MSSQL, query_timeout_sec=1)
+
+    # Then we expect a timeout, rather than a result
+    it = iter(arrow_reader)
+    with raises(Error, match="Query timeout"):
+        next(it)
+        next(it)
+
 
 @pytest.mark.slow
 def test_should_not_leak_memory_for_each_batch():
