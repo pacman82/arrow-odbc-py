@@ -43,6 +43,7 @@ pub use self::arrow_odbc_reader::ArrowOdbcReader;
 ///   schema be supplied `schema` Rust will take ownership of it an the `schema` will be
 ///   overwritten with an empty one. This means the Python code, must only deallocate the memory
 ///   directly pointed to by `schema`, but not freeing the resources of the passed schema.
+/// * `query_timout_sec`: Optional query timeout in seconds. If `NULL` no timeout is applied.
 #[no_mangle]
 pub unsafe extern "C" fn arrow_odbc_reader_query(
     mut reader: NonNull<ArrowOdbcReader>,
@@ -51,6 +52,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
     query_len: usize,
     parameters: *const *mut ArrowOdbcParameter,
     parameters_len: usize,
+    query_timeout_sec: *const usize,
 ) -> *mut ArrowOdbcError {
     let connection = connection.as_mut().take();
     // Transtlate C Args into more idiomatic rust representations
@@ -66,9 +68,15 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
             .collect()
     };
 
+    let query_timeout_sec = if query_timeout_sec.is_null() {
+        None
+    } else {
+        Some(*query_timeout_sec)
+    };
+
     try_!(reader
         .as_mut()
-        .promote_to_cursor(connection, query, &parameters[..]));
+        .promote_to_cursor(connection, query, &parameters[..], query_timeout_sec));
 
     null_mut() // Ok(())
 }

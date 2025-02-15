@@ -69,6 +69,7 @@ class _BatchReaderRaii:
         connection: ConnectionRaii,
         query: str,
         parameters: Optional[List[Optional[str]]],
+        query_timeout_sec: Optional[int],
     ):
         query_bytes = query.encode("utf-8")
 
@@ -95,6 +96,12 @@ class _BatchReaderRaii:
             (p_bytes, p_len) = encoded_parameters[p_index]
             parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(p_bytes, p_len)
 
+        if query_timeout_sec is None:
+            query_timeout_sec_pointer = ffi.NULL
+        else:
+            query_timeout_sec_pointer = ffi.new("uintptr_t *")
+            query_timeout_sec_pointer[0] = query_timeout_sec
+
         error = lib.arrow_odbc_reader_query(
             self.handle,
             connection._arrow_odbc_connection(),
@@ -102,6 +109,7 @@ class _BatchReaderRaii:
             len(query_bytes),
             parameters_array,
             parameters_len,
+            query_timeout_sec_pointer,
         )
 
         # See if we managed to execute the query successfully and return an error if not
@@ -333,6 +341,7 @@ def read_arrow_batches_from_odbc(
     schema: Optional[Schema] = None,
     map_schema: Optional[Callable[[Schema], Schema]] = None,
     fetch_concurrently=True,
+    query_timeout_sec: Optional[int] = None,
 ) -> BatchReader:
     """
     Execute the query and read the result as an iterator over Arrow batches.
@@ -439,8 +448,11 @@ def read_arrow_batches_from_odbc(
         ``True`` ``arrow-odbc`` consumes almost two times the memory as compared to false. On the
         flipsite the next batch can be fetched from the database immediatly without waiting for the
         application logic to return control.
-
-
+    :param query_timeout_sec: Use this to limit the time the query is allowed to take, before
+        responding with data to the application. The driver may replace the number of seconds you
+        provide with a minimum or maximum value. You can specify ``0``, to deactivate the timeout,
+        this is the default. For this to work the driver must support this feature. E.g. PostgreSQL,
+        and Microsoft SQL Server do, but SQLite or MariaDB do not.
     :return: A ``BatchReader`` is returned, which implements the iterator protocol and iterates over
         individual arrow batches.
     """
@@ -458,6 +470,7 @@ def read_arrow_batches_from_odbc(
         connection=connection,
         query=query,
         parameters=parameters,
+        query_timeout_sec=query_timeout_sec,
     )
 
     if max_text_size is None:

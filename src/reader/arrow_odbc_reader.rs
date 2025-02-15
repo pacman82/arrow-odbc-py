@@ -9,7 +9,10 @@ use arrow::{
 };
 use arrow_odbc::{
     arrow_schema_from,
-    odbc_api::{Connection, Cursor, CursorImpl, ParameterCollectionRef, StatementConnection},
+    odbc_api::{
+        handles::{AsStatementRef, Statement as _},
+        Connection, Cursor, CursorImpl, ParameterCollectionRef, StatementConnection,
+    },
     ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder,
 };
 
@@ -107,6 +110,7 @@ impl ArrowOdbcReader {
         conn: Connection<'static>,
         query: &str,
         params: impl ParameterCollectionRef,
+        query_timeout_sec: Option<usize>,
     ) -> Result<(), ArrowOdbcError> {
         // Move self into a temporary instance we own, in order to take ownership of the inner
         // reader and move it to a different state.
@@ -115,7 +119,7 @@ impl ArrowOdbcReader {
 
         match conn.into_cursor(query, params) {
             Ok(None) => (),
-            Ok(Some(cursor)) => {
+            Ok(Some(mut cursor)) => {
                 *self = ArrowOdbcReader::Cursor { cursor };
             }
             Err(error) => {
