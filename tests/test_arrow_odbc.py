@@ -955,6 +955,8 @@ def test_chunked_arrays_of_variable_length_strings():
 
 def test_query_timeout():
     """
+    Send a query which takes three seconds and set a timeout of one second. Verify we get a timeout
+    error.
     """
     # Given a long running query
     long_running_query = "WAITFOR DELAY '0:0:03'; SELECT 42 as a"
