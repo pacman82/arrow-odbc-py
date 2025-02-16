@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.2.0
+
+- Add support for query timeouts, introducing a new `query_timeout_sec` parameter to `read_arrow_batches_from_odbc`.
+
 ## 8.1.1
 
 - Fix: Upload for manylinux arm wheel to pypi
