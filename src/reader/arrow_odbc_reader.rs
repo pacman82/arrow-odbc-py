@@ -9,10 +9,7 @@ use arrow::{
 };
 use arrow_odbc::{
     arrow_schema_from,
-    odbc_api::{
-        handles::{AsStatementRef, Statement as _},
-        Connection, Cursor, CursorImpl, ParameterCollectionRef, StatementConnection,
-    },
+    odbc_api::{Connection, Cursor, CursorImpl, ParameterCollectionRef, StatementConnection},
     ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder,
 };
 
@@ -117,9 +114,9 @@ impl ArrowOdbcReader {
         let mut tmp_self = ArrowOdbcReader::Empty;
         swap(self, &mut tmp_self);
 
-        match conn.into_cursor(query, params) {
+        match conn.into_cursor(query, params, query_timeout_sec) {
             Ok(None) => (),
-            Ok(Some(mut cursor)) => {
+            Ok(Some(cursor)) => {
                 *self = ArrowOdbcReader::Cursor { cursor };
             }
             Err(error) => {

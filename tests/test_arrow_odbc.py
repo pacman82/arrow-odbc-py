@@ -959,14 +959,13 @@ def test_query_timeout():
     # Given a long running query
     long_running_query = "WAITFOR DELAY '0:0:03'; SELECT 42 as a"
 
-    # When setting a query timeout of 1 second and fetching data
-    arrow_reader = read_arrow_batches_from_odbc(query=long_running_query, connection_string=MSSQL, query_timeout_sec=1)
-
-    # Then we expect a timeout, rather than a result
-    it = iter(arrow_reader)
-    with raises(Error, match="Query timeout"):
-        next(it)
-        next(it)
+    # When setting a query timeout of 1 second and fetching data, then we expect a timeout
+    with raises(Error, match="Query timeout expired"):
+        _arrow_reader = read_arrow_batches_from_odbc(
+            query=long_running_query,
+            connection_string=MSSQL,
+            query_timeout_sec=1
+        )
 
 
 @pytest.mark.slow
