@@ -20,6 +20,7 @@ from arrow_odbc import (
     log_to_stderr,
     enable_odbc_connection_pooling,
     Error,
+    TextEncoding,
 )
 
 MSSQL = "Driver={ODBC Driver 18 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;\
@@ -657,6 +658,48 @@ def test_support_varbinary_max():
         next(it)
 
 
+def test_text_encoding_utf8():
+    """
+    Smoke test for explicitly choosing narrow encoding
+    """
+    # Given
+    query = "SELECT 'Hello, World!' as a"
+
+    # When
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=1, connection_string=MSSQL, payload_text_encoding=TextEncoding.UTF8
+    )
+    it = iter(reader)
+    batch = next(it)
+
+    # Then
+    actual = batch.to_pydict()
+    expected = {"a": ["Hello, World!"]}
+
+    assert expected == actual
+
+
+def test_text_encoding_utf16():
+    """
+    Smoke test for explicitly choosing wide encoding
+    """
+    # Given
+    query = "SELECT 'Hello, World!' as a"
+
+    # When
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=1, connection_string=MSSQL, payload_text_encoding=TextEncoding.UTF16
+    )
+    it = iter(reader)
+    batch = next(it)
+
+    # Then
+    actual = batch.to_pydict()
+    expected = {"a": ["Hello, World!"]}
+
+    assert expected == actual
+
+
 def test_map_f32_to_f64():
     """
     ODBC drivers for PostgreSQL seem to have some trouble reporting the precision of floating point
@@ -777,7 +820,7 @@ def test_insert_multiple_small_batches():
     For this test we are sending two batches, each containing one string for the same column. The
     second string is longer than the first one. Is reproduces an issue which occurred in the context
     of chunked arrays.
-    
+
     See issue: https://github.com/pacman82/arrow-odbc-py/issues/115
     """
     # Given
@@ -964,9 +1007,7 @@ def test_query_timeout():
     # When setting a query timeout of 1 second and fetching data, then we expect a timeout
     with raises(Error, match="Query timeout expired"):
         _arrow_reader = read_arrow_batches_from_odbc(
-            query=long_running_query,
-            connection_string=MSSQL,
-            query_timeout_sec=1
+            query=long_running_query, connection_string=MSSQL, query_timeout_sec=1
         )
 
 

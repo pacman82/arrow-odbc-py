@@ -1,4 +1,5 @@
 from typing import List, Optional, Callable
+from enum import Enum
 from cffi.api import FFI  # type: ignore
 
 import pyarrow
@@ -11,7 +12,33 @@ from arrow_odbc.connect import to_bytes_and_len, connect, ConnectionRaii  # type
 from .arrow_odbc import ffi, lib  # type: ignore
 from .error import raise_on_error
 
+# Default maximum buffer size for transition buffer. Defaults to 512 MiB.
 DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES = 2**29
+
+
+class TextEncoding(Enum):
+    """
+    Text encoding used for the payload of text columns, to transfer data from the data source to the
+    application.
+
+    ``Auto`` evaluates to Utf16 on windows and Self::Utf8 on other systems. We do this, because most
+    systems e.g. MacOs and Linux use UTF-8 as their default encoding, while windows may still use a
+    Latin1 or some other extended ASCII as their narrow encoding. On the other hand many Posix
+    drivers are lacking in their support for wide function calls and UTF-16. So using ``Utf16`` on
+    windows and ``Utf8`` everythere else is a good starting point.
+
+    ``Utf8`` use narrow characters (one byte) to encode text in payloads. ODBC lets the client
+    choose the encoding which should be based on the system local. This is often not what is
+    actually happening though. If we use narrow encoding, we assume the text to be UTF-8 and error
+    if we find that not to be the case.
+
+    ``Utf16`` use wide characters (two bytes) to encode text in payloads. ODBC defines the encoding
+    to be always UTF-16.
+    """
+
+    AUTO = 0
+    UTF8 = 1
+    UTF16 = 2
 
 
 def _schema_from_handle(handle) -> Schema:
@@ -122,12 +149,15 @@ class _BatchReaderRaii:
         max_text_size: int,
         max_binary_size: int,
         falliable_allocations: bool,
+        payload_text_encoding: TextEncoding,
         schema: Optional[Schema],
         map_schema: Optional[Callable[[Schema], Schema]],
-        fetch_concurrently: bool
+        fetch_concurrently: bool,
     ):
         if map_schema is not None:
             schema = map_schema(self.schema())
+
+        payload_text_encoding_int = payload_text_encoding.value
 
         ptr_schema = _export_schema_to_c(schema)
 
@@ -139,6 +169,7 @@ class _BatchReaderRaii:
             max_binary_size,
             falliable_allocations,
             fetch_concurrently,
+            payload_text_encoding_int,
             ptr_schema,
         )
         # See if we managed to execute the query successfully and return an error if not
@@ -202,6 +233,7 @@ class BatchReader:
         schema: Optional[Schema] = None,
         map_schema: Optional[Callable[[Schema], Schema]] = None,
         fetch_concurrently=True,
+        payload_text_encoding: TextEncoding = TextEncoding.AUTO,
     ) -> bool:
         """
         Move the reader to the next result set returned by the data source.
@@ -278,6 +310,12 @@ class BatchReader:
             required memory so if ``True`` ``arrow-odbc`` consumes almost two times the memory as
             compared to false. On the flipsite the next batch can be fetched from the database
             immediatly without waiting for the application logic to return control.
+        :param payload_text_encoding: Controls the encoding used for transferring text data from the
+            ODBC data source to the application. The resulting Arrow arrays will still be UTF-8
+            encoded. You may want to use this if you get garbage characters or invalid UTF-8 errors
+            on non-windows systems to set the encoding to ``TextEncoding.Utf16``. On windows systems
+            you may want to set this to ``TextEncoding::Utf8`` to gain performance benefits, after
+            you have verified that your system locale is set to UTF-8.
         :return: ``True`` in case there is another result set. ``False`` in case that the last
             result set has been processed.
         """
@@ -294,6 +332,7 @@ class BatchReader:
             max_text_size=max_text_size,
             max_binary_size=max_binary_size,
             falliable_allocations=falliable_allocations,
+            payload_text_encoding=payload_text_encoding,
             schema=schema,
             map_schema=map_schema,
             fetch_concurrently=fetch_concurrently,
@@ -341,6 +380,7 @@ def read_arrow_batches_from_odbc(
     map_schema: Optional[Callable[[Schema], Schema]] = None,
     fetch_concurrently=True,
     query_timeout_sec: Optional[int] = None,
+    payload_text_encoding: TextEncoding = TextEncoding.AUTO,
 ) -> BatchReader:
     """
     Execute the query and read the result as an iterator over Arrow batches.
@@ -451,6 +491,12 @@ def read_arrow_batches_from_odbc(
         provide with a minimum or maximum value. You can specify ``0``, to deactivate the timeout,
         this is the default. For this to work the driver must support this feature. E.g. PostgreSQL,
         and Microsoft SQL Server do, but SQLite or MariaDB do not.
+    :param payload_text_encoding: Controls the encoding used for transferring text data from the
+            ODBC data source to the application. The resulting Arrow arrays will still be UTF-8
+            encoded. You may want to use this if you get garbage characters or invalid UTF-8 errors
+            on non-windows systems to set the encoding to ``TextEncoding.Utf16``. On windows systems
+            you may want to set this to ``TextEncoding::Utf8`` to gain performance benefits, after
+            you have verified that your system locale is set to UTF-8.
     :return: A ``BatchReader`` is returned, which implements the iterator protocol and iterates over
         individual arrow batches.
     """
@@ -485,6 +531,7 @@ def read_arrow_batches_from_odbc(
         max_text_size=max_text_size,
         max_binary_size=max_binary_size,
         falliable_allocations=falliable_allocations,
+        payload_text_encoding=payload_text_encoding,
         schema=schema,
         map_schema=map_schema,
         fetch_concurrently=fetch_concurrently,

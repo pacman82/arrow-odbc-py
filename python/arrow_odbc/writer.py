@@ -31,9 +31,10 @@ class BatchWriter:
         time they are full, the data is send to the database. To make sure all
         the data is is send ``flush`` must be called.
         """
-        with arrow_ffi.new("struct ArrowArray*") as c_array, arrow_ffi.new(
-            "struct ArrowSchema*"
-        ) as c_schema:
+        with (
+            arrow_ffi.new("struct ArrowArray*") as c_array,
+            arrow_ffi.new("struct ArrowSchema*") as c_schema,
+        ):
             # Get the references to the C Data structures
             c_array_ptr = int(arrow_ffi.cast("uintptr_t", c_array))
             c_schema_ptr = int(arrow_ffi.cast("uintptr_t", c_schema))

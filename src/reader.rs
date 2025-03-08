@@ -10,7 +10,7 @@ use std::{
 };
 
 use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema};
-use arrow_odbc::OdbcReaderBuilder;
+use arrow_odbc::{OdbcReaderBuilder, TextEncoding};
 
 use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcConnection, ArrowOdbcError};
 
@@ -178,6 +178,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_bind_buffers(
     max_binary_size: usize,
     fallibale_allocations: bool,
     fetch_concurrently: bool,
+    payload_text_encoding: u8,
     schema: *mut c_void,
 ) -> *mut ArrowOdbcError {
     let schema = take_schema(schema);
@@ -188,6 +189,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_bind_buffers(
         max_num_rows_per_batch,
         max_bytes_per_batch,
         fallibale_allocations,
+        payload_text_encoding,
         schema,
     );
     // Move cursor to the next result set.
@@ -224,12 +226,22 @@ pub unsafe extern "C" fn arrow_odbc_reader_into_concurrent(
     null_mut()
 }
 
+fn into_text_encoding(encoding: u8) -> TextEncoding {
+    match encoding {
+        0 => TextEncoding::Auto,
+        1 => TextEncoding::Utf8,
+        2 => TextEncoding::Utf16,
+        _ => panic!("Python side of arrow odbc must only pass values 0, 1 or 2 for encoding."),
+    }
+}
+
 fn reader_builder_from_c_args(
     max_text_size: usize,
     max_binary_size: usize,
     max_num_rows_per_batch: usize,
     max_bytes_per_batch: usize,
     fallibale_allocations: bool,
+    payload_text_encoding: u8,
     schema: Option<FFI_ArrowSchema>,
 ) -> OdbcReaderBuilder {
     let mut builder = OdbcReaderBuilder::new();
@@ -250,6 +262,7 @@ fn reader_builder_from_c_args(
     if let Some(ffi_schema) = schema {
         builder.with_schema(Arc::new((&ffi_schema).try_into().unwrap()));
     }
+    builder.with_payload_text_encoding(into_text_encoding(payload_text_encoding));
     builder
 }
 
