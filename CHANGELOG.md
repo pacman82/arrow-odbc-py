@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.3.0
+
+- Add support for selecting wide or narrow encoding for transporting text data to the application explicitly. For this the `TextEncoding` enumration can be used and its variants passed to `payload_text_encoding` parameter of `read_arrow_batches_from_odbc`.
+
 ## 8.2.0
 
 - Add support for query timeouts, introducing a new `query_timeout_sec` parameter to `read_arrow_batches_from_odbc`.
