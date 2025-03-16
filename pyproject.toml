@@ -1,7 +1,6 @@
 [build-system]
-# 1.6 introduced a regression which prevents the wheel from building under os-x and windows. So we
-# need at least 1.7.
-requires = ["cffi", "maturin>=1.7,<2.0"]
+# 1.8.3 is the first version of maturin that supports Rust editon 2024
+requires = ["cffi", "maturin>=1.8.3,<2.0"]
 build-backend = "maturin"
 
 [project]
