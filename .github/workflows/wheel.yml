@@ -62,7 +62,7 @@ jobs:
         docker run --rm -v ${PWD}:/io cargodock bash /io/manylinux/build_wheel.sh
     - name: Publish Manylinux wheel
       run: |
-        pip install twine==6.0.1
+        pip install twine
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
 
   manylinux-wheel-arm:
@@ -75,7 +75,7 @@ jobs:
         docker run --rm -v ${PWD}:/io cargodock bash /io/manylinux/build_wheel.sh
     - name: Publish Manylinux wheel ARM
       run: |
-        pip install twine==6.0.1
+        pip install twine
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
 
   macos-arm-wheel:
