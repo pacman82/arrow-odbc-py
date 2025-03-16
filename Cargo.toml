@@ -1,7 +1,7 @@
 [package]
 name = "arrow-odbc-py"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 # This is only published as part of a python wheel, not as a stand alone crate.
 publish = false

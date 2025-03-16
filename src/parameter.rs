@@ -27,7 +27,7 @@ impl<'a> ArrowOdbcParameter<'a> {
 /// `char_buf` may be `NULL`, but if it is not, it must contain a valid utf-8 sequence not shorter
 /// than `char_len`. This function does not take ownership of the parameter. The parameter must at
 /// least be valid until the call make reader is finished.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_parameter_string_make(
     char_buf: *const u8,
     char_len: usize,

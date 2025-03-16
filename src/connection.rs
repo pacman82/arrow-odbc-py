@@ -28,9 +28,9 @@ impl ArrowOdbcConnection {
 /// # Safety
 ///
 /// `reader` must point to a valid ArrowOdbcConnection.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_connection_free(connection: NonNull<ArrowOdbcConnection>) {
-    drop(Box::from_raw(connection.as_ptr()));
+    drop(unsafe { Box::from_raw(connection.as_ptr()) });
 }
 
 /// Allocate and open an ODBC connection using the specified connection string. In case of an error
@@ -41,7 +41,7 @@ pub unsafe extern "C" fn arrow_odbc_connection_free(connection: NonNull<ArrowOdb
 /// `connection_string_buf` must point to a valid utf-8 encoded string. `connection_string_len` must
 /// hold the length of text in `connection_string_buf`.
 /// `user` and or `password` are optional and are allowed to be `NULL`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_connection_make(
     connection_string_buf: *const u8,
     connection_string_len: usize,

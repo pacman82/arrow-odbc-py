@@ -44,7 +44,7 @@ pub use self::arrow_odbc_reader::ArrowOdbcReader;
 ///   overwritten with an empty one. This means the Python code, must only deallocate the memory
 ///   directly pointed to by `schema`, but not freeing the resources of the passed schema.
 /// * `query_timout_sec`: Optional query timeout in seconds. If `NULL` no timeout is applied.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_reader_query(
     mut reader: NonNull<ArrowOdbcReader>,
     mut connection: NonNull<ArrowOdbcConnection>,
@@ -88,7 +88,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
 ///
 /// * `reader_out` will point to an instance of `ArrowOdbcReader`. Ownership is transferred to the
 ///   caller.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_reader_make(reader_out: *mut *mut ArrowOdbcReader) {
     let reader = ArrowOdbcReader::empty();
     *reader_out = Box::into_raw(Box::new(reader));
@@ -99,7 +99,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(reader_out: *mut *mut ArrowOdbcR
 /// # Safety
 ///
 /// `reader` must point to a valid ArrowOdbcReader.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_reader_free(reader: NonNull<ArrowOdbcReader>) {
     drop(Box::from_raw(reader.as_ptr()));
 }
@@ -111,7 +111,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_free(reader: NonNull<ArrowOdbcReader>
 ///   allocated in the python code, so it can also be deallocated there and the python part can take
 ///   ownership of the whole thing.
 /// * In case an error is returned `array` and `schema` remain unchanged.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_reader_next(
     mut reader: NonNull<ArrowOdbcReader>,
     array: *mut c_void,
@@ -151,7 +151,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
 ///   schema be supplied `schema` Rust will take ownership of it an the `schema` will be
 ///   overwritten with an empty one. This means the Python code, must only deallocate the memory
 ///   directly pointed to by `schema`, but not freeing the resources of the passed schema.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_reader_more_results(
     mut reader: NonNull<ArrowOdbcReader>,
     has_more_results: *mut bool,
@@ -169,7 +169,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
 ///   schema be supplied `schema` Rust will take ownership of it an the `schema` will be
 ///   overwritten with an empty one. This means the Python code, must only deallocate the memory
 ///   directly pointed to by `schema`, but not freeing the resources of the passed schema.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_reader_bind_buffers(
     mut reader: NonNull<ArrowOdbcReader>,
     max_num_rows_per_batch: usize,
@@ -203,7 +203,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_bind_buffers(
 }
 
 /// Retrieve the associated schema from a reader.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_reader_schema(
     mut reader: NonNull<ArrowOdbcReader>,
     out_schema: *mut c_void,
@@ -218,7 +218,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_schema(
 /// # Safety
 ///
 /// * `reader` must point to a valid non-null reader, allocated by [`arrow_odbc_reader_make`].
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_reader_into_concurrent(
     mut reader: NonNull<ArrowOdbcReader>,
 ) -> *mut ArrowOdbcError {
@@ -274,7 +274,7 @@ unsafe fn take_schema(schema: *mut c_void) -> Option<FFI_ArrowSchema> {
         None
     } else {
         let schema = schema as *mut FFI_ArrowSchema;
-        let schema = &mut *schema;
+        let schema = unsafe { &mut *schema };
         let mut tmp_schema = FFI_ArrowSchema::empty();
         swap(schema, &mut tmp_schema);
         Some(tmp_schema)
