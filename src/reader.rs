@@ -4,7 +4,7 @@ use std::{
     ffi::c_void,
     mem::swap,
     os::raw::c_int,
-    ptr::{null_mut, NonNull},
+    ptr::{NonNull, null_mut},
     slice, str,
     sync::Arc,
 };
@@ -12,7 +12,7 @@ use std::{
 use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema};
 use arrow_odbc::{OdbcReaderBuilder, TextEncoding};
 
-use crate::{parameter::ArrowOdbcParameter, try_, ArrowOdbcConnection, ArrowOdbcError};
+use crate::{ArrowOdbcConnection, ArrowOdbcError, parameter::ArrowOdbcParameter, try_};
 
 pub use self::arrow_odbc_reader::ArrowOdbcReader;
 
@@ -54,29 +54,32 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
     parameters_len: usize,
     query_timeout_sec: *const usize,
 ) -> *mut ArrowOdbcError {
-    let connection = connection.as_mut().take();
+    let connection = unsafe { connection.as_mut() }.take();
     // Transtlate C Args into more idiomatic rust representations
-    let query = slice::from_raw_parts(query_buf, query_len);
+    let query = unsafe { slice::from_raw_parts(query_buf, query_len) };
     let query = str::from_utf8(query).unwrap();
 
     let parameters = if parameters.is_null() {
         Vec::new()
     } else {
-        slice::from_raw_parts(parameters, parameters_len)
+        unsafe { slice::from_raw_parts(parameters, parameters_len) }
             .iter()
-            .map(|&p| Box::from_raw(p).unwrap())
+            .map(|&p| unsafe { Box::from_raw(p) }.unwrap())
             .collect()
     };
 
     let query_timeout_sec = if query_timeout_sec.is_null() {
         None
     } else {
-        Some(*query_timeout_sec)
+        Some(unsafe { *query_timeout_sec })
     };
 
-    try_!(reader
-        .as_mut()
-        .promote_to_cursor(connection, query, &parameters[..], query_timeout_sec));
+    try_!(unsafe { reader.as_mut() }.promote_to_cursor(
+        connection,
+        query,
+        &parameters[..],
+        query_timeout_sec
+    ));
 
     null_mut() // Ok(())
 }
@@ -91,7 +94,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_reader_make(reader_out: *mut *mut ArrowOdbcReader) {
     let reader = ArrowOdbcReader::empty();
-    *reader_out = Box::into_raw(Box::new(reader));
+    unsafe { *reader_out = Box::into_raw(Box::new(reader)) };
 }
 
 /// Frees the resources associated with an ArrowOdbcReader
@@ -101,7 +104,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_make(reader_out: *mut *mut ArrowOdbcR
 /// `reader` must point to a valid ArrowOdbcReader.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_reader_free(reader: NonNull<ArrowOdbcReader>) {
-    drop(Box::from_raw(reader.as_ptr()));
+    drop(unsafe { Box::from_raw(reader.as_ptr()) });
 }
 
 /// # Safety
@@ -122,23 +125,23 @@ pub unsafe extern "C" fn arrow_odbc_reader_next(
     let array = array as *mut FFI_ArrowArray;
 
     // In case of an error fail early, before we change the output paramters.
-    let batch = try_!(reader.as_mut().next_batch());
+    let batch = try_!(unsafe { reader.as_mut().next_batch() });
 
     if let Some((mut ffi_array, mut ffi_schema)) = batch {
         // Create two empty instances, so array and schema now point to valid instances.
-        *array = FFI_ArrowArray::empty();
-        *schema = FFI_ArrowSchema::empty();
+        unsafe { *array = FFI_ArrowArray::empty() };
+        unsafe { *schema = FFI_ArrowSchema::empty() };
         // Now that the instances are valid it safe to use them as references rather than pointers
         // (references must always be valid)
-        let array = &mut *array;
-        let schema = &mut *schema;
+        let array = unsafe { &mut *array };
+        let schema = unsafe { &mut *schema };
 
         swap(array, &mut ffi_array);
         swap(schema, &mut ffi_schema);
 
-        *has_next_out = 1;
+        unsafe { *has_next_out = 1 };
     } else {
-        *has_next_out = 0;
+        unsafe { *has_next_out = 0 };
     }
     null_mut()
 }
@@ -157,7 +160,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_more_results(
     has_more_results: *mut bool,
 ) -> *mut ArrowOdbcError {
     // Move cursor to the next result set.
-    *has_more_results = try_!(reader.as_mut().more_results());
+    unsafe { *has_more_results = try_!(reader.as_mut().more_results()) };
     null_mut()
 }
 
@@ -181,7 +184,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_bind_buffers(
     payload_text_encoding: u8,
     schema: *mut c_void,
 ) -> *mut ArrowOdbcError {
-    let schema = take_schema(schema);
+    let schema = unsafe { take_schema(schema) };
 
     let reader_builder = reader_builder_from_c_args(
         max_text_size,
@@ -193,10 +196,10 @@ pub unsafe extern "C" fn arrow_odbc_reader_bind_buffers(
         schema,
     );
     // Move cursor to the next result set.
-    try_!(reader.as_mut().promote_to_reader(reader_builder));
+    try_!(unsafe { reader.as_mut() }.promote_to_reader(reader_builder));
 
     if fetch_concurrently {
-        try_!(reader.as_mut().into_concurrent());
+        try_!(unsafe { reader.as_mut() }.into_concurrent());
     }
 
     null_mut()
@@ -210,8 +213,8 @@ pub unsafe extern "C" fn arrow_odbc_reader_schema(
 ) -> *mut ArrowOdbcError {
     let out_schema = out_schema as *mut FFI_ArrowSchema;
 
-    let schema_ffi = try_!(reader.as_mut().schema());
-    *out_schema = schema_ffi;
+    let schema_ffi = try_!(unsafe { reader.as_mut() }.schema());
+    unsafe { *out_schema = schema_ffi };
     null_mut()
 }
 
@@ -222,7 +225,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_schema(
 pub unsafe extern "C" fn arrow_odbc_reader_into_concurrent(
     mut reader: NonNull<ArrowOdbcReader>,
 ) -> *mut ArrowOdbcError {
-    try_!(reader.as_mut().into_concurrent());
+    try_!(unsafe { reader.as_mut() }.into_concurrent());
     null_mut()
 }
 

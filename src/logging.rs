@@ -1,6 +1,6 @@
 use std::ptr::null_mut;
 
-use crate::{try_, ArrowOdbcError};
+use crate::{ArrowOdbcError, try_};
 
 /// Activates logging to standard error from Rust
 ///

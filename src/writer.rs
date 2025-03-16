@@ -1,17 +1,17 @@
 use std::{
     ffi::c_void,
-    ptr::{self, null_mut, NonNull},
+    ptr::{self, NonNull, null_mut},
     slice, str,
 };
 
-use arrow::ffi::{from_ffi, FFI_ArrowArray, FFI_ArrowSchema};
+use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema, from_ffi};
 use arrow_odbc::{
+    OdbcWriter,
     arrow::{array::StructArray, datatypes::Schema, record_batch::RecordBatch},
     odbc_api::StatementConnection,
-    OdbcWriter,
 };
 
-use crate::{try_, ArrowOdbcConnection, ArrowOdbcError};
+use crate::{ArrowOdbcConnection, ArrowOdbcError, try_};
 
 /// Opaque type holding all the state associated with an ODBC writer implementation in Rust. This
 /// type also has ownership of the ODBC Connection handle.
@@ -62,7 +62,9 @@ pub unsafe extern "C" fn arrow_odbc_writer_make(
         connection, &schema, table, chunk_size
     ));
     let writer_ptr = Box::into_raw(Box::new(ArrowOdbcWriter(writer)));
-    unsafe { *writer_out = writer_ptr; }
+    unsafe {
+        *writer_out = writer_ptr;
+    }
 
     null_mut() // Ok(())
 }

@@ -8,9 +8,8 @@ use arrow::{
     record_batch::RecordBatchReader,
 };
 use arrow_odbc::{
-    arrow_schema_from,
+    ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder, arrow_schema_from,
     odbc_api::{Connection, Cursor, CursorImpl, ParameterCollectionRef, StatementConnection},
-    ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder,
 };
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This

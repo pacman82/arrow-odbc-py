@@ -35,7 +35,7 @@ pub unsafe extern "C" fn arrow_odbc_parameter_string_make(
     let opt = if char_buf.is_null() {
         None
     } else {
-        Some(slice::from_raw_parts(char_buf, char_len))
+        Some(unsafe { slice::from_raw_parts(char_buf, char_len) })
     };
 
     let param = ArrowOdbcParameter::from_opt_str(opt);
