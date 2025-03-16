@@ -7,10 +7,6 @@ mod pool;
 mod reader;
 mod writer;
 
-use std::sync::OnceLock;
-
-use arrow_odbc::odbc_api::Environment;
-
 pub use self::{
     connection::{arrow_odbc_connection_make, ArrowOdbcConnection},
     error::{arrow_odbc_error_free, arrow_odbc_error_message, ArrowOdbcError},
@@ -21,7 +17,3 @@ pub use self::{
         ArrowOdbcWriter,
     },
 };
-
-/// Using an ODBC environment with static lifetime eases our work with concurrent fetching, as we
-/// can work with safe code and without scoped threads.
-static ENV: OnceLock<Environment> = OnceLock::new();

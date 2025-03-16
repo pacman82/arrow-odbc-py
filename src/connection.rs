@@ -4,10 +4,10 @@ use std::{
     slice, str,
 };
 
-use arrow_odbc::odbc_api::{escape_attribute_value, Connection, ConnectionOptions, Environment};
+use arrow_odbc::odbc_api::{environment, escape_attribute_value, Connection, ConnectionOptions};
 use log::debug;
 
-use crate::{try_, ArrowOdbcError, ENV};
+use crate::{try_, ArrowOdbcError};
 
 /// Opaque type to transport connection to an ODBC Datasource over language boundry
 pub struct ArrowOdbcConnection(Option<Connection<'static>>);
@@ -53,14 +53,7 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
     packet_size_ptr: *const u32,
     connection_out: *mut *mut ArrowOdbcConnection,
 ) -> *mut ArrowOdbcError {
-    let env = if let Some(env) = ENV.get() {
-        // Use existing environment
-        env
-    } else {
-        // ODBC Environment does not exist yet, create it.
-        let env = try_!(Environment::new());
-        ENV.get_or_init(|| env)
-    };
+    let env = try_!(environment());
 
     let connection_string = slice::from_raw_parts(connection_string_buf, connection_string_len);
     let mut connection_string = Cow::Borrowed(str::from_utf8(connection_string).unwrap());
