@@ -20,9 +20,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.x
       - name: Install latest rust toolchain
         uses: dtolnay/rust-toolchain@v1
         with:
@@ -45,13 +42,14 @@ jobs:
       # odbcsv tool is used by the tests to setup tables
       - name: Install odbcsv
         run: cargo install odbcsv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Setup Python
+        run: uv python install
       - name: Test
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          python -m pip install --upgrade pip
-          pip install -e .[test]
-          pytest -vv
+          uv sync --dev
+          uv run pytest tests -vv
 
 
   dependabot:
