@@ -11,7 +11,7 @@ use crate::{try_, ArrowOdbcError};
 /// * 2 - Info
 /// * 3 - Debug
 /// * 4 or higher - Trace
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn arrow_odbc_log_to_stderr(level: u32) -> *mut ArrowOdbcError {
     let level = match level {
         0 => log::Level::Error,

@@ -22,9 +22,9 @@ pub struct ArrowOdbcWriter(OdbcWriter<StatementConnection<'static>>);
 /// # Safety
 ///
 /// `writer` must point to a valid ArrowOdbcReader.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_writer_free(writer: NonNull<ArrowOdbcWriter>) {
-    drop(Box::from_raw(writer.as_ptr()));
+    drop(unsafe { Box::from_raw(writer.as_ptr()) });
 }
 
 /// Creates an Arrow ODBC writer instance.
@@ -41,7 +41,7 @@ pub unsafe extern "C" fn arrow_odbc_writer_free(writer: NonNull<ArrowOdbcWriter>
 /// * `schema` pointer to an arrow schema.
 /// * `writer_out` in case of success this will point to an instance of `ArrowOdbcWriter`. Ownership
 ///   is transferred to the caller.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_writer_make(
     mut connection: NonNull<ArrowOdbcConnection>,
     table_buf: *const u8,
@@ -50,18 +50,19 @@ pub unsafe extern "C" fn arrow_odbc_writer_make(
     schema: *const c_void,
     writer_out: *mut *mut ArrowOdbcWriter,
 ) -> *mut ArrowOdbcError {
-    let connection = connection.as_mut().take();
+    let connection = unsafe { connection.as_mut().take() };
 
-    let table = slice::from_raw_parts(table_buf, table_len);
+    let table = unsafe { slice::from_raw_parts(table_buf, table_len) };
     let table = str::from_utf8(table).unwrap();
 
     let schema = schema as *const FFI_ArrowSchema;
-    let schema: Schema = try_!((&*schema).try_into());
+    let schema: Schema = try_!(unsafe { &*schema }.try_into());
 
     let writer = try_!(OdbcWriter::from_connection(
         connection, &schema, table, chunk_size
     ));
-    *writer_out = Box::into_raw(Box::new(ArrowOdbcWriter(writer)));
+    let writer_ptr = Box::into_raw(Box::new(ArrowOdbcWriter(writer)));
+    unsafe { *writer_out = writer_ptr; }
 
     null_mut() // Ok(())
 }
@@ -70,7 +71,7 @@ pub unsafe extern "C" fn arrow_odbc_writer_make(
 ///
 /// * `writer` must be valid non-null writer, allocated by [`arrow_odbc_writer_make`].
 /// * `batch` must be a valid pointer to an arrow batch
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_writer_write_batch(
     mut writer: NonNull<ArrowOdbcWriter>,
     array_ptr: *mut c_void,
@@ -78,16 +79,16 @@ pub unsafe extern "C" fn arrow_odbc_writer_write_batch(
 ) -> *mut ArrowOdbcError {
     let array_ptr = array_ptr as *mut FFI_ArrowArray;
     let schema_ptr = schema_ptr as *mut FFI_ArrowSchema;
-    let array = ptr::replace(array_ptr, FFI_ArrowArray::empty());
-    let schema = ptr::replace(schema_ptr, FFI_ArrowSchema::empty());
+    let array = unsafe { ptr::replace(array_ptr, FFI_ArrowArray::empty()) };
+    let schema = unsafe { ptr::replace(schema_ptr, FFI_ArrowSchema::empty()) };
 
     // Dereference batch
-    let array_data = try_!(from_ffi(array, &schema));
+    let array_data = try_!(unsafe { from_ffi(array, &schema) });
     let struct_array = StructArray::from(array_data);
     let record_batch = RecordBatch::from(&struct_array);
 
     // Dereference writer
-    let writer = &mut writer.as_mut().0;
+    let writer = unsafe { &mut writer.as_mut().0 };
 
     try_!(writer.write_batch(&record_batch));
     null_mut() // Ok(())
@@ -96,12 +97,12 @@ pub unsafe extern "C" fn arrow_odbc_writer_write_batch(
 /// # Safety
 ///
 /// * `writer` must be valid non-null writer, allocated by [`arrow_odbc_writer_make`].
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_writer_flush(
     mut writer: NonNull<ArrowOdbcWriter>,
 ) -> *mut ArrowOdbcError {
     // Dereference writer
-    let writer = &mut writer.as_mut().0;
+    let writer = unsafe { &mut writer.as_mut().0 };
 
     try_!(writer.flush());
     null_mut()
