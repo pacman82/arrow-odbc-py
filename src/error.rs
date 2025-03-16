@@ -40,7 +40,7 @@ where
 /// Error must be a valid non null pointer to an Error.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_error_free(error: NonNull<ArrowOdbcError>) {
-    drop(Box::from_raw(error.as_ptr()));
+    drop(unsafe { Box::from_raw(error.as_ptr()) });
 }
 
 /// A zero terminated string describing the error
@@ -50,7 +50,7 @@ pub unsafe extern "C" fn arrow_odbc_error_free(error: NonNull<ArrowOdbcError>) {
 /// Error must be a valid non null pointer to an Error.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_error_message(error: *const ArrowOdbcError) -> *const c_char {
-    let error = &*error;
+    let error = unsafe { &*error };
     error.message.as_ptr()
 }
 

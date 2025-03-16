@@ -1,13 +1,13 @@
 use std::{
     borrow::Cow,
-    ptr::{null_mut, NonNull},
+    ptr::{NonNull, null_mut},
     slice, str,
 };
 
-use arrow_odbc::odbc_api::{environment, escape_attribute_value, Connection, ConnectionOptions};
+use arrow_odbc::odbc_api::{Connection, ConnectionOptions, environment, escape_attribute_value};
 use log::debug;
 
-use crate::{try_, ArrowOdbcError};
+use crate::{ArrowOdbcError, try_};
 
 /// Opaque type to transport connection to an ODBC Datasource over language boundry
 pub struct ArrowOdbcConnection(Option<Connection<'static>>);
@@ -55,22 +55,23 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
 ) -> *mut ArrowOdbcError {
     let env = try_!(environment());
 
-    let connection_string = slice::from_raw_parts(connection_string_buf, connection_string_len);
+    let connection_string =
+        unsafe { slice::from_raw_parts(connection_string_buf, connection_string_len) };
     let mut connection_string = Cow::Borrowed(str::from_utf8(connection_string).unwrap());
 
-    append_attribute("UID", &mut connection_string, user, user_len);
-    append_attribute("PWD", &mut connection_string, password, password_len);
+    unsafe { append_attribute("UID", &mut connection_string, user, user_len) };
+    unsafe { append_attribute("PWD", &mut connection_string, password, password_len) };
 
     let login_timeout_sec = if login_timeout_sec_ptr.is_null() {
         None
     } else {
-        Some(*login_timeout_sec_ptr)
+        Some(unsafe { *login_timeout_sec_ptr })
     };
 
     let packet_size = if packet_size_ptr.is_null() {
         None
     } else {
-        Some(*packet_size_ptr)
+        Some(unsafe { *packet_size_ptr })
     };
 
     let connection = try_!(env.connect_with_connection_string(
@@ -85,7 +86,7 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
     let dbms_name = try_!(connection.database_management_system_name());
     debug!("Database managment system name as reported by ODBC: {dbms_name}");
 
-    *connection_out = Box::into_raw(Box::new(ArrowOdbcConnection::new(connection)));
+    unsafe { *connection_out = Box::into_raw(Box::new(ArrowOdbcConnection::new(connection))) };
     null_mut()
 }
 
@@ -96,13 +97,15 @@ unsafe fn append_attribute(
     ptr: *const u8,
     len: usize,
 ) {
-    // Attribute is optional and not set. Nothing to append.
     if ptr.is_null() {
+        // In case the attribute in NULL there is nothing to append
         return;
     }
 
-    let bytes = slice::from_raw_parts(ptr, len);
-    let text = str::from_utf8(bytes).unwrap();
-    let escaped = escape_attribute_value(text);
+    let attribute_value = unsafe { slice::from_raw_parts(ptr, len) };
+    let attribute_value =
+        str::from_utf8(attribute_value).expect("Python side must always encode in UTF-8");
+
+    let escaped = escape_attribute_value(attribute_value);
     *connection_string = format!("{connection_string}{attribute_name}={escaped};").into()
 }
