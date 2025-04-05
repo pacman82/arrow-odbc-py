@@ -14,10 +14,10 @@ name = "arrow_odbc"
 crate-type = ["cdylib"]
 
 [dependencies]
-arrow-odbc = "15.1.1"
+arrow-odbc = "16.0.0"
 # arrow would be included indirectly using arrow-odbc, but we need to explicitly specify the ffi
 # feature.
-arrow = { version = "54.2.1", default-features = false, features = ["ffi"] }
+arrow = { version = "54.3.1", default-features = false, features = ["ffi"] }
 stderrlog = "0.6.0"
 log = "0.4.27"
 
