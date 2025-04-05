@@ -30,7 +30,7 @@ jobs:
         python -m build
     - name: Publish Windows wheel
       run: |
-        pip install twine
+        uv pip install twine==6.0.1
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
         
   macos-x86-wheel:
@@ -49,7 +49,7 @@ jobs:
         args: --release --out dist --find-interpreter
     - name: Publish Mac OS x86 wheel
       run: |
-        pip install twine
+        uv pip install twine==6.0.1
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
 
   manylinux-wheel:
@@ -62,7 +62,7 @@ jobs:
         docker run --rm -v ${PWD}:/io cargodock bash /io/manylinux/build_wheel.sh
     - name: Publish Manylinux wheel
       run: |
-        pip install twine
+        uv pip install twine==6.0.1
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
 
   manylinux-wheel-arm:
@@ -75,7 +75,7 @@ jobs:
         docker run --rm -v ${PWD}:/io cargodock bash /io/manylinux/build_wheel.sh
     - name: Publish Manylinux wheel ARM
       run: |
-        pip install twine
+        uv pip install twine==6.0.1
         twine upload --skip-existing -u __token__ -p "${{ secrets.PYPI_API_TOKEN }}" dist/*
 
   macos-arm-wheel:
