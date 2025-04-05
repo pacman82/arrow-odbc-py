@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.3.1
+
+- Updated Rust dependencies. This includes an update of `odbc-api`. With this arrow-odbc can now insert text larger than 4000 characters into an Microsoft SQL Server, if on Windows.
+
 ## 8.3.0
 
 - Add support for selecting wide or narrow encoding for transporting text data to the application explicitly. For this the `TextEncoding` enumration can be used and its variants passed to `payload_text_encoding` parameter of `read_arrow_batches_from_odbc`.
