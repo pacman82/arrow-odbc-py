@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.3.2
+
+Same as 8.3.1. Release triggered again, due to failure in publishing wheels.
+
 ## 8.3.1
 
 - Updated Rust dependencies. This includes an update of `odbc-api`. With this arrow-odbc can now insert text larger than 4000 characters into an Microsoft SQL Server, if on Windows.
