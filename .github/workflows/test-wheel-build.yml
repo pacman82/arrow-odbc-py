@@ -1,0 +1,78 @@
+# Build wheels without publishing to PyPI.
+
+name: Test Wheel Build
+
+on: [push]
+
+jobs:
+  windows-wheel:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+    - name: Setup Python
+      run: uv python install
+    - name: Build windows wheel
+      # Only build the wheel on windows and no source dist. We got a different hash for the source
+      # dist on windows. The (uvalidated) assumption is that this might be to the \r\n line endings
+      # which might be introduced during checkout.
+      run: uv build --wheel
+        
+  macos-x86-wheel:
+    runs-on: macos-13
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+    - name: Setup Python
+      run: uv python install
+      # In order to build for x86_64 we lean into the cross build support of maturin
+    - name: Build Mac OS x86 wheel
+      uses: PyO3/maturin-action@v1
+      with:
+        target: x86_64
+        args: --release --out dist --find-interpreter
+
+  manylinux-wheel:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+    - name: Build Manylinux wheel
+      run: |
+        docker build -t cargodock ./manylinux
+        docker run --rm -v ${PWD}:/io cargodock bash /io/manylinux/build_wheel.sh
+
+  manylinux-wheel-arm:
+    runs-on: ubuntu-24.04-arm
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+    - name: Build Manylinux wheel ARM
+      run: |
+        docker build -t cargodock ./manylinux -f ./manylinux/aarch64.dockerfile
+        docker run --rm -v ${PWD}:/io cargodock bash /io/manylinux/build_wheel.sh
+
+  macos-arm-wheel:
+    runs-on: macos-14
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+    - name: Setup Python
+      run: uv python install
+    - name: Install latests rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        default: true
+        override: true
+    - name: Install Unix ODBC
+      run: |
+        brew install unixodbc
+        sudo ln -s /opt/homebrew/lib ~/lib
+    - name: Build Mac OS arm wheel
+      run: uv build
