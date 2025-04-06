@@ -1,6 +1,6 @@
 # Changelog
 
-## 8.3.2-6
+## 8.3.2-7
 
 Same as 8.3.1. Release triggered again, due to failure in publishing wheels.
 
