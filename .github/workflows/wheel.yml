@@ -22,7 +22,10 @@ jobs:
     - name: Setup Python
       run: uv python install
     - name: Build windows wheel
-      run: uv build
+      # Only build the wheel on windows and no source dist. We got a different hash for the source
+      # dist on windows. The (uvalidated) assumption is that this might be to the \r\n line endings
+      # which might be introduced during checkout.
+      run: uv build --wheel
     - name: Publish Windows wheel
       run: uv publish --trusted-publishing always --check-url "https://pypi.org/simple"
         
