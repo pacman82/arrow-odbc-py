@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.3.9
+
+- fix: Pyproject.toml now specifies Python 3.9 as the oldest supported Python version. With introduction of UV this had been wrongly set to 3.10.
+
 ## 8.3.2-8
 
 Same as 8.3.1. Release triggered again, due to failure in publishing wheels.
