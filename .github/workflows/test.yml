@@ -43,7 +43,7 @@ jobs:
       - name: Install odbcsv
         run: cargo install odbcsv
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v6
       - name: Setup Python
         run: uv python install
       - name: Test
