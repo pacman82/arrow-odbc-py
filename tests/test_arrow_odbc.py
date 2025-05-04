@@ -919,13 +919,12 @@ def test_reinitalizing_logger_should_raise():
     ):
         log_to_stderr()
 
-
 @pytest.mark.xfail(reason="Bug in MS driver cutting column name with umlaut one letter short.")
 def test_umlaut_in_column_name():
     """
     Query a row with an umlaut in it. The column name should be unchanged in the arrow schema
     """
-    query = "SELECT a AS hällo"
+    query = "SELECT 42 AS hällo"
     reader = read_arrow_batches_from_odbc(query=query, batch_size=100, connection_string=MSSQL)
     it = iter(reader)
     actual = next(it)
