@@ -82,9 +82,12 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
         }
     ));
 
-    // Log dbms name to ease debugging of issues.
-    let dbms_name = try_!(connection.database_management_system_name());
-    debug!("Database managment system name as reported by ODBC: {dbms_name}");
+    // Log dbms name to ease debugging of issues. Since ODBC calls are expensive, only query name
+    // if we are actually logging the message.
+    if log::max_level() <= log::LevelFilter::Debug {
+        let dbms_name = try_!(connection.database_management_system_name());
+        debug!("Database managment system name as reported by ODBC: {dbms_name}");
+    }
 
     unsafe { *connection_out = Box::into_raw(Box::new(ArrowOdbcConnection::new(connection))) };
     null_mut()

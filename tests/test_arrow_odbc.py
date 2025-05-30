@@ -379,9 +379,10 @@ def test_out_of_range_timestamp_ns():
 
 def test_time():
     """
-    Query a table with one row. Should return one batch
+    Query a table with with a TIME column on MS. Type detection requires special treatment for
+    Microsoft SQL Server, since it does report a custom type (-154) for TIME columns.
     """
-    table = "TimestampNs"
+    table = "test_time"
     setup_table(table=table, column_type="TIME", values=["12:34:56.1234567"])
 
     query = f"SELECT * FROM {table}"
@@ -389,9 +390,34 @@ def test_time():
     it = iter(reader)
     actual = next(it)
 
-    # schema = pa.schema([("a", pa.time64("ns"))])
-    schema = pa.schema([("a", pa.utf8())])
-    expected = pa.RecordBatch.from_pydict({"a": ["12:34:56.1234567"]}, schema)
+    schema = pa.schema([("a", pa.time64("ns"))])
+    expected = pa.RecordBatch.from_pydict({"a": [45296123456700]}, schema)
+    print(expected[0])
+    print(actual[0])
+    assert expected == actual
+
+    with raises(StopIteration):
+        next(it)
+
+
+def test_should_map_column_with_accounting_for_dbms():
+    """
+    Verifies that database specific mapping is accounted for, even than mapping types manually.
+    """
+    table = "test_should_map_column_with_accounting_for_dbms"
+    setup_table(table=table, column_type="TIME", values=["12:34:56.1234567"])
+
+    query = f"SELECT * FROM {table}"
+    # We map the columns 'manually' with an identity function, so we can verify what the input
+    # schema for the mapping would look like.
+    reader = read_arrow_batches_from_odbc(
+        query=query, batch_size=1, connection_string=MSSQL, map_schema=lambda x: x
+    )
+    it = iter(reader)
+    actual = next(it)
+
+    schema = pa.schema([("a", pa.time64("ns"))])
+    expected = pa.RecordBatch.from_pydict({"a": [45296123456700]}, schema)
     print(expected[0])
     print(actual[0])
     assert expected == actual
@@ -941,6 +967,7 @@ def test_reinitalizing_logger_should_raise():
         match=r"attempted to set a logger after the logging system was already initialized",
     ):
         log_to_stderr()
+
 
 @pytest.mark.xfail(reason="Bug in MS driver cutting column name with umlaut one letter short.")
 def test_umlaut_in_column_name():
