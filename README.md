@@ -133,6 +133,10 @@ There is no ready made wheel for the platform you want to target? Do not worry, 
 | Float(p > 24)            | Float64              |
 | Date                     | Date32               |
 | LongVarbinary            | Binary               |
+| Time(p = 0)              | Time32Second         |
+| Time(p = 1..3)           | Time32Millisecond    |
+| Time(p = 4..6)           | Time64Microsecond    |
+| Time(p = 7..9)           | Time64Nanosecond     |
 | Timestamp(p = 0)         | TimestampSecond      |
 | Timestamp(p: 1..3)       | TimestampMilliSecond |
 | Timestamp(p: 4..6)       | TimestampMicroSecond |

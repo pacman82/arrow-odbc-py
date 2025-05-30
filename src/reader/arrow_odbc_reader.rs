@@ -156,7 +156,7 @@ impl ArrowOdbcReader {
                 schema.try_into()?
             }
             ArrowOdbcReader::Cursor { cursor } => {
-                let schema = arrow_schema_from(cursor, false)?;
+                let schema = arrow_schema_from(cursor, None, false)?;
                 schema.try_into()?
             }
             ArrowOdbcReader::Reader { reader } => {
