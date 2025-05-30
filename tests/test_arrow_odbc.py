@@ -377,6 +377,29 @@ def test_out_of_range_timestamp_ns():
         it.__next__()
 
 
+def test_time():
+    """
+    Query a table with one row. Should return one batch
+    """
+    table = "TimestampNs"
+    setup_table(table=table, column_type="TIME", values=["12:34:56.1234567"])
+
+    query = f"SELECT * FROM {table}"
+    reader = read_arrow_batches_from_odbc(query=query, batch_size=1, connection_string=MSSQL)
+    it = iter(reader)
+    actual = next(it)
+
+    # schema = pa.schema([("a", pa.time64("ns"))])
+    schema = pa.schema([("a", pa.utf8())])
+    expected = pa.RecordBatch.from_pydict({"a": ["12:34:56.1234567"]}, schema)
+    print(expected[0])
+    print(actual[0])
+    assert expected == actual
+
+    with raises(StopIteration):
+        next(it)
+
+
 def test_specify_user_and_password_separatly():
     """
     Query a table with one row. Should return one batch
