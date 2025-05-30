@@ -4,21 +4,21 @@ use std::{
     slice, str,
 };
 
-use arrow_odbc::odbc_api::{Connection, ConnectionOptions, environment, escape_attribute_value};
+use arrow_odbc::odbc_api::{ConnectionOptions, environment, escape_attribute_value};
 use log::debug;
 
 use crate::{ArrowOdbcError, try_};
 
 /// Opaque type to transport connection to an ODBC Datasource over language boundry
-pub struct ArrowOdbcConnection(Option<Connection<'static>>);
+pub struct ArrowOdbcConnection(Option<Connection>);
 
 impl ArrowOdbcConnection {
-    pub fn new(connection: Connection<'static>) -> Self {
+    pub fn new(connection: Connection) -> Self {
         ArrowOdbcConnection(Some(connection))
     }
 
     /// Take the inner connection out of its wrapper
-    pub fn take(&mut self) -> Connection<'static> {
+    pub fn take(&mut self) -> Connection {
         self.0.take().unwrap()
     }
 }
@@ -83,8 +83,7 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
     ));
 
     // Log dbms name to ease debugging of issues.
-    let dbms_name = try_!(connection.database_management_system_name());
-    debug!("Database managment system name as reported by ODBC: {dbms_name}");
+    let connection = try_!(Connection::new(connection));
 
     unsafe { *connection_out = Box::into_raw(Box::new(ArrowOdbcConnection::new(connection))) };
     null_mut()
@@ -108,4 +107,24 @@ unsafe fn append_attribute(
 
     let escaped = escape_attribute_value(attribute_value);
     *connection_string = format!("{connection_string}{attribute_name}={escaped};").into()
+}
+
+/// A connection to an ODBC data source and metainformation about its name.
+pub struct Connection {
+    pub connection: arrow_odbc::odbc_api::Connection<'static>,
+    pub dbms_name: String,
+}
+
+impl Connection {
+    fn new(
+        connection: arrow_odbc::odbc_api::Connection<'static>,
+    ) -> Result<Self, arrow_odbc::odbc_api::Error> {
+        let dbms_name = connection.database_management_system_name()?;
+        debug!("Database managment system name as reported by ODBC: {dbms_name}");
+        let connection = Connection {
+            connection,
+            dbms_name,
+        };
+        Ok(connection)
+    }
 }

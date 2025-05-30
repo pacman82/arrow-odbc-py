@@ -59,7 +59,7 @@ pub unsafe extern "C" fn arrow_odbc_writer_make(
     let schema: Schema = try_!(unsafe { &*schema }.try_into());
 
     let writer = try_!(OdbcWriter::from_connection(
-        connection, &schema, table, chunk_size
+        connection.connection, &schema, table, chunk_size
     ));
     let writer_ptr = Box::into_raw(Box::new(ArrowOdbcWriter(writer)));
     unsafe {

@@ -1,6 +1,6 @@
 use std::mem::swap;
 
-use crate::error::ArrowOdbcError;
+use crate::{connection::Connection, error::ArrowOdbcError};
 use arrow::{
     array::{Array, StructArray},
     datatypes::Schema,
@@ -9,7 +9,7 @@ use arrow::{
 };
 use arrow_odbc::{
     ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder, arrow_schema_from,
-    odbc_api::{Connection, Cursor, CursorImpl, ParameterCollectionRef, StatementConnection},
+    odbc_api::{Cursor, CursorImpl, ParameterCollectionRef, StatementConnection},
 };
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
@@ -103,7 +103,7 @@ impl ArrowOdbcReader {
     /// connection state.
     pub fn promote_to_cursor(
         &mut self,
-        conn: Connection<'static>,
+        conn: Connection,
         query: &str,
         params: impl ParameterCollectionRef,
         query_timeout_sec: Option<usize>,
@@ -113,7 +113,7 @@ impl ArrowOdbcReader {
         let mut tmp_self = ArrowOdbcReader::Empty;
         swap(self, &mut tmp_self);
 
-        match conn.into_cursor(query, params, query_timeout_sec) {
+        match conn.connection.into_cursor(query, params, query_timeout_sec) {
             Ok(None) => (),
             Ok(Some(cursor)) => {
                 *self = ArrowOdbcReader::Cursor { cursor };
