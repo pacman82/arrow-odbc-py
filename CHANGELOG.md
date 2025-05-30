@@ -1,5 +1,9 @@
 # Changelog
 
+## 9.0.0
+
+- Map SQL type `TIME` to arrow `time32` or `time64` depending on the precision.
+
 ## 8.3.9
 
 - fix: Pyproject.toml now specifies Python 3.9 as the oldest supported Python version. With introduction of UV this had been wrongly set to 3.10.
