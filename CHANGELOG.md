@@ -1,5 +1,9 @@
 # Changelog
 
+## 9.1.0
+
+- Update of upstream `arrow-odbc` Rust crate. Includes support for inserting timestamps with time zones.
+
 ## 9.0.0
 
 - Map SQL type `TIME` to arrow `time32` or `time64` depending on the precision.
