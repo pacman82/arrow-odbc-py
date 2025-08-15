@@ -9,7 +9,9 @@ use arrow::{
 };
 use arrow_odbc::{
     ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder, arrow_schema_from,
-    odbc_api::{Connection, Cursor, CursorImpl, ParameterCollectionRef, StatementConnection},
+    odbc_api::{
+        Connection, Cursor, CursorImpl, ParameterCollectionRef, handles::StatementConnection,
+    },
 };
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
@@ -39,21 +41,21 @@ pub enum ArrowOdbcReader {
     Cursor {
         /// Required to account for Database specific behavor then determining the arrow schema.
         dbms_name: String,
-        cursor: CursorImpl<StatementConnection<'static>>,
+        cursor: CursorImpl<StatementConnection<Connection<'static>>>,
     },
     Reader {
         /// We want to support state transitions from `Reader` back to `Cursor` so we keep the name
         /// around. Another way to look at this, is that we want to determine a new schema again in
         /// case we process multiple result sets.
         dbms_name: String,
-        reader: OdbcReader<CursorImpl<StatementConnection<'static>>>,
+        reader: OdbcReader<CursorImpl<StatementConnection<Connection<'static>>>>,
     },
     ConcurrentReader {
         /// We want to support state transitions from `Reader` back to `Cursor` so we keep the name
         /// around. Another way to look at this, is that we want to determine a new schema again in
         /// case we process multiple result sets.
         dbms_name: String,
-        reader: ConcurrentOdbcReader<CursorImpl<StatementConnection<'static>>>,
+        reader: ConcurrentOdbcReader<CursorImpl<StatementConnection<Connection<'static>>>>,
     },
 }
 

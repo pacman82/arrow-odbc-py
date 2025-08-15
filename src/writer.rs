@@ -8,14 +8,14 @@ use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema, from_ffi};
 use arrow_odbc::{
     OdbcWriter,
     arrow::{array::StructArray, datatypes::Schema, record_batch::RecordBatch},
-    odbc_api::StatementConnection,
+    odbc_api::{Connection, handles::StatementConnection},
 };
 
 use crate::{ArrowOdbcConnection, ArrowOdbcError, try_};
 
 /// Opaque type holding all the state associated with an ODBC writer implementation in Rust. This
 /// type also has ownership of the ODBC Connection handle.
-pub struct ArrowOdbcWriter(OdbcWriter<StatementConnection<'static>>);
+pub struct ArrowOdbcWriter(OdbcWriter<StatementConnection<Connection<'static>>>);
 
 /// Frees the resources associated with an ArrowOdbcWriter
 ///

@@ -568,7 +568,7 @@ def test_query_with_none_parameter():
 
 def test_query_with_int_parameter():
     """
-    Use an int parameter in a where clause and verify that the result is filtered accordingly
+    Use an int parameter in a where clause and verify that we get a type error
     """
     table = "QueryWithIntParameter"
     connection = pyodbc.connect(MSSQL)
