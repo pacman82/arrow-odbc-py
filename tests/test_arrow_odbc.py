@@ -584,7 +584,7 @@ def test_query_with_int_parameter():
         match="read_arrow_batches_from_odbc only supports string arguments for SQL query parameters",
     ):
         read_arrow_batches_from_odbc(
-            query=query, batch_size=10, connection_string=MSSQL, parameters=[2]
+            query=query, batch_size=10, connection_string=MSSQL, parameters=[2] # type: ignore
         )
 
 
