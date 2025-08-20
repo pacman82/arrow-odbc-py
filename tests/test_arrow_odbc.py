@@ -983,23 +983,31 @@ def test_umlaut_in_parameter_utf_16_encoding():
     connection.execute(
         f"CREATE TABLE {table} (a NVARCHAR(50));"
     )
-    connection.execute(f"INSERT INTO {table} (a) VALUES ('Hällo');")
+    # connection.execute(f"INSERT INTO {table} (a) VALUES ('您好');")
     connection.commit()
     connection.close()
 
     query = f"SELECT a FROM {table} WHERE a=?;"
     reader = read_arrow_batches_from_odbc(
+        query=f"INSERT INTO {table} (a) VALUES (?)",
+        batch_size=1,
+        connection_string=MSSQL,
+        parameters=["您好"],
+        payload_text_encoding=TextEncoding.UTF16,
+    )
+    assert reader is None
+    reader = read_arrow_batches_from_odbc(
         query=query,
         batch_size=1,
         connection_string=MSSQL,
-        parameters=["Hällo"],
+        parameters=["您好"],
         payload_text_encoding=TextEncoding.UTF16,
     )
     it = iter(reader)
     batch = next(it)
 
     actual = batch.to_pydict()
-    expected = {"a": ["Hällo"]}
+    expected = {"a": ["您好"]}
 
     assert expected == actual
 
