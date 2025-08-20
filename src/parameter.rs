@@ -65,3 +65,31 @@ pub unsafe extern "C" fn arrow_odbc_parameter_string_make(
     let param = ArrowOdbcParameter::from_opt_str(opt, text_encoding.use_utf16());
     Box::into_raw(Box::new(param))
 }
+
+#[cfg(test)]
+mod tests {
+    use arrow_odbc::odbc_api::buffers::Indicator;
+    use widestring::Utf16Str;
+
+    use crate::parameter::ArrowOdbcParameter;
+
+    #[test]
+    fn construct_utf16_parameter() {
+        // Given a chinese greeting in utf-8
+        let text = "您好";
+
+        // When constructing a parameter with utf-16 encoding
+        let use_utf16 = true;
+        let param = ArrowOdbcParameter::from_opt_str(Some(text.as_bytes()), use_utf16);
+
+        // Then
+        let param = param.unwrap();
+        let indicator = unsafe { Indicator::from_isize(*param.indicator_ptr()) };
+        assert_eq!(Indicator::Length(4), indicator); // Size of the encoded value in bytes
+        let value = param.value_ptr();
+        let value_slice = unsafe { std::slice::from_raw_parts(value as *const u16, 2) };
+        let value = Utf16Str::from_slice(value_slice).expect("Must be valid UTF-16");
+        let value = value.to_string();
+        assert_eq!(text, value);
+    }
+}
