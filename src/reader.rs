@@ -52,15 +52,12 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
     query_len: usize,
     parameters: *const *mut ArrowOdbcParameter,
     parameters_len: usize,
-    payload_text_encoding: u8,
     query_timeout_sec: *const usize,
 ) -> *mut ArrowOdbcError {
     let connection = unsafe { connection.as_mut() }.take();
     // Transtlate C Args into more idiomatic rust representations
     let query = unsafe { slice::from_raw_parts(query_buf, query_len) };
     let query = str::from_utf8(query).unwrap();
-
-    let text_encoding = into_text_encoding(payload_text_encoding);
 
     let parameters = if parameters.is_null() {
         Vec::new()
