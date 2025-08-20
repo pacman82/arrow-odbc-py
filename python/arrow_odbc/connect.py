@@ -11,7 +11,7 @@ def to_bytes_and_len(value: Optional[str]) -> Tuple[bytes, int]:
         value_len = 0
     else:
         value_bytes = value.encode("utf-8")
-        value_len = len(value)
+        value_len = len(value_bytes)
 
     return (value_bytes, value_len)
 
