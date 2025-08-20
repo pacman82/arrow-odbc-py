@@ -229,7 +229,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_into_concurrent(
     null_mut()
 }
 
-fn into_text_encoding(encoding: u8) -> TextEncoding {
+pub fn into_text_encoding(encoding: u8) -> TextEncoding {
     match encoding {
         0 => TextEncoding::Auto,
         1 => TextEncoding::Utf8,
