@@ -181,6 +181,7 @@ dependencies = [
  "arrow-odbc",
  "log",
  "stderrlog",
+ "widestring",
 ]
 
 [[package]]

@@ -20,6 +20,7 @@ arrow-odbc = "19.1.0"
 arrow = { version = "56.0.0", default-features = false, features = ["ffi"] }
 stderrlog = "0.6.0"
 log = "0.4.27"
+widestring = "1.2.0"
 
 [profile.release]
 # Panics should only be caused by logic errors and are considered bugs

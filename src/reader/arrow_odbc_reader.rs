@@ -8,7 +8,7 @@ use arrow::{
     record_batch::RecordBatchReader,
 };
 use arrow_odbc::{
-    ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder, TextEncoding, arrow_schema_from,
+    ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder, arrow_schema_from,
     odbc_api::{
         Connection, Cursor, CursorImpl, ParameterCollectionRef, handles::StatementConnection,
     },
