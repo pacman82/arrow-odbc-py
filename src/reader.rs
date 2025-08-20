@@ -52,6 +52,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
     query_len: usize,
     parameters: *const *mut ArrowOdbcParameter,
     parameters_len: usize,
+    payload_text_encoding: u8,
     query_timeout_sec: *const usize,
 ) -> *mut ArrowOdbcError {
     let connection = unsafe { connection.as_mut() }.take();
@@ -67,6 +68,8 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
             .map(|&p| unsafe { Box::from_raw(p) }.unwrap())
             .collect()
     };
+
+    let text_encoding = into_text_encoding(payload_text_encoding);
 
     let query_timeout_sec = if query_timeout_sec.is_null() {
         None

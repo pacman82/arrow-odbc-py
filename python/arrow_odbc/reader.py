@@ -136,6 +136,7 @@ class _BatchReaderRaii:
             len(query_bytes),
             parameters_array,
             parameters_len,
+            TextEncoding.AUTO.value,
             query_timeout_sec_pointer,
         )
 
