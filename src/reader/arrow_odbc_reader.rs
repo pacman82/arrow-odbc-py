@@ -8,9 +8,10 @@ use arrow::{
     record_batch::RecordBatchReader,
 };
 use arrow_odbc::{
-    arrow_schema_from, odbc_api::{
-        handles::StatementConnection, Connection, Cursor, CursorImpl, ParameterCollectionRef
-    }, ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder, TextEncoding
+    ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder, TextEncoding, arrow_schema_from,
+    odbc_api::{
+        Connection, Cursor, CursorImpl, ParameterCollectionRef, handles::StatementConnection,
+    },
 };
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
@@ -130,7 +131,6 @@ impl ArrowOdbcReader {
         conn: Connection<'static>,
         query: &str,
         params: impl ParameterCollectionRef,
-        text_encoding: TextEncoding,
         query_timeout_sec: Option<usize>,
     ) -> Result<(), ArrowOdbcError> {
         // Move self into a temporary instance we own, in order to take ownership of the inner

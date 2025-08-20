@@ -60,6 +60,8 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
     let query = unsafe { slice::from_raw_parts(query_buf, query_len) };
     let query = str::from_utf8(query).unwrap();
 
+    let text_encoding = into_text_encoding(payload_text_encoding);
+
     let parameters = if parameters.is_null() {
         Vec::new()
     } else {
@@ -68,8 +70,6 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
             .map(|&p| unsafe { Box::from_raw(p) }.unwrap())
             .collect()
     };
-
-    let text_encoding = into_text_encoding(payload_text_encoding);
 
     let query_timeout_sec = if query_timeout_sec.is_null() {
         None
@@ -81,7 +81,6 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
         connection,
         query,
         &parameters[..],
-        text_encoding,
         query_timeout_sec
     ));
 
