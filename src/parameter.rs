@@ -31,6 +31,7 @@ impl<'a> ArrowOdbcParameter<'a> {
 pub unsafe extern "C" fn arrow_odbc_parameter_string_make(
     char_buf: *const u8,
     char_len: usize,
+    text_encoding: u8,
 ) -> *mut ArrowOdbcParameter<'static> {
     let opt = if char_buf.is_null() {
         None

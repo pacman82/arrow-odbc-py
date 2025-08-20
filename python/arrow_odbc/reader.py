@@ -120,11 +120,13 @@ class _BatchReaderRaii:
             # payload is just referenced.
             encoded_parameters = [to_bytes_and_len(p) for p in parameters]
 
+        text_encoding = text_encoding.value
+
         for p_index in range(0, parameters_len):
             (p_bytes, p_len) = encoded_parameters[p_index]
-            parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(p_bytes, p_len)
-
-        text_encoding = text_encoding.value
+            parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(
+                p_bytes, p_len, text_encoding
+            )
 
         if query_timeout_sec is None:
             query_timeout_sec_pointer = ffi.NULL
@@ -139,7 +141,6 @@ class _BatchReaderRaii:
             len(query_bytes),
             parameters_array,
             parameters_len,
-            text_encoding,
             query_timeout_sec_pointer,
         )
 
