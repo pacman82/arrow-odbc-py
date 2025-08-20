@@ -584,7 +584,10 @@ def test_query_with_int_parameter():
         match="read_arrow_batches_from_odbc only supports string arguments for SQL query parameters",
     ):
         read_arrow_batches_from_odbc(
-            query=query, batch_size=10, connection_string=MSSQL, parameters=[2] # type: ignore
+            query=query,
+            batch_size=10,
+            connection_string=MSSQL,
+            parameters=[2],  # type: ignore
         )
 
 
@@ -967,6 +970,27 @@ def test_reinitalizing_logger_should_raise():
         match=r"attempted to set a logger after the logging system was already initialized",
     ):
         log_to_stderr()
+
+
+def test_umlaut_in_parameter_utf_16_encoding():
+    """
+    Query a row with an umlaut in it. The column name should be unchanged in the arrow schema
+    """
+    query = "SELECT ? AS a"
+    reader = read_arrow_batches_from_odbc(
+        query=query,
+        batch_size=100,
+        connection_string=MSSQL,
+        parameters=["Hällo"],
+        payload_text_encoding=TextEncoding.UTF16,
+    )
+    it = iter(reader)
+    batch = next(it)
+
+    actual = batch.to_pydict()
+    expected = {"a": ["Hällo"]}
+
+    assert expected == actual
 
 
 @pytest.mark.xfail(reason="Bug in MS driver cutting column name with umlaut one letter short.")
