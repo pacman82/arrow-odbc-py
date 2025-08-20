@@ -96,6 +96,7 @@ class _BatchReaderRaii:
         connection: ConnectionRaii,
         query: str,
         parameters: Optional[List[Optional[str]]],
+        text_encoding: TextEncoding,
         query_timeout_sec: Optional[int],
     ):
         query_bytes = query.encode("utf-8")
@@ -123,6 +124,8 @@ class _BatchReaderRaii:
             (p_bytes, p_len) = encoded_parameters[p_index]
             parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(p_bytes, p_len)
 
+        text_encoding = text_encoding.value
+
         if query_timeout_sec is None:
             query_timeout_sec_pointer = ffi.NULL
         else:
@@ -136,7 +139,7 @@ class _BatchReaderRaii:
             len(query_bytes),
             parameters_array,
             parameters_len,
-            TextEncoding.AUTO.value,
+            text_encoding,
             query_timeout_sec_pointer,
         )
 
@@ -515,6 +518,7 @@ def read_arrow_batches_from_odbc(
         connection=connection,
         query=query,
         parameters=parameters,
+        text_encoding=payload_text_encoding,
         query_timeout_sec=query_timeout_sec,
     )
 
