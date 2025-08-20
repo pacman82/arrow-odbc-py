@@ -976,10 +976,21 @@ def test_umlaut_in_parameter_utf_16_encoding():
     """
     Query a row with an umlaut in it. The column name should be unchanged in the arrow schema
     """
-    query = "SELECT ? AS a"
+    # Given
+    table = "UmlautInParameterUTF16Encoding"
+    connection = pyodbc.connect(MSSQL)
+    connection.execute(f"DROP TABLE IF EXISTS {table};")
+    connection.execute(
+        f"CREATE TABLE {table} (a NVARCHAR(50));"
+    )
+    connection.execute(f"INSERT INTO {table} (a) VALUES ('Hällo');")
+    connection.commit()
+    connection.close()
+
+    query = f"SELECT a FROM {table} WHERE a=?;"
     reader = read_arrow_batches_from_odbc(
         query=query,
-        batch_size=100,
+        batch_size=1,
         connection_string=MSSQL,
         parameters=["Hällo"],
         payload_text_encoding=TextEncoding.UTF16,

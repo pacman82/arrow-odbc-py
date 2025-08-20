@@ -1,7 +1,7 @@
 use crate::reader::into_text_encoding;
-use arrow_odbc::odbc_api::parameter::{InputParameter, VarCharBox, VarWCharBox};
+use arrow_odbc::odbc_api::{IntoParameter, parameter::InputParameter};
 use std::slice;
-use widestring::Utf16String;
+use widestring::U16String;
 
 /// Opaque type holding a parameter intended to be bound to a placeholder (`?`) in an SQL query.
 pub struct ArrowOdbcParameter(Box<dyn InputParameter>);
@@ -17,23 +17,23 @@ impl ArrowOdbcParameter {
     }
 
     fn utf16_text(value: Option<&[u8]>) -> Box<dyn InputParameter> {
-        let vcb = if let Some(byte_slice) = value {
-            let str_slice = str::from_utf8(byte_slice).unwrap();
-            let utf16_vec = Utf16String::from_str(str_slice).into_vec();
-            VarWCharBox::from_vec(utf16_vec)
-        } else {
-            VarWCharBox::null()
-        };
-        Box::new(vcb)
+        let arg = value
+            .map(|bytes| {
+                let str_slice = str::from_utf8(bytes).unwrap();
+                U16String::from_str(str_slice)
+            })
+            .into_parameter();
+        Box::new(arg)
     }
 
     fn utf8_text(value: Option<&[u8]>) -> Box<dyn InputParameter> {
-        let vcb = if let Some(slice) = value {
-            VarCharBox::from_vec(slice.to_vec())
-        } else {
-            VarCharBox::null()
-        };
-        Box::new(vcb)
+        let arg = value
+            .map(|bytes| {
+                let str_slice = str::from_utf8(bytes).unwrap();
+                str_slice.to_owned()
+            })
+            .into_parameter();
+        Box::new(arg)
     }
 }
 
