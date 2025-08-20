@@ -81,6 +81,7 @@ pub unsafe extern "C" fn arrow_odbc_reader_query(
         connection,
         query,
         &parameters[..],
+        text_encoding,
         query_timeout_sec
     ));
 
