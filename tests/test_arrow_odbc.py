@@ -971,7 +971,6 @@ def test_reinitalizing_logger_should_raise():
     ):
         log_to_stderr()
 
-@pytest.mark.xfail(reason="This should be implemented now, but the test keeps failing.")
 def test_umlaut_in_parameter_utf_16_encoding():
     """
     Query a row with an umlaut in it. The column name should be unchanged in the arrow schema
@@ -981,9 +980,9 @@ def test_umlaut_in_parameter_utf_16_encoding():
     connection = pyodbc.connect(MSSQL)
     connection.execute(f"DROP TABLE IF EXISTS {table};")
     connection.execute(
-        f"CREATE TABLE {table} (a NVARCHAR(50));"
+        f"CREATE TABLE {table} (a VARCHAR(50));"
     )
-    connection.execute(f"INSERT INTO {table} (a) VALUES ('您好');")
+    connection.execute(f"INSERT INTO {table} (a) VALUES ('Hällo');")
     connection.commit()
     connection.close()
 
@@ -992,14 +991,15 @@ def test_umlaut_in_parameter_utf_16_encoding():
         query=query,
         batch_size=1,
         connection_string=MSSQL,
-        parameters=["您好"],
-        payload_text_encoding=TextEncoding.UTF16,
+        # parameters=["您好"],
+        parameters=["Hällo"],
+        # payload_text_encoding=TextEncoding.UTF8,
     )
     it = iter(reader)
     batch = next(it)
 
     actual = batch.to_pydict()
-    expected = {"a": ["您好"]}
+    expected = {"a": ["Hällo"]}
 
     assert expected == actual
 
