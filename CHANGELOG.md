@@ -1,5 +1,10 @@
 # Changelog
 
+## 9.2.0
+
+- `payload_text_encoding` now also applies to arguments passed to the query.
+- fix: There had been an issue there the character length instead of the binary size has been used to determine the length of string parameters.
+
 ## 9.1.0
 
 - Update of upstream `arrow-odbc` Rust crate. Includes support for inserting timestamps with time zones.
