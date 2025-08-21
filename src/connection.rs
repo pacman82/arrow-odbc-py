@@ -19,7 +19,7 @@ impl ArrowOdbcConnection {
     }
 
     /// Take the inner connection out of its wrapper
-    pub fn take(&mut self) -> Arc<Mutex<Connection<'static>>> {
+    pub fn inner(&self) -> Arc<Mutex<Connection<'static>>> {
         self.0.clone()
     }
 }

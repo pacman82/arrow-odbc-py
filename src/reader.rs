@@ -47,14 +47,14 @@ pub use self::arrow_odbc_reader::ArrowOdbcReader;
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_reader_query(
     mut reader: NonNull<ArrowOdbcReader>,
-    mut connection: NonNull<ArrowOdbcConnection>,
+    connection: NonNull<ArrowOdbcConnection>,
     query_buf: *const u8,
     query_len: usize,
     parameters: *const *mut ArrowOdbcParameter,
     parameters_len: usize,
     query_timeout_sec: *const usize,
 ) -> *mut ArrowOdbcError {
-    let connection = unsafe { connection.as_mut() }.take();
+    let connection = unsafe { connection.as_ref() }.inner();
     // Transtlate C Args into more idiomatic rust representations
     let query = unsafe { slice::from_raw_parts(query_buf, query_len) };
     let query = str::from_utf8(query).unwrap();
