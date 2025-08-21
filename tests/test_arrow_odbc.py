@@ -971,35 +971,24 @@ def test_reinitalizing_logger_should_raise():
     ):
         log_to_stderr()
 
-def test_umlaut_in_parameter_utf_16_encoding():
+def test_chinese_paramter_utf_16_encoding():
     """
     Query a row with an umlaut in it. The column name should be unchanged in the arrow schema
     """
     # Given
-    table = "UmlautInParameterUTF16Encoding"
-    connection = pyodbc.connect(MSSQL)
-    connection.execute(f"DROP TABLE IF EXISTS {table};")
-    connection.execute(
-        f"CREATE TABLE {table} (a VARCHAR(50));"
-    )
-    connection.execute(f"INSERT INTO {table} (a) VALUES ('Hällo');")
-    connection.commit()
-    connection.close()
-
-    query = f"SELECT a FROM {table} WHERE a=?;"
+    query = "SELECT ? as a;"
     reader = read_arrow_batches_from_odbc(
         query=query,
         batch_size=1,
         connection_string=MSSQL,
-        # parameters=["您好"],
-        parameters=["Hällo"],
+        parameters=["您好"],
         payload_text_encoding=TextEncoding.UTF16,
     )
     it = iter(reader)
     batch = next(it)
 
     actual = batch.to_pydict()
-    expected = {"a": ["Hällo"]}
+    expected = {"a": ["您好"]}
 
     assert expected == actual
 
