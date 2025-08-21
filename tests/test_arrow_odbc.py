@@ -993,7 +993,7 @@ def test_umlaut_in_parameter_utf_16_encoding():
         connection_string=MSSQL,
         # parameters=["您好"],
         parameters=["Hällo"],
-        # payload_text_encoding=TextEncoding.UTF8,
+        payload_text_encoding=TextEncoding.UTF16,
     )
     it = iter(reader)
     batch = next(it)
