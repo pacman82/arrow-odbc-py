@@ -10,7 +10,8 @@ use arrow::{
 use arrow_odbc::{
     ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder, arrow_schema_from,
     odbc_api::{
-        Connection, Cursor, CursorImpl, ParameterCollectionRef, handles::StatementConnection,
+        ConnectionTransitions, Cursor, CursorImpl, ParameterCollectionRef, SharedConnection,
+        handles::StatementConnection,
     },
 };
 
@@ -41,21 +42,21 @@ pub enum ArrowOdbcReader {
     Cursor {
         /// Required to account for Database specific behavor then determining the arrow schema.
         dbms_name: String,
-        cursor: CursorImpl<StatementConnection<Connection<'static>>>,
+        cursor: CursorImpl<StatementConnection<SharedConnection<'static>>>,
     },
     Reader {
         /// We want to support state transitions from `Reader` back to `Cursor` so we keep the name
         /// around. Another way to look at this, is that we want to determine a new schema again in
         /// case we process multiple result sets.
         dbms_name: String,
-        reader: OdbcReader<CursorImpl<StatementConnection<Connection<'static>>>>,
+        reader: OdbcReader<CursorImpl<StatementConnection<SharedConnection<'static>>>>,
     },
     ConcurrentReader {
         /// We want to support state transitions from `Reader` back to `Cursor` so we keep the name
         /// around. Another way to look at this, is that we want to determine a new schema again in
         /// case we process multiple result sets.
         dbms_name: String,
-        reader: ConcurrentOdbcReader<CursorImpl<StatementConnection<Connection<'static>>>>,
+        reader: ConcurrentOdbcReader<CursorImpl<StatementConnection<SharedConnection<'static>>>>,
     },
 }
 
@@ -128,7 +129,7 @@ impl ArrowOdbcReader {
     /// connection state.
     pub fn promote_to_cursor(
         &mut self,
-        conn: Connection<'static>,
+        conn: SharedConnection<'static>,
         query: &str,
         params: impl ParameterCollectionRef,
         query_timeout_sec: Option<usize>,
@@ -138,7 +139,7 @@ impl ArrowOdbcReader {
         let mut tmp_self = ArrowOdbcReader::Empty;
         swap(self, &mut tmp_self);
 
-        let dbms_name = conn.database_management_system_name()?;
+        let dbms_name = conn.lock().unwrap().database_management_system_name()?;
 
         match conn.into_cursor(query, params, query_timeout_sec) {
             Ok(None) => (),
