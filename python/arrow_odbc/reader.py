@@ -116,8 +116,8 @@ class _BatchReaderRaii:
 
             parameters_array = ffi.new("ArrowOdbcParameter *[]", len(parameters))
             parameters_len = len(parameters)
-            # Must be kept alive. Within Rust code we only allocate an additional indicator the string
-            # payload is just referenced.
+            # Must be kept alive. Within Rust code we only allocate an additional indicator the
+            # string payload is just referenced.
             encoded_parameters = [to_bytes_and_len(p) for p in parameters]
 
         text_encoding = text_encoding.value
@@ -253,7 +253,11 @@ class BatchReader:
 
             from arrow_odbc import read_arrow_batches_from_odbc
 
-            connection_string="Driver={ODBC Driver 18 for SQL Server};Server=localhost;TrustServerCertificate=yes;"
+            connection_string=
+                "Driver={ODBC Driver 18 for SQL Server};" \
+                "Server=localhost;" \
+                "TrustServerCertificate=yes;"
+
             reader = read_arrow_batches_from_odbc(
                 query=f"SELECT * FROM MyTable; SELECT * FROM OtherTable;",
                 connection_string=connection_string,
