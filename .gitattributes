@@ -1,2 +1,0 @@
-# Set default behavior to never change line ending. Default auto behaviour seemed to cause trouble with wheel build on windows.
-* -text
