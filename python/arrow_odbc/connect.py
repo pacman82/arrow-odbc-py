@@ -16,7 +16,10 @@ def to_bytes_and_len(value: Optional[str]) -> Tuple[bytes, int]:
     return (value_bytes, value_len)
 
 
-class ConnectionRaii:
+class Connection:
+    """
+    A strong reference to an ODBC connection.
+    """
     def __init__(self, handle: Any) -> None:
         self.handle = handle
 
@@ -38,7 +41,53 @@ def connect(
     password: Optional[str],
     login_timeout_sec: Optional[int],
     packet_size: Optional[int],
-) -> ConnectionRaii:
+) -> Connection:
+    """
+    Opens a connection to an ODBC data source.
+
+    In case you want to use connection pooling, call ``enable_odbc_connection_pooling()`` before
+    calling this function.
+
+    Example:
+
+    .. code-block:: python
+
+        from arrow_odbc import connect, enable_odbc_connection_pooling
+
+        # Let the ODBC driver manager take care of connection pooling for us
+        enable_odbc_connection_pooling()
+
+        # Connect to the data source
+        connection_string=
+            "Driver={ODBC Driver 18 for SQL Server};" \
+            "Server=localhost;" \
+            "TrustServerCertificate=yes;"
+        connection = connect(
+            connection_string=connection_string,
+            user="SA",
+            password="My@Test@Password"
+        )
+
+    :param connection_string: ODBC Connection string used to connect to the data source. To find a
+        connection string for your data source try https://www.connectionstrings.com/.
+    :param user: Allows for specifying the user seperatly from the connection string if it is not
+        already part of it. The value will eventually be escaped and attached to the connection
+        string as `UID`.
+    :param password: Allows for specifying the password seperatly from the connection string if it
+        is not already part of it. The value will eventually be escaped and attached to the
+        connection string as `PWD`.
+    :param login_timeout_sec: Number of seconds to wait for a login request to complete before
+        returning to the application. The default is driver-dependent. If ``0``, the timeout is
+        disabled and a connection attempt will wait indefinitely. If the specified timeout exceeds
+        the maximum login timeout in the data source, the driver substitutes that value and uses
+        that instead.
+    :param packet_size: Specifying the network packet size in bytes. Many ODBC drivers do not
+        support this option. If the specified size exceeds the maximum packet size or is smaller
+        than the minimum packet size, the driver substitutes that value and returns SQLSTATE 01S02
+        (Option value changed).You may want to enable logging to standard error using
+        ``log_to_stderr``.
+    :return: A ``Connection`` is returned.
+    """
     connection_string_bytes = connection_string.encode("utf-8")
 
     (user_bytes, user_len) = to_bytes_and_len(user)
@@ -72,4 +121,4 @@ def connect(
     # Dereference output pointer. This gives us an `ArrowOdbcConnection *`. We take ownership of
     # the ArrowOdbcConnection and must take care to free it.
     handle = connection_out[0]
-    return ConnectionRaii(handle=handle)
+    return Connection(handle=handle)

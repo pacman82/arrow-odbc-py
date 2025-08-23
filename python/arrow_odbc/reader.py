@@ -7,7 +7,7 @@ import pyarrow
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
 from pyarrow import RecordBatch, Schema, Array  # type: ignore
 
-from arrow_odbc.connect import to_bytes_and_len, connect, ConnectionRaii  # type: ignore
+from arrow_odbc.connect import to_bytes_and_len, connect, Connection  # type: ignore
 
 from .arrow_odbc import ffi, lib  # type: ignore
 from .error import raise_on_error
@@ -93,7 +93,7 @@ class _BatchReaderRaii:
 
     def query(
         self,
-        connection: ConnectionRaii,
+        connection: Connection,
         query: str,
         parameters: Optional[List[Optional[str]]],
         text_encoding: TextEncoding,
@@ -396,7 +396,10 @@ def read_arrow_batches_from_odbc(
 
         from arrow_odbc import read_arrow_batches_from_odbc
 
-        connection_string="Driver={ODBC Driver 18 for SQL Server};Server=localhost;TrustServerCertificate=yes;"
+        connection_string=
+            "Driver={ODBC Driver 18 for SQL Server};" \
+            "Server=localhost;"
+            "TrustServerCertificate=yes;"
 
         reader = read_arrow_batches_from_odbc(
             query=f"SELECT * FROM MyTable WHERE a=?",
