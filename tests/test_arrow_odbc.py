@@ -1,6 +1,7 @@
 import datetime
 import os
 
+from arrow_odbc.reader import BatchReader
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -14,6 +15,7 @@ from subprocess import check_output
 from pytest import raises
 
 from arrow_odbc import (
+    connect,
     insert_into_table,
     from_table_to_db,
     read_arrow_batches_from_odbc,
@@ -574,7 +576,7 @@ def test_query_with_int_parameter():
     connection = pyodbc.connect(MSSQL)
     connection.execute(f"DROP TABLE IF EXISTS {table};")
     connection.execute(f"CREATE TABLE {table} (a CHAR(1), b INTEGER);")
-    connection.execute(f"INSERT INTO {table} (a,b) VALUES ('A', 1),('B',2),('C',3),('D',4);")
+    connection.execute(f"INSERT INTO {table} (a,b) VALUES ('A',1),('B',2),('C',3),('D',4);")
     connection.commit()
     connection.close()
 
@@ -1082,6 +1084,32 @@ def test_query_timeout():
         _arrow_reader = read_arrow_batches_from_odbc(
             query=long_running_query, connection_string=MSSQL, query_timeout_sec=1
         )
+
+
+def test_reuse_connection_for_other_reader():
+    """
+    Reuse the same ODBC connection for multiple readers.
+    """
+    query = "SELECT 42 as a"
+
+    connection = connect(connection_string=MSSQL)
+
+    second_reader = BatchReader.from_connection(
+        connection=connection, query=query, batch_size=10,
+    )
+    it = iter(second_reader)
+    batch_from_first_reader = next(it)
+
+    second_reader = BatchReader.from_connection(
+        connection=connection, query=query, batch_size=10,
+    )
+    it = iter(second_reader)
+    batch_from_second_reader = next(it)
+
+    schema = pa.schema([("a", pa.int32(), False)])
+    expected = pa.RecordBatch.from_pydict({"a": [42]}, schema)
+    assert expected == batch_from_first_reader
+    assert expected == batch_from_second_reader
 
 
 @pytest.mark.slow

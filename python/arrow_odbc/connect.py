@@ -37,10 +37,10 @@ class Connection:
 
 def connect(
     connection_string: str,
-    user: Optional[str],
-    password: Optional[str],
-    login_timeout_sec: Optional[int],
-    packet_size: Optional[int],
+    user: Optional[str] = None,
+    password: Optional[str] = None,
+    login_timeout_sec: Optional[int] = None,
+    packet_size: Optional[int] = None,
 ) -> Connection:
     """
     Opens a connection to an ODBC data source.
