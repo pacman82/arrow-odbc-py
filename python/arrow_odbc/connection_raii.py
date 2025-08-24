@@ -23,7 +23,7 @@ class ConnectionRaii:
     def __init__(self, handle: Any) -> None:
         self.handle = handle
 
-    def _arrow_odbc_connection(self) -> Any:
+    def arrow_odbc_connection(self) -> Any:
         """
         Give access to the inner ArrowOdbcConnection handle
         """

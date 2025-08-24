@@ -2,9 +2,10 @@ from typing import Optional, Any
 
 from pyarrow import RecordBatchReader
 from pyarrow.cffi import ffi as arrow_ffi
-from arrow_odbc.connect import connect
 
 from .arrow_odbc import ffi, lib  # type: ignore
+from .connect import connect
+from .connection_raii import ConnectionRaii
 from .error import raise_on_error
 
 
@@ -24,6 +25,38 @@ class BatchWriter:
     def __del__(self):
         # Free the resources associated with this handle.
         lib.arrow_odbc_writer_free(self.handle)
+
+    @classmethod
+    def _from_connection(
+        cls,
+        connection: ConnectionRaii,
+        reader: Any,
+        chunk_size: int,
+        table: str,
+    ):
+        table_bytes = table.encode("utf-8")
+
+        # Allocate structures where we will export the Array data and the Array schema. They will be
+        # released when we exit the with block.
+        with arrow_ffi.new("struct ArrowSchema*") as c_schema:
+            # Get the references to the C Data structures.
+            c_schema_ptr = int(arrow_ffi.cast("uintptr_t", c_schema))
+
+            # Export the schema to the C Data structures.
+            reader.schema._export_to_c(c_schema_ptr)
+
+            writer_out = ffi.new("ArrowOdbcWriter **")
+            error = lib.arrow_odbc_writer_make(
+                connection.arrow_odbc_connection(),
+                table_bytes,
+                len(table_bytes),
+                chunk_size,
+                c_schema,
+                writer_out,
+            )
+            raise_on_error(error)
+
+        return BatchWriter(handle=writer_out[0])
 
     def write_batch(self, batch):
         """
@@ -114,37 +147,14 @@ def insert_into_table(
         (Option value changed).You may want to enable logging to standard error using
         ``log_to_stderr``.
     """
-    table_bytes = table.encode("utf-8")
-
-    # Allocate structures where we will export the Array data and the Array schema. They will be
-    # released when we exit the with block.
-    with arrow_ffi.new("struct ArrowSchema*") as c_schema:
-        # Get the references to the C Data structures.
-        c_schema_ptr = int(arrow_ffi.cast("uintptr_t", c_schema))
-
-        # Export the schema to the C Data structures.
-        reader.schema._export_to_c(c_schema_ptr)
-
-        connection = connect(connection_string, user, password, login_timeout_sec, packet_size)
-
-        # Connecting to the database has been successful. Note that connection does not truly take
-        # ownership of the connection. If it runs out of scope (e.g. due to a raised exception) the
-        # connection would not be closed and its associated resources would not be freed. However
-        # `arrow_odbc_writer_make` will take ownership of connection. Even if it should fail the
-        # connection will be closed.
-
-        writer_out = ffi.new("ArrowOdbcWriter **")
-        error = lib.arrow_odbc_writer_make(
-            connection.raii._arrow_odbc_connection(),
-            table_bytes,
-            len(table_bytes),
-            chunk_size,
-            c_schema,
-            writer_out,
-        )
-        raise_on_error(error)
-
-    writer = BatchWriter(handle=writer_out[0])
+    connection = connect(connection_string, user, password, login_timeout_sec, packet_size)
+    
+    writer = BatchWriter._from_connection(
+        connection=connection.raii,
+        reader=reader,
+        chunk_size=chunk_size,
+        table=table,
+    )
 
     # Write all batches in reader
     for batch in reader:

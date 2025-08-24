@@ -142,7 +142,7 @@ class _BatchReaderRaii:
 
         error = lib.arrow_odbc_reader_query(
             self.handle,
-            connection._arrow_odbc_connection(),
+            connection.arrow_odbc_connection(),
             query_bytes,
             len(query_bytes),
             parameters_array,
