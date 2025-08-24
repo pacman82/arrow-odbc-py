@@ -226,8 +226,8 @@ class Connection:
         """
         Reads an arrow table and inserts its contents into a relational table on the database.
 
-        This is a convinience wrapper around ``insert_into_table`` which converts an arrow table into a
-        record batch reader for you.
+        This is a convinience wrapper around ``insert_into_table`` which converts an arrow table
+        into a record batch reader for you.
 
         Example:
 
@@ -251,13 +251,13 @@ class Connection:
                     chunk_size=1000
                 )
 
-        :param source: PyArrow table with content to be inserted into the target table on the database.
-            Each column of the table must correspond to a column in the target table with identical
-            name.
+        :param source: PyArrow table with content to be inserted into the target table on the
+            database. Each column of the table must correspond to a column in the target table with
+            identical name.
         :param target: Name of the database table to insert into.
         :param chunk_size: Number of records to insert in each roundtrip to the database. The number
-            will be automatically reduced to the number of rows, if the table is small, in order to save
-            memory.
+            will be automatically reduced to the number of rows, if the table is small, in order to
+            save memory.
         """
         # There is no need for chunk size to exceed the maximum amount of rows in the table
         chunk_size = min(chunk_size, source.num_rows)
