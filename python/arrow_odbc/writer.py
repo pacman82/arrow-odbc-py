@@ -135,7 +135,7 @@ def insert_into_table(
 
         writer_out = ffi.new("ArrowOdbcWriter **")
         error = lib.arrow_odbc_writer_make(
-            connection._arrow_odbc_connection(),
+            connection.raii._arrow_odbc_connection(),
             table_bytes,
             len(table_bytes),
             chunk_size,

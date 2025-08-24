@@ -1,7 +1,6 @@
 import datetime
 import os
 
-from arrow_odbc.reader import BatchReader
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -1095,16 +1094,14 @@ def test_reuse_connection_for_other_reader():
 
     connection = connect(connection_string=MSSQL)
 
-    second_reader = BatchReader.from_connection(
-        connection=connection,
+    second_reader = connection.read_arrow_batches(
         query=query,
         batch_size=10,
     )
     it = iter(second_reader)
     batch_from_first_reader = next(it)
 
-    second_reader = BatchReader.from_connection(
-        connection=connection,
+    second_reader = connection.read_arrow_batches(
         query=query,
         batch_size=10,
     )
