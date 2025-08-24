@@ -9,7 +9,7 @@ import duckdb
 import pytest
 import pyodbc
 
-from typing import List, Any
+from typing import Any, Sequence
 from subprocess import check_output
 
 from pytest import raises
@@ -32,7 +32,7 @@ log_to_stderr()
 enable_odbc_connection_pooling()
 
 
-def setup_table(table: str, column_type: str, values: List[Any]):
+def setup_table(table: str, column_type: str, values: Sequence[Any]):
     connection = pyodbc.connect(MSSQL)
     connection.execute(f"DROP TABLE IF EXISTS {table};")
     connection.execute(f"CREATE TABLE {table} (a {column_type});")

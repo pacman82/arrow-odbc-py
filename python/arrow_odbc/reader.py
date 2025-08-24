@@ -1,4 +1,4 @@
-from typing import List, Optional, Callable
+from typing import Optional, Callable, Sequence
 from enum import Enum
 from cffi.api import FFI  # type: ignore
 
@@ -95,7 +95,7 @@ class _BatchReaderRaii:
         self,
         connection: Connection,
         query: str,
-        parameters: Optional[List[Optional[str]]],
+        parameters: Optional[Sequence[Optional[str]]],
         text_encoding: TextEncoding,
         query_timeout_sec: Optional[int],
     ):
@@ -222,7 +222,7 @@ class BatchReader:
         connection: Connection,
         query: str,
         batch_size: int = 65535,
-        parameters: Optional[List[Optional[str]]] = None,
+        parameters: Optional[Sequence[Optional[str]]] = None,
         max_bytes_per_batch: Optional[int] = DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
         max_text_size: Optional[int] = None,
         max_binary_size: Optional[int] = None,
@@ -538,7 +538,7 @@ def read_arrow_batches_from_odbc(
     batch_size: int = 65535,
     user: Optional[str] = None,
     password: Optional[str] = None,
-    parameters: Optional[List[Optional[str]]] = None,
+    parameters: Optional[Sequence[Optional[str]]] = None,
     max_bytes_per_batch: Optional[int] = DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
     max_text_size: Optional[int] = None,
     max_binary_size: Optional[int] = None,
