@@ -1,6 +1,5 @@
 from typing import Optional, Any
 
-from pyarrow import RecordBatchReader
 from .connect import connect
 
 
@@ -124,20 +123,14 @@ def from_table_to_db(
         the maximum login timeout in the data source, the driver substitutes that value and uses
         that instead.
     """
-    # There is no need for chunk size to exceed the maximum amount of rows in the table
-    chunk_size = min(chunk_size, source.num_rows)
-    # We implemement this in terms of the functionality to insert a batches from a record batch
-    # reader, so first we convert our table into a record batch reader.
-    schema = source.schema
-    batches = source.to_batches(chunk_size)
-    reader = RecordBatchReader.from_batches(schema, batches)
-    # Now we can insert from the reader
-    insert_into_table(
-        reader,
-        chunk_size=chunk_size,
-        table=target,
+    connection = connect(
         connection_string=connection_string,
         user=user,
         password=password,
         login_timeout_sec=login_timeout_sec,
+    )
+    connection.from_table_to_db(
+        source=source,
+        target=target,
+        chunk_size=chunk_size,
     )

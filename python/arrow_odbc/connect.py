@@ -2,6 +2,7 @@ from typing import Any, Callable, Optional, Sequence
 
 from arrow_odbc.writer import BatchWriter
 from pyarrow import Schema  # type: ignore
+from pyarrow import RecordBatchReader
 
 from .reader import (
     DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
@@ -163,7 +164,6 @@ class Connection:
             query_timeout_sec=query_timeout_sec,
             payload_text_encoding=payload_text_encoding,
         )
-    
 
     def insert_into_table(
         self,
@@ -204,24 +204,6 @@ class Connection:
             for the bulk writer.
         :param chunk_size: Number of records to insert in each roundtrip to the database.
             Independent of batch size (i.e. number of rows in an individual record batch).
-        :param connection_string: ODBC Connection string used to connect to the data source. To find
-            a connection string for your data source try https://www.connectionstrings.com/.
-        :param user: Allows for specifying the user seperatly from the connection string if it is
-            not already part of it. The value will eventually be escaped and attached to the
-            connection string as `UID`.
-        :param password: Allows for specifying the password seperatly from the connection string if
-            it is not already part of it. The value will eventually be escaped and attached to the
-            connection string as `PWD`.
-        :param login_timeout_sec: Number of seconds to wait for a login request to complete before
-            returning to the application. The default is driver-dependent. If ``0``, the timeout is
-            disabled and a connection attempt will wait indefinitely. If the specified timeout 
-            exceeds the maximum login timeout in the data source, the driver substitutes that value
-            and uses that instead.
-        :param packet_size: Specifying the network packet size in bytes. Many ODBC drivers do not
-            support this option. If the specified size exceeds the maximum packet size or is smaller
-            than the minimum packet size, the driver substitutes that value and returns SQLSTATE
-            01S02 (Option value changed).You may want to enable logging to standard error using
-            ``log_to_stderr``.
         """
         writer = BatchWriter._from_connection(
             connection=self.raii,
@@ -234,6 +216,62 @@ class Connection:
         for batch in reader:
             writer.write_batch(batch)
         writer.flush()
+
+    def from_table_to_db(
+        self,
+        source: Any,
+        target: str,
+        chunk_size: int = 1000,
+    ):
+        """
+        Reads an arrow table and inserts its contents into a relational table on the database.
+
+        This is a convinience wrapper around ``insert_into_table`` which converts an arrow table into a
+        record batch reader for you.
+
+        Example:
+
+        .. code-block:: python
+
+            from arrow_odbc import connect
+            import pyarrow as pa
+            import pandas
+
+
+            def dataframe_to_table(df):
+                table = pa.Table.from_pandas(df)
+                connection = connect(
+                    connection_string=connection_string,
+                    user="SA",
+                    password="My@Test@Password"
+                )
+                connection.from_table_to_db(
+                    source=table,
+                    target="MyTable",
+                    chunk_size=1000
+                )
+
+        :param source: PyArrow table with content to be inserted into the target table on the database.
+            Each column of the table must correspond to a column in the target table with identical
+            name.
+        :param target: Name of the database table to insert into.
+        :param chunk_size: Number of records to insert in each roundtrip to the database. The number
+            will be automatically reduced to the number of rows, if the table is small, in order to save
+            memory.
+        """
+        # There is no need for chunk size to exceed the maximum amount of rows in the table
+        chunk_size = min(chunk_size, source.num_rows)
+        # We implemement this in terms of the functionality to insert a batches from a record batch
+        # reader, so first we convert our table into a record batch reader.
+        schema = source.schema
+        batches = source.to_batches(chunk_size)
+        reader = RecordBatchReader.from_batches(schema, batches)
+        # Now we can insert from the reader
+        self.insert_into_table(
+            reader=reader,
+            table=target,
+            chunk_size=chunk_size,
+        )
 
 
 def connect(
