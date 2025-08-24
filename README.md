@@ -23,16 +23,22 @@ Fill Apache Arrow arrays from ODBC data sources. This package is build on top of
 ### Query
 
 ```python
-from arrow_odbc import read_arrow_batches_from_odbc
+from arrow_odbc import connect
 
-connection_string="Driver={ODBC Driver 18 for SQL Server};Server=localhost;TrustServerCertificate=yes;"
+connection_string=
+    "Driver={ODBC Driver 18 for SQL Server};" \
+    "Server=localhost;" \
+    "TrustServerCertificate=yes;"
 
-reader = read_arrow_batches_from_odbc(
+connection = connect(
+    connection_string=connection_string,
+    user="SA",
+    password="My@Test@Password",
+)
+reader = connection.read_arrow_batches(
     query=f"SELECT * FROM MyTable WHERE a=?",
     connection_string=connection_string,
     parameters=["I'm a positional query parameter"],
-    user="SA",
-    password="My@Test@Password",
 )
 
 for batch in reader:
@@ -52,10 +58,13 @@ import pandas
 def dataframe_to_table(df):
     table = pa.Table.from_pandas(df)
     reader = pa.RecordBatchReader.from_batches(table.schema, table.to_batches())
-    insert_into_table(
+
+    connection = connect(
         connection_string=connection_string,
         user="SA",
         password="My@Test@Password",
+    )
+    connection.insert_into_table(
         chunk_size=1000,
         table="MyTable",
         reader=reader,
