@@ -2,7 +2,6 @@ from typing import Optional, Any
 
 from pyarrow import RecordBatchReader
 from .connect import connect
-from .writer import BatchWriter
 
 
 def insert_into_table(
@@ -66,18 +65,7 @@ def insert_into_table(
         ``log_to_stderr``.
     """
     connection = connect(connection_string, user, password, login_timeout_sec, packet_size)
-
-    writer = BatchWriter._from_connection(
-        connection=connection.raii,
-        reader=reader,
-        chunk_size=chunk_size,
-        table=table,
-    )
-
-    # Write all batches in reader
-    for batch in reader:
-        writer.write_batch(batch)
-    writer.flush()
+    connection.insert_into_table(reader=reader, table=table, chunk_size=chunk_size)
 
 
 def from_table_to_db(
