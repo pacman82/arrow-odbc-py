@@ -1,25 +1,16 @@
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 from cffi.api import FFI  # type: ignore
 
 from .arrow_odbc import ffi, lib  # type: ignore
-from arrow_odbc.error import raise_on_error
-
-
-def to_bytes_and_len(value: Optional[str]) -> Tuple[bytes, int]:
-    if value is None:
-        value_bytes = FFI.NULL
-        value_len = 0
-    else:
-        value_bytes = value.encode("utf-8")
-        value_len = len(value_bytes)
-
-    return (value_bytes, value_len)
+from .buffer import to_bytes_and_len
+from .error import raise_on_error
 
 
 class Connection:
     """
     A strong reference to an ODBC connection.
     """
+
     def __init__(self, handle: Any) -> None:
         self.handle = handle
 

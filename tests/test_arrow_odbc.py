@@ -973,6 +973,7 @@ def test_reinitalizing_logger_should_raise():
     ):
         log_to_stderr()
 
+
 def test_chinese_paramter_utf_16_encoding():
     """
     Query a row with an umlaut in it. The column name should be unchanged in the arrow schema
@@ -1095,13 +1096,17 @@ def test_reuse_connection_for_other_reader():
     connection = connect(connection_string=MSSQL)
 
     second_reader = BatchReader.from_connection(
-        connection=connection, query=query, batch_size=10,
+        connection=connection,
+        query=query,
+        batch_size=10,
     )
     it = iter(second_reader)
     batch_from_first_reader = next(it)
 
     second_reader = BatchReader.from_connection(
-        connection=connection, query=query, batch_size=10,
+        connection=connection,
+        query=query,
+        batch_size=10,
     )
     it = iter(second_reader)
     batch_from_second_reader = next(it)

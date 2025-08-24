@@ -7,9 +7,9 @@ import pyarrow
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
 from pyarrow import RecordBatch, Schema, Array  # type: ignore
 
-from arrow_odbc.connect import to_bytes_and_len, connect, Connection  # type: ignore
-
 from .arrow_odbc import ffi, lib  # type: ignore
+from .buffer import to_bytes_and_len
+from .connect import connect, Connection  # type: ignore
 from .error import raise_on_error
 
 # Default maximum buffer size for transition buffer. Defaults to 512 MiB.
@@ -231,7 +231,8 @@ class BatchReader:
         map_schema: Optional[Callable[[Schema], Schema]] = None,
         fetch_concurrently=True,
         query_timeout_sec: Optional[int] = None,
-        payload_text_encoding: TextEncoding = TextEncoding.AUTO,) -> "BatchReader":
+        payload_text_encoding: TextEncoding = TextEncoding.AUTO,
+    ) -> "BatchReader":
         """
     Execute the query and read the result as an iterator over Arrow batches.
 
