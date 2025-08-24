@@ -15,11 +15,11 @@ from pytest import raises
 
 from arrow_odbc import (
     connect,
+    Connection,
     insert_into_table,
     from_table_to_db,
     read_arrow_batches_from_odbc,
     log_to_stderr,
-    enable_odbc_connection_pooling,
     Error,
     TextEncoding,
 )
@@ -28,7 +28,7 @@ MSSQL = "Driver={ODBC Driver 18 for SQL Server};Server=localhost;UID=SA;PWD=My@T
     TrustServerCertificate=yes;"
 
 log_to_stderr()
-enable_odbc_connection_pooling()
+Connection.enable_connection_pooling()
 
 
 def setup_table(table: str, column_type: str, values: Sequence[Any]):

@@ -1,5 +1,11 @@
 # Changelog
 
+## 9.3.0
+
+- Reusing connections is now supported. Users can now explicitly create new `Connection`s usings the `connect` function. Connections in turn offer a `read_arrow_batches` and `insert_into_table` function. This means users can now make sure the same connection is used for reading and inserting.
+
+  See also: <https://github.com/pacman82/arrow-odbc-py/issues/92>
+
 ## 9.2.0
 
 - `payload_text_encoding` now also applies to arguments passed to the query.

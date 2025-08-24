@@ -1,6 +1,5 @@
 from typing import Any, Callable, Optional, Sequence
 
-from arrow_odbc.writer import BatchWriter
 from pyarrow import Schema  # type: ignore
 from pyarrow import RecordBatchReader
 
@@ -11,6 +10,8 @@ from .reader import (
     TextEncoding,
 )
 from .connection_raii import ConnectionRaii
+from .pool import enable_odbc_connection_pooling
+from .writer import BatchWriter
 
 
 class Connection:
@@ -20,6 +21,36 @@ class Connection:
 
     def __init__(self, raii: ConnectionRaii) -> None:
         self.raii = raii
+
+    @classmethod
+    def enable_connection_pooling(cls) -> None:
+        """
+        Activates the connection pooling of the ODBC driver manager for the entire process. Best
+        called before creating the ODBC environment, i.e. before you the first connection is opend
+        with arrow-odbc. This is useful in scenarios there you frequently read or write rows and the
+        overhead of creating a connection for each query is significant.
+
+        Example:
+
+        .. code-block:: python
+
+            from arrow_odbc import Connection
+
+            # Let the ODBC driver manager take care of connection pooling for us
+            Connection.enable_connection_pooling()
+
+            # Create the first connection after Connection pooling is enabled
+            connection_string=
+                "Driver={ODBC Driver 18 for SQL Server};" \
+                "Server=localhost;" \
+                "TrustServerCertificate=yes;"
+            connection = connect(
+                connection_string=connection_string,
+                user="SA",
+                password="My@Test@Password"
+            )
+        """
+        enable_odbc_connection_pooling()
 
     def read_arrow_batches(
         self,
