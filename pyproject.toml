@@ -5,18 +5,15 @@ build-backend = "maturin"
 
 [project]
 name = "arrow-odbc"
-authors = [{name = "Markus Klein"}]
-description="Read the data of an ODBC data source as sequence of Apache Arrow record batches."
+authors = [{ name = "Markus Klein" }]
+description = "Read the data of an ODBC data source as sequence of Apache Arrow record batches."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
 version = "9.3.0"
 # cffi: for communicating with Rust
 # pyarrow: to create pyarrow arrays out of the c representation
-dependencies = [
-    "cffi",
-    "pyarrow >= 8.0.0",
-]
+dependencies = ["cffi", "pyarrow >= 8.0.0"]
 
 [project.urls]
 repository = "https://github.com/pacman82/arrow-odbc-py"
@@ -28,6 +25,10 @@ bindings = "cffi"
 python-source = "python"
 # Not sure what the default would be, best be sure and make release profile explicit
 profile = "release"
+# With the underneath option, we could force wide (or `narrow`) builds independent of the
+# platform. I wonder if there is a way to expose a feauture flag to our build via maturin on the
+# command line.
+# features = ["wide"]
 
 [tool.ruff]
 line-length = 100
@@ -35,8 +36,4 @@ line-length = 100
 [tool.ruff.format]
 
 [dependency-groups]
-dev = [
-    "duckdb>=1.2.1",
-    "pyodbc>=5.2.0",
-    "pytest>=8.3.5",
-]
+dev = ["duckdb>=1.2.1", "pyodbc>=5.2.0", "pytest>=8.3.5"]
