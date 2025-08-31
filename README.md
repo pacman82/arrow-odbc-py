@@ -121,12 +121,32 @@ There is no ready made wheel for the platform you want to target? Do not worry, 
 
 * To build from source you need to install the Rust toolchain. Installation instruction can be found here: <https://www.rust-lang.org/tools/install>
 * Install ODBC driver manager. See above.
+* To setup the python environment, and build the wheel itself `uv` is recommened. You can get it from here: <https://docs.astral.sh/uv/getting-started/installation/>
 * Build wheel
 
   ```shell
-  python -m pip install build
-  python -m build
+  uv build
   ```
+
+## Encodings for SQL statement text
+
+ODBC applications use either narrow or wide encodings. The narrow encoding is either UTF-8 or an extended ASCII, the wide encoding is always UTF-16. The narrow encoding is supposed to be governed by the system locale. `arrow-odbc-py` chooses to use the wide encoding on windows platform and the narrow ones on all others (e.g. Linux, Mac). UTF-8 is the default locale on many of these systems, and the wide paths are typically less battletested on Mac or Linux drivers. On the other hand, most Windows platforms do not have yet a UTF-8 local active by default. Over all the guess is, that sticking to UTF-16 on windows and hoping for a UTF-8 local and driver support on other Platform, results in the least problems on average.
+
+Your milage may vary though. Please note that the encoding for the parameters and results of your queries can be controlled at runtime with the `payload_text_encoding` parameter of `Connection.read_arrow_batches`.
+
+The encoding used for the statement text itself, e.g. for column names is controlled at compile time though. With the wheels deployed to `pypi` you will always get the wide encoding on Windows and the narrow encoding on the other platforms. If this does not work for you, you can build the wheel yourself with a different encoding. If you can build the wheel from source as described above, you can also change the compile time features flags.
+
+E.g. to build the wheel with the wide encoding use:
+
+```shell
+uv run maturin build --features wide
+```
+
+or, to use the narrow encoding for windows:
+
+```shell
+uv run maturin build --features narrow
+```
 
 ## Matching of ODBC to Arrow types then querying
 
