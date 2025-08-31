@@ -1,14 +1,11 @@
 {
-    "packages": {
-        ".": {
-            "release-type": "python",
-            "extra-files": [
-                {
-                    "type": "toml",
-                    "path": "uv.lock",
-                    "jsonpath": "$.package[?(@.name.value=='arrow-odbc')].version"
-                }
-            ]
+    "bootstrap-sha": "977a44e1fe2d49228e5484183ac385c9ec7a6fce",
+    "release-type": "python",
+    "extra-files": [
+        {
+            "type": "toml",
+            "path": "uv.lock",
+            "jsonpath": "$.package[?(@.name.value=='arrow-odbc')].version"
         }
-    }
+    ]
 }
