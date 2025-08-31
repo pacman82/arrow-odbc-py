@@ -62,6 +62,17 @@ make html
 
 ### Windows (without make)
 
+Using sphinx directly:
+
 ```shell
 sphinx-build -M html ./doc/source ./doc/build
+```
+
+Using uv and powershell:
+
+```shell
+.\venv\Scripts\activate.ps1
+cd ./doc
+uv pip install -r requirements.txt
+cmd /c .\make.bat html
 ```
