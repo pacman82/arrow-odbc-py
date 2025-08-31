@@ -1,5 +1,14 @@
 # Changelog
 
+## [9.3.1](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.0...v9.3.1) (2025-08-31)
+
+
+### Documentation
+
+* Document how to build for narrow/wide encoding explicitly ([ea520ff](https://github.com/pacman82/arrow-odbc-py/commit/ea520ff3bf8e2e34bdae79969c5c36507af927cd))
+* Instruction on how to build documentation in windows ([7b6e7fe](https://github.com/pacman82/arrow-odbc-py/commit/7b6e7fed15ccc2bb0488e5d3c36372020c0f391e))
+* Update Readme using now connection methods ([3f7c4e1](https://github.com/pacman82/arrow-odbc-py/commit/3f7c4e1f9d57079d1021b56dc132b2a929ec0ea5))
+
 ## 9.3.0
 
 - Reusing connections is now supported. Users can now explicitly create new `Connection`s usings the `connect` function. Connections in turn offer a `read_arrow_batches` and `insert_into_table` function. This means users can now make sure the same connection is used for reading and inserting.

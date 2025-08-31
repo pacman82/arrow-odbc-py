@@ -10,7 +10,7 @@ description = "Read the data of an ODBC data source as sequence of Apache Arrow 
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
-version = "9.3.0"
+version = "9.3.1"
 # cffi: for communicating with Rust
 # pyarrow: to create pyarrow arrays out of the c representation
 dependencies = ["cffi", "pyarrow >= 8.0.0"]
