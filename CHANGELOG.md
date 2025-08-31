@@ -1,5 +1,41 @@
 # Changelog
 
+## [5.0.0](https://github.com/pacman82/arrow-odbc-py/compare/v4.1.0...v5.0.0) (2025-08-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* Detect Time types in Microsoft SQL Server
+* Map time datatyes to Time32 or Time64
+
+### Features
+
+* Add Connection.enable_connection_pooling ([7c3d88c](https://github.com/pacman82/arrow-odbc-py/commit/7c3d88cc495c4dac27bff989b346584ad7dc6ba1))
+* Connection can now be used to instantiate Reader ([c15fa5f](https://github.com/pacman82/arrow-odbc-py/commit/c15fa5f3e4e03e21075af6f4a5ee9059326ba87f))
+* Connection now has insert_into_table method ([31aefe0](https://github.com/pacman82/arrow-odbc-py/commit/31aefe0a4c5816de69341c212cd9ebfc441ae00e))
+* Detect Time types in Microsoft SQL Server ([93f962f](https://github.com/pacman82/arrow-odbc-py/commit/93f962f84024d1f4c863e8a8edae21c2fbb731a4))
+* Explicitly choose between narrow and wide payload encoding. ([86668b5](https://github.com/pacman82/arrow-odbc-py/commit/86668b5196741a045eb97fb7e696b9fe2c8de943))
+* Implement query timeout ([e225c45](https://github.com/pacman82/arrow-odbc-py/commit/e225c455a5a8be909737ec194667523f37e27fd5))
+* Introduce parameter query_timeout_sec ([4a465f2](https://github.com/pacman82/arrow-odbc-py/commit/4a465f245bd1a74b05151f1cb55d05aec7bb0151))
+* introduced connection.from_table_to_db ([6e0fde8](https://github.com/pacman82/arrow-odbc-py/commit/6e0fde80088951f429a9aa4973d65820f57bf6a1))
+* Map time datatyes to Time32 or Time64 ([988f452](https://github.com/pacman82/arrow-odbc-py/commit/988f4529bf41609395f1b411e0c6b6eec4ac5c1d))
+* Reuse connections ([547f19b](https://github.com/pacman82/arrow-odbc-py/commit/547f19be68bd0ed94dd52b4e6ff72716ba7a4976))
+* Use payload encoding for parameter payload ([44c0238](https://github.com/pacman82/arrow-odbc-py/commit/44c02386d97d06e0011888f561eac063bdc64de8))
+
+
+### Bug Fixes
+
+* arrch64 manylinux release ([eb0d9e8](https://github.com/pacman82/arrow-odbc-py/commit/eb0d9e825d108094ea754ea9644489985fd2af22))
+* Inserting multiple small batches now works, even if the second batch triggers rebinding the buffer due to element size. Previously in this scenario not all values already inserted were correctly copied into the new buffer. This caused strings to be replaced with `null` bytes. ([e9f807b](https://github.com/pacman82/arrow-odbc-py/commit/e9f807b3184c65d922e673f18942a36004180400))
+* License metadata ([d29d825](https://github.com/pacman82/arrow-odbc-py/commit/d29d825e97c5580b420a4a38e1d1517113264b16))
+* Package metadata, now points to uppercase changelog ([f4a3180](https://github.com/pacman82/arrow-odbc-py/commit/f4a318050403888ee7ec476c2fdd045ea5bd6425))
+* Resync version numbers to 8.0.6 ([1c66f6c](https://github.com/pacman82/arrow-odbc-py/commit/1c66f6cbb2fdc98208782b593db99954428c64dd))
+* Space in link description ([58fb2fe](https://github.com/pacman82/arrow-odbc-py/commit/58fb2fe75ac5886ce6c0afb0e9af2bc57e335c33))
+* Specify that Python 3.9 is still supported ([645e52d](https://github.com/pacman82/arrow-odbc-py/commit/645e52d597c223ae8241d28ecf0d2942e33c4a5c))
+* Use auditwheel repair to create manylinux wheel. This fixes an issue with the SHA256 hash of the WHEEL file in the dist info ([90daf3c](https://github.com/pacman82/arrow-odbc-py/commit/90daf3c5b0294be0c2aba418665eae2633b2d27b))
+* Use binary length then constructing Utf8-parameter buffers ([f206ddd](https://github.com/pacman82/arrow-odbc-py/commit/f206dddb04085f77e19fd7e021c2056d0329a25f))
+* windows and os-x build ([148fd20](https://github.com/pacman82/arrow-odbc-py/commit/148fd20984432d1d75c3de8c31ca12f3cd067afe))
+
 ## 9.3.0
 
 - Reusing connections is now supported. Users can now explicitly create new `Connection`s usings the `connect` function. Connections in turn offer a `read_arrow_batches` and `insert_into_table` function. This means users can now make sure the same connection is used for reading and inserting.
