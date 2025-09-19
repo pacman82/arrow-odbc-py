@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Any
 
 from .connect import connect
 
@@ -8,10 +8,10 @@ def insert_into_table(
     chunk_size: int,
     table: str,
     connection_string: str,
-    user: Optional[str] = None,
-    password: Optional[str] = None,
-    login_timeout_sec: Optional[int] = None,
-    packet_size: Optional[int] = None,
+    user: str | None = None,
+    password: str | None = None,
+    login_timeout_sec: int | None = None,
+    packet_size: int | None = None,
 ):
     """
     Consume the batches in the reader and insert them into a table on the database.
@@ -72,9 +72,9 @@ def from_table_to_db(
     target: str,
     connection_string: str,
     chunk_size: int = 1000,
-    user: Optional[str] = None,
-    password: Optional[str] = None,
-    login_timeout_sec: Optional[int] = None,
+    user: str | None = None,
+    password: str | None = None,
+    login_timeout_sec: int | None = None,
 ):
     """
     Reads an arrow table and inserts its contents into a relational table on the database.

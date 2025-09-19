@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, Sequence
+from typing import Any, Callable, Sequence
 
 from pyarrow import Schema  # type: ignore
 from pyarrow import RecordBatchReader
@@ -56,15 +56,15 @@ class Connection:
         self,
         query: str,
         batch_size: int = DEFAULT_FETCH_BUFFER_LIMIT_IN_ROWS,
-        parameters: Optional[Sequence[Optional[str]]] = None,
-        max_bytes_per_batch: Optional[int] = DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
-        max_text_size: Optional[int] = None,
-        max_binary_size: Optional[int] = None,
+        parameters: Sequence[str | None] | None = None,
+        max_bytes_per_batch: int | None = DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
+        max_text_size: int | None = None,
+        max_binary_size: int | None = None,
         falliable_allocations: bool = False,
-        schema: Optional[Schema] = None,
-        map_schema: Optional[Callable[[Schema], Schema]] = None,
-        fetch_concurrently=True,
-        query_timeout_sec: Optional[int] = None,
+        schema: Schema | None = None,
+        map_schema: Callable[[Schema], Schema] | None = None,
+        fetch_concurrently: bool = True,
+        query_timeout_sec: int | None = None,
         payload_text_encoding: TextEncoding = TextEncoding.AUTO,
     ) -> BatchReader:
         """
@@ -307,10 +307,10 @@ class Connection:
 
 def connect(
     connection_string: str,
-    user: Optional[str] = None,
-    password: Optional[str] = None,
-    login_timeout_sec: Optional[int] = None,
-    packet_size: Optional[int] = None,
+    user: str | None = None,
+    password: str | None = None,
+    login_timeout_sec: int | None = None,
+    packet_size: int | None = None,
 ) -> Connection:
     """
     Opens a connection to an ODBC data source.
