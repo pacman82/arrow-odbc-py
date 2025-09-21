@@ -1,5 +1,12 @@
 # Changelog
 
+## [9.3.2](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.1...v9.3.2) (2025-09-21)
+
+
+### Documentation
+
+* Document quoting behaviour for insert_into_table. ([0b261ff](https://github.com/pacman82/arrow-odbc-py/commit/0b261ff10008808bd38dc1ac6551e2ae9b4243ca))
+
 ## [9.3.1](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.0...v9.3.1) (2025-08-31)
 
 
