@@ -2,6 +2,9 @@
 
 ## [9.3.2](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.1...v9.3.2) (2025-09-21)
 
+### Added
+
+* Then inserting into tables already quoted names in the source reader will no longer be quoted (i.e. enclosed in double quotes (`"`). This has been done in order to support inserting into tables which have column names identical to reserved keywords (e.g. `values` or `from`).
 
 ### Documentation
 
