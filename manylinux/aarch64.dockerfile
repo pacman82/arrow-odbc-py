@@ -1,7 +1,7 @@
 FROM quay.io/pypa/manylinux_2_28_aarch64
 
 RUN yum search unixodbc
-RUN yum install unixODBC.x86_64 -y
+RUN yum install unixODBC.aarch64 -y
 
 # We want a current rust toolchain to build the rust part of the wheel
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
