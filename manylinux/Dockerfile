@@ -1,4 +1,4 @@
-FROM quay.io/pypa/manylinux2014_x86_64
+FROM quay.io/pypa/manylinux_2_28_x86_64
 
 # Install unix-odbc from source. Version installed via YUM is too old
 RUN curl https://www.unixodbc.org/unixODBC-2.3.9.tar.gz > unixODBC-2.3.9.tar.gz
