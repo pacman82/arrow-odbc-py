@@ -1,5 +1,12 @@
 # Changelog
 
+## [9.3.3](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.2...v9.3.3) (2025-09-22)
+
+
+### Bug Fixes
+
+* pyproject.toml now correctly specifies Python 3.10 as oldest ([a80ad9d](https://github.com/pacman82/arrow-odbc-py/commit/a80ad9d15a2013af62cb22fa780e7660e7254ae2))
+
 ## [9.3.2](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.1...v9.3.2) (2025-09-21)
 
 ### Breaking
