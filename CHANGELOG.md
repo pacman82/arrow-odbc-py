@@ -2,6 +2,10 @@
 
 ## [9.3.2](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.1...v9.3.2) (2025-09-21)
 
+### Breaking
+
+* Due to style changes in type annotations support for Python 3.9 has been accidentially dropped. However, Python 3.10 is now the oldest Python version under test for a while, so these changes will not be reverted. Overall dropping Python 3.9 is fine, although it should not have happend by accident. Thanks to @timkpaine for spotting the issue.
+
 ### Added
 
 * Then inserting into tables already quoted names in the source reader will no longer be quoted (i.e. enclosed in double quotes (`"`). This has been done in order to support inserting into tables which have column names identical to reserved keywords (e.g. `values` or `from`).
@@ -408,7 +412,7 @@ Same as 8.3.1. Release triggered again, due to failure in publishing wheels.
 ## 0.1.17
 
 - Updated Rust dependencies
-  
+
 ## 0.1.16
 
 - Updated Rust dependencies
