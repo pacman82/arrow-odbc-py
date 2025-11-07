@@ -1,28 +1,24 @@
 import datetime
 import os
-
-import pyarrow as pa
-import pyarrow.parquet as pq
+from subprocess import check_output
+from typing import Any, Sequence
 
 import duckdb
-import pytest
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pyodbc
-
-from typing import Any, Sequence
-from subprocess import check_output
-
-from pytest import raises
-
+import pytest
 from arrow_odbc import (
-    connect,
     Connection,
-    insert_into_table,
-    from_table_to_db,
-    read_arrow_batches_from_odbc,
-    log_to_stderr,
     Error,
     TextEncoding,
+    connect,
+    from_table_to_db,
+    insert_into_table,
+    log_to_stderr,
+    read_arrow_batches_from_odbc,
 )
+from pytest import raises
 
 MSSQL = "Driver={ODBC Driver 18 for SQL Server};Server=localhost;UID=SA;PWD=My@Test@Password1;\
     TrustServerCertificate=yes;"
@@ -1112,6 +1108,25 @@ def test_reuse_connection_for_other_reader():
     expected = pa.RecordBatch.from_pydict({"a": [42]}, schema)
     assert expected == batch_from_first_reader
     assert expected == batch_from_second_reader
+
+
+def test_insert_string_column_with_only_nulls():
+    """
+    Insert a string column with only null values.
+    """
+    # Given
+    table = "InsertStringColumnWithOnlyNulls"
+    empty_table(table, "VARCHAR(10)")
+    arrow_table = pa.table({"a": pa.array([None], pa.utf8())})
+
+    # When
+    from_table_to_db(source=arrow_table, target=table, connection_string=MSSQL)
+
+    # Then
+    actual = check_output(
+        ["odbcsv", "fetch", "-c", MSSQL, "-q", f"SELECT a FROM {table} ORDER BY id"]
+    )
+    assert 'a\n""\n' == actual.decode("utf8")
 
 
 @pytest.mark.slow
