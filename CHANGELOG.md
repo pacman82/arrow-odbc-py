@@ -1,5 +1,12 @@
 # Changelog
 
+## [9.3.4](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.3...v9.3.4) (2025-11-08)
+
+
+### Documentation
+
+* Explain quoting behavior also in docstring to `from_table_to_db` ([5052c16](https://github.com/pacman82/arrow-odbc-py/commit/5052c16af16a37defda72ad26836780049b47988))
+
 ## [9.3.3](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.2...v9.3.3) (2025-09-22)
 
 
