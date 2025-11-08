@@ -109,7 +109,13 @@ def from_table_to_db(
 
     :param source: PyArrow table with content to be inserted into the target table on the database.
         Each column of the table must correspond to a column in the target table with identical
-        name.
+        name. Each field in the schema must correspond to a column in the table with identical name.
+        The iterator must yield individual arrow tables. In case a column name contains a
+        non-alphanumeric character different from ``@``, ``$``, ``#``, or ``_``, the name will be
+        escaped using double quotes. However if the name already is already escaped, i.e. it is
+        enclosed in either rectangular brackets ([, ]), double quotes (") or backticks (`), it will
+        be used as is. This is to allow for users to apply their own quoting if needed, e.g. in case
+        reserved keywords are used as column names.
     :param target: Name of the database table to insert into.
     :param connection_string: ODBC Connection string used to connect to the data source. To find a
         connection string for your data source try https://www.connectionstrings.com/.
