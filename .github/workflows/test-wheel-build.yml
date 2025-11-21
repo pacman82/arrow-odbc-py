@@ -8,7 +8,7 @@ jobs:
   windows-wheel:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       - name: Setup Python
@@ -22,7 +22,7 @@ jobs:
   macos-x86-wheel:
     runs-on: macos-13
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       - name: Setup Python
@@ -37,7 +37,7 @@ jobs:
   manylinux-wheel:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Build Manylinux wheel
         run: |
           docker build -t cargodock ./manylinux
@@ -46,7 +46,7 @@ jobs:
   manylinux-wheel-arm:
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Build Manylinux wheel ARM
         run: |
           docker build -t cargodock ./manylinux -f ./manylinux/aarch64.dockerfile
@@ -55,7 +55,7 @@ jobs:
   macos-arm-wheel:
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       - name: Setup Python
