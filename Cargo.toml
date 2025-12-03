@@ -19,7 +19,7 @@ arrow-odbc = "21"
 # feature.
 arrow = { version = "57.1.0", default-features = false, features = ["ffi"] }
 stderrlog = "0.6.0"
-log = "0.4.28"
+log = "0.4.29"
 widestring = "1.2.1"
 
 [features]
