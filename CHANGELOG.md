@@ -1,5 +1,12 @@
 # Changelog
 
+## [9.3.5](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.4...v9.3.5) (2026-02-11)
+
+
+### Miscellaneous Chores
+
+* release ([7793abf](https://github.com/pacman82/arrow-odbc-py/commit/7793abf795317d4b2e73cbf303998a7fb938cd83))
+
 ## [9.3.4](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.3...v9.3.4) (2025-11-08)
 
 
