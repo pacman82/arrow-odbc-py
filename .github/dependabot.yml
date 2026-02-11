@@ -1,11 +1,16 @@
 version: 2
 updates:
-- package-ecosystem: cargo
-  directory: "./"
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 10
-- package-ecosystem: github-actions
-  directory: "/"
-  schedule:
-    interval: daily
+  - package-ecosystem: cargo
+    directory: "./"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    commit-message:
+      # We are using deps as the prefix since it is recognized by release please as a releasable
+      # change. "build" or "chore" would not trigger new release requests. We want to forward
+      # performance and security improvemens of newer versions to our users, though.
+      prefix: "deps"
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: daily
