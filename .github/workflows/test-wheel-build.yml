@@ -20,7 +20,7 @@ jobs:
         run: uv build --wheel
 
   macos-x86-wheel:
-    runs-on: macos-13
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v6
       - name: Install uv
@@ -53,7 +53,7 @@ jobs:
           docker run --rm -v ${PWD}:/io cargodock bash /io/manylinux/build_wheel.sh
 
   macos-arm-wheel:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v6
       - name: Install uv
