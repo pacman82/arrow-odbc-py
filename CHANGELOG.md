@@ -5,7 +5,7 @@
 
 ### Dependencies
 
-* bump arrow-odbc from 21.0.0 to 21.0.1 ([55b2bbd](https://github.com/pacman82/arrow-odbc-py/commit/55b2bbdc9fbcef82188fca370ffad39097deab7c))
+* bump arrow crate to version 58 ([55b2bbd](https://github.com/pacman82/arrow-odbc-py/commit/55b2bbdc9fbcef82188fca370ffad39097deab7c))
 
 ## [9.3.5](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.4...v9.3.5) (2026-02-11)
 
