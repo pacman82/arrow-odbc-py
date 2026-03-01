@@ -1,5 +1,14 @@
 # Changelog
 
+## [9.3.7](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.6...v9.3.7) (2026-03-01)
+
+
+### Features
+
+* Only use one codegen unit in release ([7694e47](https://github.com/pacman82/arrow-odbc-py/commit/7694e47dcacc4f514a062bcecd668968dc848d8f))
+* Update to latest arrow-odbc crate, which uses SIMD for utf8 ([69ee287](https://github.com/pacman82/arrow-odbc-py/commit/69ee2874bcce8fed453930af25e16e005bc78f22))
+* Use "target-cpu=x86-64-v3" on non-arm platforms ([4a8e41a](https://github.com/pacman82/arrow-odbc-py/commit/4a8e41ac2a7688677d3fb1b6a3e4dfe72308588f))
+
 ## [9.3.6](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.5...v9.3.6) (2026-02-24)
 
 
