@@ -52,3 +52,6 @@ wide = ["arrow-odbc/wide"]
 panic = 'abort'
 # Link time Optimization
 lto = true
+# Enable optimizing across crate boundaries. Default code units seems to be 16. Using only one
+# gives the compiler more freedo to inline.
+codegen-units = 1
