@@ -35,5 +35,8 @@ line-length = 100
 
 [tool.ruff.format]
 
+[tool.pyright]
+reportAssignmentType = false
+
 [dependency-groups]
 dev = ["duckdb>=1.2.1", "pyodbc>=5.2.0", "pytest>=8.3.5"]

@@ -1,11 +1,13 @@
-from typing import Optional, Callable, Sequence
+# pyright: reportAttributeAccessIssue=false
+# pyright: reportMissingTypeStubs=false
+
 from enum import Enum
-from cffi.api import FFI  # type: ignore
+from typing import Callable, Optional, Sequence
 
 import pyarrow
-
+from cffi.api import FFI  # type: ignore
+from pyarrow import Array, RecordBatch, Schema  # type: ignore
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
-from pyarrow import RecordBatch, Schema, Array  # type: ignore
 
 from .arrow_odbc import ffi, lib  # type: ignore
 from .buffer import to_bytes_and_len
