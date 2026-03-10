@@ -25,10 +25,11 @@ Fill Apache Arrow arrays from ODBC data sources. This package is build on top of
 ```python
 from arrow_odbc import connect
 
-connection_string=
-    "Driver={ODBC Driver 18 for SQL Server};" \
-    "Server=localhost;" \
+connection_string = (
+    "Driver={ODBC Driver 18 for SQL Server};"
+    "Server=localhost;"
     "TrustServerCertificate=yes;"
+)
 
 connection = connect(
     connection_string=connection_string,
@@ -37,7 +38,6 @@ connection = connect(
 )
 reader = connection.read_arrow_batches(
     query=f"SELECT * FROM MyTable WHERE a=?",
-    connection_string=connection_string,
     parameters=["I'm a positional query parameter"],
 )
 
