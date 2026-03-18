@@ -1,5 +1,16 @@
 # Changelog
 
+## [10.0.0](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.7...v10.0.0) (2026-03-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* Match arrow decmial to decimal relational type then inserting
+
+### Features
+
+* Match arrow decmial to decimal relational type then inserting ([b3ffe04](https://github.com/pacman82/arrow-odbc-py/commit/b3ffe04f5dbadef7866bfc6d814123ce3660dfaa))
+
 ## [9.3.7](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.6...v9.3.7) (2026-03-01)
 
 
