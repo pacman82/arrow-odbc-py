@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.1](https://github.com/pacman82/arrow-odbc-py/compare/v10.0.0...v10.0.1) (2026-03-20)
+
+
+### Fixes
+
+* Fix a panic which occurred on then querying text columns as UTF-16. ([4969177](https://github.com/pacman82/arrow-odbc-py/commit/49691777b056c6240b6163ecc24476513600bee8))
+
 ## [10.0.0](https://github.com/pacman82/arrow-odbc-py/compare/v9.3.7...v10.0.0) (2026-03-18)
 
 
