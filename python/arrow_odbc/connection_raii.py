@@ -1,8 +1,10 @@
+# pyright: reportAttributeAccessIssue=false
+
 from typing import Any, Optional
 
 from cffi import FFI
 
-from .arrow_odbc import lib, ffi  # type: ignore
+from .arrow_odbc import ffi, lib  # type: ignore
 from .buffer import to_bytes_and_len
 from .error import raise_on_error
 
@@ -29,6 +31,18 @@ class ConnectionRaii:
         """
         return self.handle
 
+    def set_autocommit(self, autocommit: bool) -> None:
+        error = lib.arrow_odbc_connection_set_autocommit(self.handle, autocommit)
+        raise_on_error(error)
+
+    def rollback(self) -> None:
+        error = lib.arrow_odbc_connection_rollback(self.handle)
+        raise_on_error(error)
+
+    def commit(self) -> None:
+        error = lib.arrow_odbc_connection_commit(self.handle)
+        raise_on_error(error)
+
     def __del__(self):
         if self.handle:
             # Free the resources associated with this handle.
@@ -38,10 +52,10 @@ class ConnectionRaii:
     def connect(
         cls,
         connection_string: str,
-        user: Optional[str] = None,
-        password: Optional[str] = None,
-        login_timeout_sec: Optional[int] = None,
-        packet_size: Optional[int] = None,
+        user: Optional[str],
+        password: Optional[str],
+        login_timeout_sec: Optional[int],
+        packet_size: Optional[int],
     ) -> "ConnectionRaii":
         connection_string_bytes = connection_string.encode("utf-8")
 

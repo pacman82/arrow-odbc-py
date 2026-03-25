@@ -1129,6 +1129,53 @@ def test_insert_string_column_with_only_nulls():
     assert 'a\n""\n' == actual.decode("utf8")
 
 
+def test_manual_rollback():
+    """
+    Verify that we do not commit automatically in manual commit mode.
+    """
+    # Given
+    table = "ManualRollback"
+    py_odbc_connection = pyodbc.connect(MSSQL, autocommit=False)
+    py_odbc_connection.execute(f"DROP TABLE IF EXISTS {table};")
+    py_odbc_connection.execute(f"CREATE TABLE {table} (a INT);")
+    py_odbc_connection.commit()
+    arrow_table = pa.table({"a": pa.array([42])})
+
+    # When inserting data and rolling it back
+    connection = connect(connection_string=MSSQL, autocommit=False)
+    connection.from_table_to_db(source=arrow_table, target=table)
+    connection.rollback()
+
+    # Then table is still empty
+    cursor = py_odbc_connection.execute(f"SELECT a FROM {table}")
+    rows = cursor.fetchall()
+    assert len(rows) == 0
+
+
+def test_manual_commit():
+    """
+    Verify that data is visible to other connections after commit in mmanual commit mode.
+    """
+    # Given
+    table = "ManualCommit"
+    py_odbc_connection = pyodbc.connect(MSSQL, autocommit=False)
+    py_odbc_connection.execute(f"DROP TABLE IF EXISTS {table};")
+    py_odbc_connection.execute(f"CREATE TABLE {table} (a INT);")
+    py_odbc_connection.commit()
+    arrow_table = pa.table({"a": pa.array([42])})
+
+    # When inserting data and committing
+    connection = connect(connection_string=MSSQL, autocommit=False)
+    connection.from_table_to_db(source=arrow_table, target=table)
+    connection.commit()
+
+    # Then commited row is visible to other connections
+    cursor = py_odbc_connection.execute(f"SELECT a FROM {table}")
+    rows = cursor.fetchall()
+    assert len(rows) == 1
+    assert rows[0][0] == 42
+
+
 @pytest.mark.slow
 def test_should_not_leak_memory_for_each_batch():
     """

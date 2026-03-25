@@ -1,16 +1,15 @@
 from typing import Any, Callable, Sequence
 
-from pyarrow import Schema  # type: ignore
-from pyarrow import RecordBatchReader
+from pyarrow import RecordBatchReader, Schema
 
+from .connection_raii import ConnectionRaii
+from .pool import enable_odbc_connection_pooling
 from .reader import (
     DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
     DEFAULT_FETCH_BUFFER_LIMIT_IN_ROWS,
     BatchReader,
     TextEncoding,
 )
-from .connection_raii import ConnectionRaii
-from .pool import enable_odbc_connection_pooling
 from .writer import BatchWriter
 
 
@@ -304,6 +303,20 @@ class Connection:
             chunk_size=chunk_size,
         )
 
+    def rollback(self) -> None:
+        """
+        Rollback the current transaction. Behavior is only defined in manual commit mode, which can
+        be set by setting ``autocommit`` to ``False`` when creating the connection.
+        """
+        self.raii.rollback()
+
+    def commit(self) -> None:
+        """
+        Commit the current transaction. Behavior is only defined in manual commit mode, which can
+        be set by setting ``autocommit`` to ``False`` when creating the connection.
+        """
+        self.raii.commit()
+
 
 def connect(
     connection_string: str,
@@ -311,6 +324,7 @@ def connect(
     password: str | None = None,
     login_timeout_sec: int | None = None,
     packet_size: int | None = None,
+    autocommit: bool = True,
 ) -> Connection:
     """
     Opens a connection to an ODBC data source.
@@ -356,6 +370,16 @@ def connect(
         than the minimum packet size, the driver substitutes that value and returns SQLSTATE 01S02
         (Option value changed).You may want to enable logging to standard error using
         ``log_to_stderr``.
+    :param autocommit: If ``True`` the connection is set to autocommit mode, which means that each
+        individual statement is committed immediately after it is executed. This is the default for
+        ODBC connections, but some drivers may choose to use manual commit mode by default. If
+        ``False`` the connection is set to manual commit mode. In manual commit mode you need to
+        explicitly call `commit()` on the connection after executing a statement to make the changes
+        visible to other connections. If you do not do so, your changes will not be visible to other
+        connections and will be rolled back when the connection is closed. Setting this parameter to
+        ``True`` ensures that you do not have to worry about this and that your changes are always
+        visible immediately. Setting it to ``False`` allows you to execute multiple inserts and
+        queries in the same transaction. Insert performance might also differ based on commit mode.
     :return: A ``Connection`` is returned.
     """
     raii = ConnectionRaii.connect(
@@ -365,4 +389,9 @@ def connect(
         login_timeout_sec=login_timeout_sec,
         packet_size=packet_size,
     )
+
+    # True is default
+    if not autocommit:
+        raii.set_autocommit(False)
+
     return Connection(raii=raii)
