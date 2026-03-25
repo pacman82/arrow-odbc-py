@@ -6,7 +6,7 @@ use std::{
 };
 
 use arrow_odbc::odbc_api::{
-    Connection, ConnectionOptions, SharedConnection, environment, escape_attribute_value,
+    self, Connection, ConnectionOptions, SharedConnection, environment, escape_attribute_value,
 };
 use log::debug;
 
@@ -24,13 +24,28 @@ impl ArrowOdbcConnection {
     pub fn inner(&self) -> SharedConnection<'static> {
         self.0.clone()
     }
+
+    pub fn set_autocommit(&self, enabled: bool) -> Result<(), odbc_api::Error> {
+        let connection = self.0.lock().unwrap();
+        connection.set_autocommit(enabled)
+    }
+
+    pub fn commit(&self) -> Result<(), odbc_api::Error> {
+        let connection = self.0.lock().unwrap();
+        connection.commit()
+    }
+
+    pub fn rollback(&self) -> Result<(), odbc_api::Error> {
+        let connection = self.0.lock().unwrap();
+        connection.rollback()
+    }
 }
 
 /// Frees the resources associated with an ArrowOdbcConnection
 ///
 /// # Safety
 ///
-/// `reader` must point to a valid ArrowOdbcConnection.
+/// `connection` must point to a valid ArrowOdbcConnection.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_connection_free(connection: NonNull<ArrowOdbcConnection>) {
     drop(unsafe { Box::from_raw(connection.as_ptr()) });
@@ -114,4 +129,47 @@ unsafe fn append_attribute(
 
     let escaped = escape_attribute_value(attribute_value);
     *connection_string = format!("{connection_string}{attribute_name}={escaped};").into()
+}
+
+/// Set autocommit mode. Default is `true`.
+///
+/// # Safety
+///
+/// `connection` must point to a valid ArrowOdbcConnection.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn arrow_odbc_connection_set_autocommit(
+    connection: NonNull<ArrowOdbcConnection>,
+    enabled: bool,
+) -> *mut ArrowOdbcError {
+    let connection = unsafe { connection.as_ref() };
+    try_!(connection.set_autocommit(enabled));
+    null_mut()
+}
+
+/// Commit the current transaction. This is only meaningful if autocommit mode is disabled.
+///
+/// # Safety
+///
+/// `connection` must point to a valid ArrowOdbcConnection.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn arrow_odbc_connection_commit(
+    connection: NonNull<ArrowOdbcConnection>,
+) -> *mut ArrowOdbcError {
+    let connection = unsafe { connection.as_ref() };
+    try_!(connection.commit());
+    null_mut()
+}
+
+/// Rollback the current transaction. This is only meaningful if autocommit mode is disabled.
+///
+/// # Safety
+///
+/// `connection` must point to a valid ArrowOdbcConnection.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn arrow_odbc_connection_rollback(
+    connection: NonNull<ArrowOdbcConnection>,
+) -> *mut ArrowOdbcError {
+    let connection = unsafe { connection.as_ref() };
+    try_!(connection.rollback());
+    null_mut()
 }
