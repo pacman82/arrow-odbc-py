@@ -5,13 +5,15 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use arrow_odbc::odbc_api::{Connection, ConnectionOptions, environment, escape_attribute_value};
+use arrow_odbc::odbc_api::{
+    Connection, ConnectionOptions, SharedConnection, environment, escape_attribute_value,
+};
 use log::debug;
 
 use crate::{ArrowOdbcError, try_};
 
 /// Opaque type to transport connection to an ODBC Datasource over language boundry
-pub struct ArrowOdbcConnection(Arc<Mutex<Connection<'static>>>);
+pub struct ArrowOdbcConnection(SharedConnection<'static>);
 
 impl ArrowOdbcConnection {
     pub fn new(connection: Connection<'static>) -> Self {
@@ -19,7 +21,7 @@ impl ArrowOdbcConnection {
     }
 
     /// Take the inner connection out of its wrapper
-    pub fn inner(&self) -> Arc<Mutex<Connection<'static>>> {
+    pub fn inner(&self) -> SharedConnection<'static> {
         self.0.clone()
     }
 }
