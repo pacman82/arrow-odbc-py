@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.1.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.0.1...v10.1.0) (2026-03-25)
+
+
+### Features
+
+* Support for manual commit mode ([6091e51](https://github.com/pacman82/arrow-odbc-py/commit/6091e513f9e782f8a1f462672ed10e91a786709d))
+
 ## [10.0.1](https://github.com/pacman82/arrow-odbc-py/compare/v10.0.0...v10.0.1) (2026-03-20)
 
 
