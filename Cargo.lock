@@ -160,9 +160,9 @@ dependencies = [
 
 [[package]]
 name = "arrow-odbc"
-version = "23.0.1"
+version = "23.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e34e8d93a537201e5516d11983d85a1e44abd71c17f3fdb72e4a1cb97791701"
+checksum = "b4b0a7cccf7bc759fd0d51121d66c497035f9bd1a5ef1dda85ec8365363920f5"
 dependencies = [
  "arrow",
  "atoi",
