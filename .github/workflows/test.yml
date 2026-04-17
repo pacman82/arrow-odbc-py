@@ -48,7 +48,7 @@ jobs:
       - name: Test
         run: |
           uv sync --dev
-          uv run pytest tests -vv
+          uv run pytest tests -vv --runslow
 
   dependabot:
     needs: [linux]

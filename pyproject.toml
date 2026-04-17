@@ -19,6 +19,9 @@ dependencies = ["cffi", "pyarrow >= 8.0.0"]
 repository = "https://github.com/pacman82/arrow-odbc-py"
 changelog = "https://github.com/pacman82/arrow-odbc-py/blob/main/CHANGELOG.md"
 
+[project.entry-points.pyinstaller40]
+hook-dirs = "arrow_odbc.__pyinstaller:get_hook_dirs"
+
 [tool.maturin]
 # Bindings type
 bindings = "cffi"
@@ -39,4 +42,4 @@ line-length = 100
 reportAssignmentType = false
 
 [dependency-groups]
-dev = ["duckdb>=1.2.1", "pyodbc>=5.2.0", "pytest>=8.3.5"]
+dev = ["duckdb>=1.2.1", "pyinstaller>=6.0", "pyodbc>=5.2.0", "pytest>=8.3.5"]
