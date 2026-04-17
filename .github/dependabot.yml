@@ -14,3 +14,15 @@ updates:
     directory: "/"
     schedule:
       interval: daily
+  - package-ecosystem: docker
+    directory: "/.devcontainer"
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: "deps"
+  - package-ecosystem: docker-compose
+    directory: "/"
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: "deps"

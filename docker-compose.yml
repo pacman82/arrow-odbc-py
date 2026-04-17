@@ -3,7 +3,7 @@
 services:
   # Microsoft SQL database used for testing
   mssql:
-    image: mcr.microsoft.com/mssql/server:2019-CU5-ubuntu-18.04
+    image: mcr.microsoft.com/mssql/server:2025-latest
     ports:
       - 1433:1433
 
