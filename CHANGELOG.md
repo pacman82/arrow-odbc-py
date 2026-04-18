@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.2.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.1.0...v10.2.0) (2026-04-18)
+
+
+### Features
+
+* Add pyinstaller hook ([e855c1c](https://github.com/pacman82/arrow-odbc-py/commit/e855c1c6fd7c5660f66c6c499be43d550b4dbe76))
+
 ## [10.1.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.0.1...v10.1.0) (2026-03-25)
 
 
