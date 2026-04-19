@@ -7,6 +7,8 @@
 
 * Update to odbc-api 24.1.2. ([6c6bd3d](https://github.com/pacman82/arrow-odbc-py/commit/6c6bd3d67d1e7d33a9418cd0ba904ec93671c552))
 
+  This implies a behaviour change which avoids explicitly closing cursors during tear down, but rather leaves it to the driver to do so than freeing the statement handle. This means slightly faster tear down for most users, but it can also avoid a panic in case the driver would error for `SQLCloseCursor`. See: <https://github.com/pacman82/arrow-odbc-py/issues/178>
+
 ## [10.2.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.1.0...v10.2.0) (2026-04-18)
 
 
