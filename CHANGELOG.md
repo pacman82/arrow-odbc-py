@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.3.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.2.0...v10.3.0) (2026-04-19)
+
+
+### Features
+
+* Update to odbc-api 24.1.2. ([6c6bd3d](https://github.com/pacman82/arrow-odbc-py/commit/6c6bd3d67d1e7d33a9418cd0ba904ec93671c552))
+
 ## [10.2.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.1.0...v10.2.0) (2026-04-18)
 
 
