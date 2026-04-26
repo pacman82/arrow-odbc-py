@@ -1,4 +1,5 @@
-from typing import Optional, Callable, Sequence
+from collections.abc import Sequence
+from typing import Callable
 
 from pyarrow import Schema
 
@@ -15,19 +16,19 @@ def read_arrow_batches_from_odbc(
     query: str,
     connection_string: str,
     batch_size: int = DEFAULT_FETCH_BUFFER_LIMIT_IN_ROWS,
-    user: Optional[str] = None,
-    password: Optional[str] = None,
-    parameters: Optional[Sequence[Optional[str]]] = None,
-    max_bytes_per_batch: Optional[int] = DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
-    max_text_size: Optional[int] = None,
-    max_binary_size: Optional[int] = None,
+    user: str | None = None,
+    password: str | None = None,
+    parameters: Sequence[str | None] | None = None,
+    max_bytes_per_batch: int | None = DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
+    max_text_size: int | None = None,
+    max_binary_size: int | None = None,
     falliable_allocations: bool = False,
-    login_timeout_sec: Optional[int] = None,
-    packet_size: Optional[int] = None,
-    schema: Optional[Schema] = None,
-    map_schema: Optional[Callable[[Schema], Schema]] = None,
+    login_timeout_sec: int | None = None,
+    packet_size: int | None = None,
+    schema: Schema | None = None,
+    map_schema: Callable[[Schema], Schema] | None = None,
     fetch_concurrently=True,
-    query_timeout_sec: Optional[int] = None,
+    query_timeout_sec: int | None = None,
     payload_text_encoding: TextEncoding = TextEncoding.AUTO,
 ) -> BatchReader:
     """

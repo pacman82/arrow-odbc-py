@@ -1,6 +1,6 @@
 # pyright: reportAttributeAccessIssue=false
 
-from typing import Any, Optional
+from typing import Any
 
 from cffi import FFI
 
@@ -52,10 +52,10 @@ class ConnectionRaii:
     def connect(
         cls,
         connection_string: str,
-        user: Optional[str],
-        password: Optional[str],
-        login_timeout_sec: Optional[int],
-        packet_size: Optional[int],
+        user: str | None,
+        password: str | None,
+        login_timeout_sec: int | None,
+        packet_size: int | None,
     ) -> "ConnectionRaii":
         connection_string_bytes = connection_string.encode("utf-8")
 

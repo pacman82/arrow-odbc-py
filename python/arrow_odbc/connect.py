@@ -1,4 +1,5 @@
-from typing import Any, Callable, Sequence
+from collections.abc import Sequence
+from typing import Any, Callable
 
 from pyarrow import RecordBatchReader, Schema
 
