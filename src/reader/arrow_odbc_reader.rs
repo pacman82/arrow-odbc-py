@@ -126,7 +126,7 @@ impl ArrowOdbcReader {
     }
 
     /// Promote Connection to cursor state. If this operation fails, the reader will stay in
-    /// connection state.
+    /// empty state.
     pub fn promote_to_cursor(
         &mut self,
         conn: SharedConnection<'static>,

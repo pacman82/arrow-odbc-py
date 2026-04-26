@@ -588,6 +588,24 @@ def test_query_with_int_parameter():
         )
 
 
+def test_runs_statement_without_result_set():
+    """
+    ``Connection.execute`` is intended for statements which do not return a result set, like DDL or
+    DML. Run a CREATE, an INSERT with a parameter, and verify the row arrived.
+    """
+    table = "ExecuteRunsStatementsWithoutResultSet"
+    connection = connect(connection_string=MSSQL)
+    connection.execute(f"DROP TABLE IF EXISTS {table};")
+    connection.execute(f"CREATE TABLE {table} (a INTEGER);")
+    connection.execute(f"INSERT INTO {table} (a) VALUES (?);", parameters=["42"])
+
+    reader = connection.read_arrow_batches(query=f"SELECT a FROM {table};", batch_size=10)
+    actual = next(iter(reader))
+
+    expected = pa.RecordBatch.from_pydict({"a": [42]}, pa.schema([("a", pa.int32())]))
+    assert expected == actual
+
+
 def test_query_timestamp_as_date():
     """
     Query a timestamp as date by providing an arrow schema

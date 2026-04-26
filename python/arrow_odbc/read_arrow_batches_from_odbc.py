@@ -145,10 +145,10 @@ def read_arrow_batches_from_odbc(
         and Microsoft SQL Server do, but SQLite or MariaDB do not.
     :param payload_text_encoding: Controls the encoding used for transferring text data from the
             ODBC data source to the application. The resulting Arrow arrays will still be UTF-8
-            encoded. You may want to use this if you get garbage characters or invalid UTF-8 errors
-            on non-windows systems to set the encoding to ``TextEncoding.Utf16``. On windows systems
-            you may want to set this to ``TextEncoding::Utf8`` to gain performance benefits, after
-            you have verified that your system locale is set to UTF-8.
+            encoded. If you see garbage characters or invalid UTF-8 errors in non-windows systems,
+            you may want to set the encoding to ``TextEncoding.Utf16``. On windows systems you may
+            want to set this to ``TextEncoding::Utf8`` to gain performance benefits, after you have
+            verified that your system locale is set to UTF-8.
     :return: A ``BatchReader`` is returned, which implements the iterator protocol and iterates over
         individual arrow batches.
     """

@@ -176,11 +176,10 @@ class Connection:
             E.g. PostgreSQL, and Microsoft SQL Server do, but SQLite or MariaDB do not.
         :param payload_text_encoding: Controls the encoding used for transferring text data from the
                 ODBC data source to the application. The resulting Arrow arrays will still be UTF-8
-                encoded. You may want to use this if you get garbage characters or invalid UTF-8
-                errors on non-windows systems to set the encoding to ``TextEncoding.Utf16``. On
-                windows systems you may want to set this to ``TextEncoding::Utf8`` to gain
-                performance benefits, after you have verified that your system locale is set to
-                UTF-8.
+                encoded. If you see garbage characters or invalid UTF-8 errors in non-windows
+                systems, you may want to set the encoding to ``TextEncoding.Utf16``. On windows
+                systems you may want to set this to ``TextEncoding::Utf8`` to gain performance
+                benefits, after you have verified that your system locale is set to UTF-8.
         :return: A ``BatchReader`` is returned, which implements the iterator protocol and iterates
             over individual arrow batches.
         """
@@ -322,6 +321,60 @@ class Connection:
             reader=reader,
             table=target,
             chunk_size=chunk_size,
+        )
+
+    def execute(
+        self,
+        query: str,
+        parameters: Sequence[str | None] | None = None,
+        query_timeout_sec: int | None = None,
+        payload_text_encoding: TextEncoding = TextEncoding.AUTO,
+    ) -> None:
+        """
+        Execute a SQL statement which does not return a result set, e.g. ``INSERT``, ``UPDATE``,
+        ``DELETE`` or DDL like ``CREATE TABLE``. Any result set the statement might produce is
+        discarded.
+
+        Example:
+
+        .. code-block:: python
+
+            from arrow_odbc import connect
+
+            connection = connect(
+                connection_string=connection_string,
+                user="SA",
+                password="My@Test@Password",
+            )
+            connection.execute("CREATE TABLE MyTable (a INTEGER);")
+            connection.execute("INSERT INTO MyTable (a) VALUES (?);", parameters=["42"])
+
+        :param query: The SQL statement to execute.
+        :param parameters: ODBC allows you to use a question mark as placeholder marker (``?``) for
+            positional parameters. This argument takes a list of parameters those number must match
+            the number of placeholders in the SQL statement. Currently all parameters are passed as
+            VARCHAR strings. You can use ``None`` to pass ``NULL``.
+        :param query_timeout_sec: Use this to limit the time the query is allowed to take, before
+            responding to the application. The driver may replace the number of seconds you provide
+            with a minimum or maximum value. You can specify ``0`` to deactivate the timeout, this
+            is the default. For this to work the driver must support this feature. E.g. PostgreSQL
+            and Microsoft SQL Server do, but SQLite or MariaDB do not.
+        :param payload_text_encoding: Controls the encoding used for the string parameters bound
+            to the query. If you see garbage characters or invalid UTF-8 errors in non-windows
+            systems, you may want to set the encoding to ``TextEncoding.Utf16``. On windows
+            systems you may want to set this to ``TextEncoding::Utf8`` to gain performance
+            benefits, after you have verified that your system locale is set to UTF-8.
+        """
+        # First iteration: allocate a throwaway reader so we can reuse the existing
+        # ``arrow_odbc_reader_query`` FFI entry point. The reader is freed when ``reader`` goes out
+        # of scope, which also drops any cursor the statement may have produced.
+        reader = BatchReaderRaii()
+        self._query(
+            reader=reader,
+            query=query,
+            parameters=parameters,
+            text_encoding=payload_text_encoding,
+            query_timeout_sec=query_timeout_sec,
         )
 
     def rollback(self) -> None:
