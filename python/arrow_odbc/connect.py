@@ -3,7 +3,7 @@ from typing import Any, Callable
 
 from pyarrow import RecordBatchReader, Schema
 
-from .connection_raii import ConnectionRaii
+from .connection_raii import _ConnectionRaii
 from .pool import enable_odbc_connection_pooling
 from .reader import (
     DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
@@ -19,7 +19,7 @@ class Connection:
     A strong reference to an ODBC connection.
     """
 
-    def __init__(self, raii: ConnectionRaii) -> None:
+    def __init__(self, raii: _ConnectionRaii) -> None:
         self.raii = raii
 
     @classmethod
@@ -383,7 +383,7 @@ def connect(
         queries in the same transaction. Insert performance might also differ based on commit mode.
     :return: A ``Connection`` is returned.
     """
-    raii = ConnectionRaii.connect(
+    raii = _ConnectionRaii.connect(
         connection_string=connection_string,
         user=user,
         password=password,

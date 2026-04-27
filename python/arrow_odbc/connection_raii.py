@@ -9,7 +9,7 @@ from .buffer import to_bytes_and_len
 from .error import raise_on_error
 
 
-class ConnectionRaii:
+class _ConnectionRaii:
     """
     A strong reference to an ODBC connection.
 
@@ -56,7 +56,7 @@ class ConnectionRaii:
         password: str | None,
         login_timeout_sec: int | None,
         packet_size: int | None,
-    ) -> "ConnectionRaii":
+    ) -> "_ConnectionRaii":
         connection_string_bytes = connection_string.encode("utf-8")
 
         (user_bytes, user_len) = to_bytes_and_len(user)
@@ -90,4 +90,4 @@ class ConnectionRaii:
         # Dereference output pointer. This gives us an `ArrowOdbcConnection *`. We take ownership of
         # the ArrowOdbcConnection and must take care to free it.
         handle = connection_out[0]
-        return ConnectionRaii(handle=handle)
+        return _ConnectionRaii(handle=handle)

@@ -11,7 +11,7 @@ from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
 
 from .arrow_odbc import ffi, lib  # type: ignore
 from .buffer import to_bytes_and_len
-from .connection_raii import ConnectionRaii
+from .connection_raii import _ConnectionRaii
 from .error import raise_on_error
 from .text_encoding import TextEncoding
 
@@ -77,7 +77,7 @@ class _BatchReaderRaii:
 
     def query(
         self,
-        connection: ConnectionRaii,
+        connection: _ConnectionRaii,
         query: str,
         parameters: Sequence[str | None] | None,
         text_encoding: TextEncoding,
@@ -203,7 +203,7 @@ class BatchReader:
     @classmethod
     def _from_connection(
         cls,
-        connection: ConnectionRaii,
+        connection: _ConnectionRaii,
         query: str,
         batch_size: int = DEFAULT_FETCH_BUFFER_LIMIT_IN_ROWS,
         parameters: Sequence[str | None] | None = None,

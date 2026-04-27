@@ -3,7 +3,7 @@ from typing import Any
 from pyarrow.cffi import ffi as arrow_ffi
 
 from .arrow_odbc import ffi, lib  # type: ignore
-from .connection_raii import ConnectionRaii
+from .connection_raii import _ConnectionRaii
 from .error import raise_on_error
 
 
@@ -27,7 +27,7 @@ class BatchWriter:
     @classmethod
     def _from_connection(
         cls,
-        connection: ConnectionRaii,
+        connection: _ConnectionRaii,
         reader: Any,
         chunk_size: int,
         table: str,
