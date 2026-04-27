@@ -3,13 +3,13 @@ from typing import Any, Callable
 
 from pyarrow import RecordBatchReader, Schema
 
-from .connection_raii import _ConnectionRaii
+from .connection_raii import ConnectionRaii
 from .pool import enable_odbc_connection_pooling
 from .reader import (
     DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
     DEFAULT_FETCH_BUFFER_LIMIT_IN_ROWS,
     BatchReader,
-    _BatchReaderRaii,
+    BatchReaderRaii,
 )
 from .text_encoding import TextEncoding
 from .writer import BatchWriter
@@ -20,7 +20,7 @@ class Connection:
     A strong reference to an ODBC connection.
     """
 
-    def __init__(self, raii: _ConnectionRaii) -> None:
+    def __init__(self, raii: ConnectionRaii) -> None:
         self.raii = raii
 
     @classmethod
@@ -181,7 +181,7 @@ class Connection:
         :return: A ``BatchReader`` is returned, which implements the iterator protocol and iterates
             over individual arrow batches.
         """
-        reader = _BatchReaderRaii()
+        reader = BatchReaderRaii()
 
         self.raii.query(
             reader=reader,
@@ -400,7 +400,7 @@ def connect(
         queries in the same transaction. Insert performance might also differ based on commit mode.
     :return: A ``Connection`` is returned.
     """
-    raii = _ConnectionRaii.connect(
+    raii = ConnectionRaii.connect(
         connection_string=connection_string,
         user=user,
         password=password,
