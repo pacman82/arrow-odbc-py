@@ -9,8 +9,8 @@ from .reader import (
     DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
     DEFAULT_FETCH_BUFFER_LIMIT_IN_ROWS,
     BatchReader,
-    TextEncoding,
 )
+from .text_encoding import TextEncoding
 from .writer import BatchWriter
 
 
