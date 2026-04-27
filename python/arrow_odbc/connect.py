@@ -9,6 +9,7 @@ from .reader import (
     DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
     DEFAULT_FETCH_BUFFER_LIMIT_IN_ROWS,
     BatchReader,
+    _BatchReaderRaii,
 )
 from .text_encoding import TextEncoding
 from .writer import BatchWriter
@@ -180,21 +181,37 @@ class Connection:
         :return: A ``BatchReader`` is returned, which implements the iterator protocol and iterates
             over individual arrow batches.
         """
-        return BatchReader._from_connection(
-            connection=self.raii,
+        reader = _BatchReaderRaii()
+
+        self.raii.query(
+            reader_handle=reader.handle,
             query=query,
-            batch_size=batch_size,
             parameters=parameters,
+            text_encoding=payload_text_encoding,
+            query_timeout_sec=query_timeout_sec,
+        )
+
+        if max_text_size is None:
+            max_text_size = 0
+        if max_binary_size is None:
+            max_binary_size = 0
+        if max_bytes_per_batch is None:
+            max_bytes_per_batch = 0
+
+        # Let us transition to reader state
+        reader.bind_buffers(
+            batch_size=batch_size,
             max_bytes_per_batch=max_bytes_per_batch,
             max_text_size=max_text_size,
             max_binary_size=max_binary_size,
             falliable_allocations=falliable_allocations,
+            payload_text_encoding=payload_text_encoding,
             schema=schema,
             map_schema=map_schema,
             fetch_concurrently=fetch_concurrently,
-            query_timeout_sec=query_timeout_sec,
-            payload_text_encoding=payload_text_encoding,
         )
+
+        return BatchReader(reader)
 
     def insert_into_table(
         self,

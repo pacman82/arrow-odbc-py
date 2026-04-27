@@ -9,7 +9,6 @@ from pyarrow import Array, RecordBatch, Schema  # type: ignore
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
 
 from .arrow_odbc import ffi, lib  # type: ignore
-from .connection_raii import _ConnectionRaii
 from .error import raise_on_error
 from .text_encoding import TextEncoding
 
@@ -141,55 +140,6 @@ class BatchReader:
         # This is the schema of the batches returned by reader. We take care to keep it in sync in
         # case the state of reader changes.
         self.schema = self.reader.schema()
-
-    @classmethod
-    def _from_connection(
-        cls,
-        connection: _ConnectionRaii,
-        query: str,
-        batch_size: int = DEFAULT_FETCH_BUFFER_LIMIT_IN_ROWS,
-        parameters: Sequence[str | None] | None = None,
-        max_bytes_per_batch: int | None = DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
-        max_text_size: int | None = None,
-        max_binary_size: int | None = None,
-        falliable_allocations: bool = False,
-        schema: Schema | None = None,
-        map_schema: Callable[[Schema], Schema] | None = None,
-        fetch_concurrently=True,
-        query_timeout_sec: int | None = None,
-        payload_text_encoding: TextEncoding = TextEncoding.AUTO,
-    ) -> "BatchReader":
-        reader = _BatchReaderRaii()
-
-        connection.query(
-            reader_handle=reader.handle,
-            query=query,
-            parameters=parameters,
-            text_encoding=payload_text_encoding,
-            query_timeout_sec=query_timeout_sec,
-        )
-
-        if max_text_size is None:
-            max_text_size = 0
-        if max_binary_size is None:
-            max_binary_size = 0
-        if max_bytes_per_batch is None:
-            max_bytes_per_batch = 0
-
-        # Let us transition to reader state
-        reader.bind_buffers(
-            batch_size=batch_size,
-            max_bytes_per_batch=max_bytes_per_batch,
-            max_text_size=max_text_size,
-            max_binary_size=max_binary_size,
-            falliable_allocations=falliable_allocations,
-            payload_text_encoding=payload_text_encoding,
-            schema=schema,
-            map_schema=map_schema,
-            fetch_concurrently=fetch_concurrently,
-        )
-
-        return BatchReader(reader)
 
     def __iter__(self):
         # Implement iterable protocol so reader can be used in for loops.
