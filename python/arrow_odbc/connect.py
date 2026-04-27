@@ -1,9 +1,12 @@
 from collections.abc import Sequence
 from typing import Any, Callable
 
+from cffi import FFI
 from pyarrow import RecordBatchReader, Schema
 
-from .connection_raii import ConnectionRaii
+from .arrow_odbc import ffi, lib  # type: ignore
+from .buffer import to_bytes_and_len
+from .error import raise_on_error
 from .pool import enable_odbc_connection_pooling
 from .reader import (
     DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES,
@@ -20,8 +23,8 @@ class Connection:
     A strong reference to an ODBC connection.
     """
 
-    def __init__(self, raii: ConnectionRaii) -> None:
-        self.raii = raii
+    def __init__(self, handle: Any) -> None:
+        self.handle = handle
 
     @classmethod
     def enable_connection_pooling(cls) -> None:
@@ -183,7 +186,7 @@ class Connection:
         """
         reader = BatchReaderRaii()
 
-        self.raii.query(
+        self._query(
             reader=reader,
             query=query,
             parameters=parameters,
@@ -254,7 +257,7 @@ class Connection:
             Independent of batch size (i.e. number of rows in an individual record batch).
         """
         writer = BatchWriter._from_connection(
-            connection=self.raii,
+            connection_handle=self.handle,
             reader=reader,
             chunk_size=chunk_size,
             table=table,
@@ -326,14 +329,79 @@ class Connection:
         Rollback the current transaction. Behavior is only defined in manual commit mode, which can
         be set by setting ``autocommit`` to ``False`` when creating the connection.
         """
-        self.raii.rollback()
+        error = lib.arrow_odbc_connection_rollback(self.handle)
+        raise_on_error(error)
 
     def commit(self) -> None:
         """
         Commit the current transaction. Behavior is only defined in manual commit mode, which can
         be set by setting ``autocommit`` to ``False`` when creating the connection.
         """
-        self.raii.commit()
+        error = lib.arrow_odbc_connection_commit(self.handle)
+        raise_on_error(error)
+
+    def __del__(self):
+        if self.handle:
+            lib.arrow_odbc_connection_free(self.handle)
+
+    def _set_autocommit(self, autocommit: bool) -> None:
+        error = lib.arrow_odbc_connection_set_autocommit(self.handle, autocommit)
+        raise_on_error(error)
+
+    def _query(
+        self,
+        reader: BatchReaderRaii,
+        query: str,
+        parameters: Sequence[str | None] | None,
+        text_encoding: TextEncoding,
+        query_timeout_sec: int | None,
+    ) -> None:
+        query_bytes = query.encode("utf-8")
+
+        if parameters is None:
+            parameters_array = FFI.NULL
+            parameters_len = 0
+            encoded_parameters = []
+        else:
+            # Check precondition in order to save users some debugging, in case they directly pass a
+            # non-string argument and do not use a type linter.
+            if not all([p is None or hasattr(p, "encode") for p in parameters]):
+                raise TypeError(
+                    "read_arrow_batches_from_odbc only supports string arguments for SQL query "
+                    "parameters"
+                )
+
+            parameters_array = ffi.new("ArrowOdbcParameter *[]", len(parameters))
+            parameters_len = len(parameters)
+            # Must be kept alive. Within Rust code we only allocate an additional indicator the
+            # string payload is just referenced.
+            encoded_parameters = [to_bytes_and_len(p) for p in parameters]
+
+        text_encoding_int = text_encoding.value
+
+        for p_index in range(0, parameters_len):
+            (p_bytes, p_len) = encoded_parameters[p_index]
+            parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(
+                p_bytes, p_len, text_encoding_int
+            )
+
+        if query_timeout_sec is None:
+            query_timeout_sec_pointer = ffi.NULL
+        else:
+            query_timeout_sec_pointer = ffi.new("uintptr_t *")
+            query_timeout_sec_pointer[0] = query_timeout_sec
+
+        error = lib.arrow_odbc_reader_query(
+            reader.handle,
+            self.handle,
+            query_bytes,
+            len(query_bytes),
+            parameters_array,
+            parameters_len,
+            query_timeout_sec_pointer,
+        )
+
+        raise_on_error(error)
 
 
 def connect(
@@ -400,16 +468,39 @@ def connect(
         queries in the same transaction. Insert performance might also differ based on commit mode.
     :return: A ``Connection`` is returned.
     """
-    raii = ConnectionRaii.connect(
-        connection_string=connection_string,
-        user=user,
-        password=password,
-        login_timeout_sec=login_timeout_sec,
-        packet_size=packet_size,
+    connection_string_bytes = connection_string.encode("utf-8")
+
+    (user_bytes, user_len) = to_bytes_and_len(user)
+    (password_bytes, password_len) = to_bytes_and_len(password)
+    # We use a pointer to pass the login time, so NULL can represent None
+    if login_timeout_sec is None:
+        login_timeout_sec_ptr = FFI.NULL
+    else:
+        login_timeout_sec_ptr = ffi.new("uint32_t *")
+        login_timeout_sec_ptr[0] = login_timeout_sec
+    if packet_size is None:
+        packet_size_ptr = FFI.NULL
+    else:
+        packet_size_ptr = ffi.new("uint32_t *")
+        packet_size_ptr[0] = packet_size
+    connection_out = ffi.new("ArrowOdbcConnection **")
+    error = lib.arrow_odbc_connection_make(
+        connection_string_bytes,
+        len(connection_string_bytes),
+        user_bytes,
+        user_len,
+        password_bytes,
+        password_len,
+        login_timeout_sec_ptr,
+        packet_size_ptr,
+        connection_out,
     )
+    raise_on_error(error)
+    # Take ownership of the ArrowOdbcConnection. The destructor of Connection will free it.
+    connection = Connection(handle=connection_out[0])
 
     # True is default
     if not autocommit:
-        raii.set_autocommit(False)
+        connection._set_autocommit(False)
 
-    return Connection(raii=raii)
+    return connection

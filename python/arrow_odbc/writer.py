@@ -3,7 +3,6 @@ from typing import Any
 from pyarrow.cffi import ffi as arrow_ffi
 
 from .arrow_odbc import ffi, lib  # type: ignore
-from .connection_raii import ConnectionRaii
 from .error import raise_on_error
 
 
@@ -27,7 +26,7 @@ class BatchWriter:
     @classmethod
     def _from_connection(
         cls,
-        connection: ConnectionRaii,
+        connection_handle: Any,
         reader: Any,
         chunk_size: int,
         table: str,
@@ -45,7 +44,7 @@ class BatchWriter:
 
             writer_out = ffi.new("ArrowOdbcWriter **")
             error = lib.arrow_odbc_writer_make(
-                connection.arrow_odbc_connection(),
+                connection_handle,
                 table_bytes,
                 len(table_bytes),
                 chunk_size,
