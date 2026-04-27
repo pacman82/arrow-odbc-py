@@ -35,7 +35,7 @@ def _schema_from_handle(handle) -> Schema:
         return Schema._import_from_c(ptr_schema)
 
 
-class _BatchReaderRaii:
+class BatchReaderRaii:
     """
     Takes ownership of the reader in its various states and makes sure its resources are freed if
     the object is deleted.
@@ -126,7 +126,7 @@ class BatchReader:
     Iterates over Arrow batches from an ODBC data source
     """
 
-    def __init__(self, reader: _BatchReaderRaii):
+    def __init__(self, reader: BatchReaderRaii):
         """
         Low level constructor, users should rather invoke `read_arrow_batches_from_odbc` in order to
         create instances of `BatchReader`.
@@ -289,7 +289,7 @@ class BatchReader:
         convert the ``arrow-odbc`` BatchReader into a ``pyarrow`` ``RecordBatchReader``.
         """
         # New empty tmp reader
-        reader = _BatchReaderRaii()
+        reader = BatchReaderRaii()
         tmp = BatchReader(reader)
         # Swap self and tmp
         tmp.reader, self.reader = self.reader, tmp.reader

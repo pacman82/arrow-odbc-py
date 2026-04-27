@@ -8,11 +8,11 @@ from cffi import FFI
 from .arrow_odbc import ffi, lib  # type: ignore
 from .buffer import to_bytes_and_len
 from .error import raise_on_error
-from .reader import _BatchReaderRaii
+from .reader import BatchReaderRaii
 from .text_encoding import TextEncoding
 
 
-class _ConnectionRaii:
+class ConnectionRaii:
     """
     A strong reference to an ODBC connection.
 
@@ -48,7 +48,7 @@ class _ConnectionRaii:
 
     def query(
         self,
-        reader: _BatchReaderRaii,
+        reader: BatchReaderRaii,
         query: str,
         parameters: Sequence[str | None] | None,
         text_encoding: TextEncoding,
@@ -114,7 +114,7 @@ class _ConnectionRaii:
         password: str | None,
         login_timeout_sec: int | None,
         packet_size: int | None,
-    ) -> "_ConnectionRaii":
+    ) -> "ConnectionRaii":
         connection_string_bytes = connection_string.encode("utf-8")
 
         (user_bytes, user_len) = to_bytes_and_len(user)
@@ -148,4 +148,4 @@ class _ConnectionRaii:
         # Dereference output pointer. This gives us an `ArrowOdbcConnection *`. We take ownership of
         # the ArrowOdbcConnection and must take care to free it.
         handle = connection_out[0]
-        return _ConnectionRaii(handle=handle)
+        return ConnectionRaii(handle=handle)
