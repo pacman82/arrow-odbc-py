@@ -5,12 +5,10 @@
 from collections.abc import Callable, Sequence
 
 import pyarrow
-from cffi.api import FFI  # type: ignore
 from pyarrow import Array, RecordBatch, Schema  # type: ignore
 from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
 
 from .arrow_odbc import ffi, lib  # type: ignore
-from .buffer import to_bytes_and_len
 from .connection_raii import _ConnectionRaii
 from .error import raise_on_error
 from .text_encoding import TextEncoding
@@ -74,62 +72,6 @@ class _BatchReaderRaii:
             schema_ptr = int(ffi.cast("uintptr_t", schema))
             struct_array = Array._import_from_c(array_ptr, schema_ptr)
             return RecordBatch.from_struct_array(struct_array)
-
-    def query(
-        self,
-        connection: _ConnectionRaii,
-        query: str,
-        parameters: Sequence[str | None] | None,
-        text_encoding: TextEncoding,
-        query_timeout_sec: int | None,
-    ):
-        query_bytes = query.encode("utf-8")
-
-        if parameters is None:
-            parameters_array = FFI.NULL
-            parameters_len = 0
-            encoded_parameters = []
-        else:
-            # Check precondition in order to save users some debugging, in case they directly pass a
-            # non-string argument and do not use a type linter.
-            if not all([p is None or hasattr(p, "encode") for p in parameters]):
-                raise TypeError(
-                    "read_arrow_batches_from_odbc only supports string arguments for SQL query "
-                    "parameters"
-                )
-
-            parameters_array = ffi.new("ArrowOdbcParameter *[]", len(parameters))
-            parameters_len = len(parameters)
-            # Must be kept alive. Within Rust code we only allocate an additional indicator the
-            # string payload is just referenced.
-            encoded_parameters = [to_bytes_and_len(p) for p in parameters]
-
-        text_encoding = text_encoding.value
-
-        for p_index in range(0, parameters_len):
-            (p_bytes, p_len) = encoded_parameters[p_index]
-            parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(
-                p_bytes, p_len, text_encoding
-            )
-
-        if query_timeout_sec is None:
-            query_timeout_sec_pointer = ffi.NULL
-        else:
-            query_timeout_sec_pointer = ffi.new("uintptr_t *")
-            query_timeout_sec_pointer[0] = query_timeout_sec
-
-        error = lib.arrow_odbc_reader_query(
-            self.handle,
-            connection.arrow_odbc_connection(),
-            query_bytes,
-            len(query_bytes),
-            parameters_array,
-            parameters_len,
-            query_timeout_sec_pointer,
-        )
-
-        # See if we managed to execute the query successfully and return an error if not
-        raise_on_error(error)
 
     def bind_buffers(
         self,
@@ -219,8 +161,8 @@ class BatchReader:
     ) -> "BatchReader":
         reader = _BatchReaderRaii()
 
-        reader.query(
-            connection=connection,
+        connection.query(
+            reader_handle=reader.handle,
             query=query,
             parameters=parameters,
             text_encoding=payload_text_encoding,
