@@ -184,7 +184,7 @@ class Connection:
         reader = _BatchReaderRaii()
 
         self.raii.query(
-            reader_handle=reader.handle,
+            reader=reader,
             query=query,
             parameters=parameters,
             text_encoding=payload_text_encoding,
