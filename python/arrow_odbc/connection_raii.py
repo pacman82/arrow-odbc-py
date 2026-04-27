@@ -8,6 +8,7 @@ from cffi import FFI
 from .arrow_odbc import ffi, lib  # type: ignore
 from .buffer import to_bytes_and_len
 from .error import raise_on_error
+from .reader import _BatchReaderRaii
 from .text_encoding import TextEncoding
 
 
@@ -47,7 +48,7 @@ class _ConnectionRaii:
 
     def query(
         self,
-        reader_handle: Any,
+        reader: _BatchReaderRaii,
         query: str,
         parameters: Sequence[str | None] | None,
         text_encoding: TextEncoding,
@@ -89,7 +90,7 @@ class _ConnectionRaii:
             query_timeout_sec_pointer[0] = query_timeout_sec
 
         error = lib.arrow_odbc_reader_query(
-            reader_handle,
+            reader.handle,
             self.handle,
             query_bytes,
             len(query_bytes),
