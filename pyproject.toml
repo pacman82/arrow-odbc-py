@@ -46,6 +46,7 @@ venv = ".venv"
 [dependency-groups]
 dev = [
     "duckdb>=1.2.1",
+    "pyarrow-stubs>=20.0.0.20251215",
     "pyinstaller>=6.0",
     "pyodbc>=5.2.0",
     "pytest>=8.3.5",

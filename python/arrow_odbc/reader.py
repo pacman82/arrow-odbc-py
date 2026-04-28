@@ -1,10 +1,10 @@
 from collections.abc import Callable
 
 import pyarrow
-from pyarrow import Array, RecordBatch, Schema  # type: ignore
-from pyarrow.cffi import ffi as arrow_ffi  # type: ignore
+from pyarrow import Array, RecordBatch, Schema
+from pyarrow.cffi import ffi as arrow_ffi
 
-from .arrow_odbc import ffi, lib  # type: ignore
+from .arrow_odbc import ffi, lib
 from .error import raise_on_error
 from .text_encoding import TextEncoding
 
