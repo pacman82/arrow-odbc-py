@@ -1,6 +1,7 @@
 from collections.abc import Callable
 
 import pyarrow
+from cffi import FFI
 from pyarrow import Array, RecordBatch, Schema
 from pyarrow.cffi import ffi as arrow_ffi
 
@@ -18,7 +19,7 @@ DEFAULT_FETCH_BUFFER_LIMIT_IN_BYTES = 2**29
 DEFAULT_FETCH_BUFFER_LIMIT_IN_ROWS = 65535
 
 
-def _schema_from_handle(handle) -> Schema:
+def _schema_from_handle(handle: "FFI.CData") -> Schema:
     """
     Take a handle to an ArrowOdbcReader and return the associated pyarrow schema
     """
@@ -42,7 +43,7 @@ class BatchReaderRaii:
         lib.arrow_odbc_reader_make(reader_out)
         # We take ownership of the corresponding reader written in Rust and keep it alive until
         # `self` is deleted.
-        self.handle = reader_out[0]
+        self.handle: "FFI.CData" = reader_out[0]
 
     def __del__(self):
         # Free the resources associated with this handle.
