@@ -23,8 +23,8 @@ class Connection:
     A strong reference to an ODBC connection.
     """
 
-    def __init__(self, handle: Any) -> None:
-        self.handle = handle
+    def __init__(self, handle: "FFI.CData") -> None:
+        self.handle: "FFI.CData" = handle
 
     @classmethod
     def enable_connection_pooling(cls) -> None:
@@ -218,7 +218,7 @@ class Connection:
 
     def insert_into_table(
         self,
-        reader: Any,
+        reader: RecordBatchReader | BatchReader,
         table: str,
         chunk_size: int,
     ):

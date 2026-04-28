@@ -8,7 +8,7 @@ class Error(Exception):
     An error emmited by the arrow-odbc-py bindings.
     """
 
-    def __init__(self, handle: FFI.CData):
+    def __init__(self, handle: "FFI.CData"):
         raw = ffi.string(lib.arrow_odbc_error_message(handle))
         # ffi.string returns bytes or str. For us it will always return bytes.3
         assert isinstance(raw, bytes)
@@ -24,7 +24,7 @@ class Error(Exception):
         return self.args[0]
 
 
-def raise_on_error(error_out: FFI.CData):
+def raise_on_error(error_out: "FFI.CData"):
     """
     Raises if the argument points to an error
     """
