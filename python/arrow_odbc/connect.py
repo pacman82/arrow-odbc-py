@@ -4,7 +4,7 @@ from typing import Any, Callable
 from cffi import FFI
 from pyarrow import RecordBatchReader, Schema
 
-from .arrow_odbc import ffi, lib  # type: ignore
+from .arrow_odbc import ffi, lib
 from .buffer import to_bytes_and_len
 from .error import raise_on_error
 from .pool import enable_odbc_connection_pooling

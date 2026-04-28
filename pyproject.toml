@@ -39,7 +39,15 @@ line-length = 100
 [tool.ruff.format]
 
 [tool.pyright]
-reportAssignmentType = false
+extraPaths = ["python"]
+venvPath = "."
+venv = ".venv"
 
 [dependency-groups]
-dev = ["duckdb>=1.2.1", "pyinstaller>=6.0", "pyodbc>=5.2.0", "pytest>=8.3.5"]
+dev = [
+    "duckdb>=1.2.1",
+    "pyinstaller>=6.0",
+    "pyodbc>=5.2.0",
+    "pytest>=8.3.5",
+    "types-cffi",
+]

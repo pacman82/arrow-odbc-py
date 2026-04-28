@@ -1,4 +1,4 @@
-from .arrow_odbc import lib  # type: ignore
+from .arrow_odbc import lib
 from .error import raise_on_error
 
 

@@ -1,8 +1,4 @@
-# pyright: reportAttributeAccessIssue=false
-# pyright: reportMissingTypeStubs=false
-# pyright: reportIndexIssue=false
-
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 
 import pyarrow
 from pyarrow import Array, RecordBatch, Schema  # type: ignore
