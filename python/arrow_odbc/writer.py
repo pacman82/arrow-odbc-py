@@ -1,10 +1,9 @@
-from cffi import FFI
-from pyarrow import RecordBatchReader
+from typing import Any
+
 from pyarrow.cffi import ffi as arrow_ffi
 
 from .arrow_odbc import ffi, lib
 from .error import raise_on_error
-from .reader import BatchReader
 
 
 class BatchWriter:
@@ -14,11 +13,11 @@ class BatchWriter:
 
     def __init__(
         self,
-        handle: FFI.CData,
+        handle,
     ):
         # We take ownership of the corresponding writer written in Rust and keep it alive until
         # `self` is deleted
-        self.handle: FFI.CData = handle
+        self.handle = handle
 
     def __del__(self):
         # Free the resources associated with this handle.
@@ -27,8 +26,8 @@ class BatchWriter:
     @classmethod
     def _from_connection(
         cls,
-        connection_handle: FFI.CData,
-        reader: RecordBatchReader | BatchReader,
+        connection_handle: Any,
+        reader: Any,
         chunk_size: int,
         table: str,
     ):
