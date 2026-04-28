@@ -1,4 +1,4 @@
-from .arrow_odbc import lib, ffi  # type: ignore
+from .arrow_odbc import ffi, lib
 
 
 class Error(Exception):

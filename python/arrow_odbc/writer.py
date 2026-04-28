@@ -2,7 +2,7 @@ from typing import Any
 
 from pyarrow.cffi import ffi as arrow_ffi
 
-from .arrow_odbc import ffi, lib  # type: ignore
+from .arrow_odbc import ffi, lib
 from .error import raise_on_error
 
 
