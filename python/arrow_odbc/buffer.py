@@ -1,9 +1,7 @@
-from typing import Any
-
 from cffi import FFI
 
 
-def to_bytes_and_len(value: str | None) -> tuple[Any | bytes, int]:
+def to_bytes_and_len(value: str | None) -> tuple["FFI.CData | bytes", int]:
     if value is None:
         value_bytes = FFI.NULL
         value_len = 0
