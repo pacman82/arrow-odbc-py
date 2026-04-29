@@ -5,84 +5,15 @@ use std::{
     mem::swap,
     os::raw::c_int,
     ptr::{NonNull, null_mut},
-    slice, str,
     sync::Arc,
 };
 
 use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema};
 use arrow_odbc::{OdbcReaderBuilder, TextEncoding};
 
-use crate::{ArrowOdbcConnection, ArrowOdbcError, parameter::ArrowOdbcParameter, try_};
+use crate::{ArrowOdbcError, try_};
 
 pub use self::arrow_odbc_reader::ArrowOdbcReader;
-
-/// Creates an Arrow ODBC reader instance.
-///
-/// Executes the SQL Query and moves the reader into cursor state.
-///
-/// # Safety
-///
-/// * `reader` must point to a valid reader in empty state.
-/// * `connection` must point to a valid OdbcConnection. This function takes ownership of the
-///   connection, even in case of an error. So The connection must not be freed explicitly
-///   afterwards.
-/// * `query_buf` must point to a valid utf-8 string
-/// * `query_len` describes the len of `query_buf` in bytes.
-/// * `parameters` must contain only valid pointers. This function takes ownership of all of them
-///   independent if the function succeeds or not. Yet it does not take ownership of the array
-///   itself.
-/// * `parameters_len` number of elements in parameters.
-/// * `max_text_size` optional upper bound for the size of text columns. Use `0` to indicate that no
-///   uppper bound applies.
-/// * `max_binary_size` optional upper bound for the size of binary columns. Use `0` to indicate
-///   that no uppper bound applies.
-/// * `fallibale_allocations`: `TRUE` if allocations should return an error, `FALSE` if it is fine
-///   to abort the process. Enabling might have a performance overhead, so it might be desirable to
-///   disable it, if you know there is enough memory available.
-/// * `schema`: Optional input arrow schema. NULL means no input schema is supplied. Should a
-///   schema be supplied `schema` Rust will take ownership of it an the `schema` will be
-///   overwritten with an empty one. This means the Python code, must only deallocate the memory
-///   directly pointed to by `schema`, but not freeing the resources of the passed schema.
-/// * `query_timout_sec`: Optional query timeout in seconds. If `NULL` no timeout is applied.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn arrow_odbc_reader_query(
-    mut reader: NonNull<ArrowOdbcReader>,
-    connection: NonNull<ArrowOdbcConnection>,
-    query_buf: *const u8,
-    query_len: usize,
-    parameters: *const *mut ArrowOdbcParameter,
-    parameters_len: usize,
-    query_timeout_sec: *const usize,
-) -> *mut ArrowOdbcError {
-    let connection = unsafe { connection.as_ref() }.inner();
-    // Transtlate C Args into more idiomatic rust representations
-    let query = unsafe { slice::from_raw_parts(query_buf, query_len) };
-    let query = str::from_utf8(query).unwrap();
-
-    let parameters = if parameters.is_null() {
-        Vec::new()
-    } else {
-        unsafe { slice::from_raw_parts(parameters, parameters_len) }
-            .iter()
-            .map(|&p| unsafe { Box::from_raw(p) }.unwrap())
-            .collect()
-    };
-
-    let query_timeout_sec = if query_timeout_sec.is_null() {
-        None
-    } else {
-        Some(unsafe { *query_timeout_sec })
-    };
-
-    try_!(unsafe { reader.as_mut() }.promote_to_cursor(
-        connection,
-        query,
-        &parameters[..],
-        query_timeout_sec
-    ));
-
-    null_mut() // Ok(())
-}
 
 /// Creates an empty Arrow ODBC reader instance. Useful for passing ownership of the reader in
 /// Python code. The previous owner can use this to express the move by holding an empty instance.
