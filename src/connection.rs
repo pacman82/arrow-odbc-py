@@ -203,7 +203,7 @@ pub unsafe extern "C" fn arrow_odbc_connection_rollback(
 ///   directly pointed to by `schema`, but not freeing the resources of the passed schema.
 /// * `query_timout_sec`: Optional query timeout in seconds. If `NULL` no timeout is applied.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn arrow_odbc_reader_query(
+pub unsafe extern "C" fn arrow_odbc_connection_execute(
     mut reader: NonNull<ArrowOdbcReader>,
     connection: NonNull<ArrowOdbcConnection>,
     query_buf: *const u8,
