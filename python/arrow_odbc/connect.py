@@ -366,8 +366,8 @@ class Connection:
             benefits, after you have verified that your system locale is set to UTF-8.
         """
         # First iteration: allocate a throwaway reader so we can reuse the existing
-        # ``arrow_odbc_reader_query`` FFI entry point. The reader is freed when ``reader`` goes out
-        # of scope, which also drops any cursor the statement may have produced.
+        # ``arrow_odbc_connection_execute`` FFI entry point. The reader is freed when ``reader``
+        # goes out of scope, which also drops any cursor the statement may have produced.
         reader = BatchReaderRaii()
         self._query(
             reader=reader,
@@ -444,7 +444,7 @@ class Connection:
             query_timeout_sec_pointer = ffi.new("uintptr_t *")
             query_timeout_sec_pointer[0] = query_timeout_sec
 
-        error = lib.arrow_odbc_reader_query(
+        error = lib.arrow_odbc_connection_execute(
             reader.handle,
             self.handle,
             query_bytes,
