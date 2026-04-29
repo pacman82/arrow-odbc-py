@@ -49,8 +49,8 @@ class _Lib:
     def arrow_odbc_reader_free(self, reader: FFI.CData) -> None: ...
     def arrow_odbc_connection_execute(
         self,
-        reader: FFI.CData,
         connection: FFI.CData,
+        reader: FFI.CData,
         query_buf: bytes,
         query_len: int,
         parameters: FFI.CData,

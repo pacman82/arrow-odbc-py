@@ -445,8 +445,8 @@ class Connection:
             query_timeout_sec_pointer[0] = query_timeout_sec
 
         error = lib.arrow_odbc_connection_execute(
-            reader.handle,
             self.handle,
+            reader.handle,
             query_bytes,
             len(query_bytes),
             parameters_array,
