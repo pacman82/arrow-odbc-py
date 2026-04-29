@@ -365,12 +365,8 @@ class Connection:
             systems you may want to set this to ``TextEncoding::Utf8`` to gain performance
             benefits, after you have verified that your system locale is set to UTF-8.
         """
-        # First iteration: allocate a throwaway reader so we can reuse the existing
-        # ``arrow_odbc_connection_execute`` FFI entry point. The reader is freed when ``reader``
-        # goes out of scope, which also drops any cursor the statement may have produced.
-        reader = BatchReaderRaii()
         self._query(
-            reader=reader,
+            reader=None,
             query=query,
             parameters=parameters,
             text_encoding=payload_text_encoding,
@@ -403,7 +399,7 @@ class Connection:
 
     def _query(
         self,
-        reader: BatchReaderRaii,
+        reader: BatchReaderRaii | None,
         query: str,
         parameters: Sequence[str | None] | None,
         text_encoding: TextEncoding,
@@ -444,9 +440,10 @@ class Connection:
             query_timeout_sec_pointer = ffi.new("uintptr_t *")
             query_timeout_sec_pointer[0] = query_timeout_sec
 
+        reader_handle = ffi.NULL if reader is None else reader.handle
         error = lib.arrow_odbc_connection_execute(
             self.handle,
-            reader.handle,
+            reader_handle,
             query_bytes,
             len(query_bytes),
             parameters_array,

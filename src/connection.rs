@@ -176,14 +176,14 @@ pub unsafe extern "C" fn arrow_odbc_connection_rollback(
 
 /// Creates an Arrow ODBC reader instance.
 ///
-/// Executes the SQL Query and moves the reader into cursor state.
+/// Executes the SQL Query and optionally moves the reader into cursor state.
 ///
 /// # Safety
 ///
 /// * `connection` must point to a valid OdbcConnection. This function takes ownership of the
 ///   connection, even in case of an error. So The connection must not be freed explicitly
 ///   afterwards.
-/// * `reader` must point to a valid reader in empty state.
+/// * `reader` must either be NULL or point to a valid reader.
 /// * `query_buf` must point to a valid utf-8 string
 /// * `query_len` describes the len of `query_buf` in bytes.
 /// * `parameters` must contain only valid pointers. This function takes ownership of all of them
@@ -205,7 +205,7 @@ pub unsafe extern "C" fn arrow_odbc_connection_rollback(
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_connection_execute(
     connection: NonNull<ArrowOdbcConnection>,
-    mut reader: NonNull<ArrowOdbcReader>,
+    reader: *mut ArrowOdbcReader,
     query_buf: *const u8,
     query_len: usize,
     parameters: *const *mut ArrowOdbcParameter,
@@ -232,12 +232,15 @@ pub unsafe extern "C" fn arrow_odbc_connection_execute(
         Some(unsafe { *query_timeout_sec })
     };
 
-    try_!(unsafe { reader.as_mut() }.promote_to_cursor(
-        connection,
-        query,
-        &parameters[..],
-        query_timeout_sec
-    ));
+    let mut local_reader;
+    let reader = if reader.is_null() {
+        local_reader = ArrowOdbcReader::empty();
+        &mut local_reader
+    } else {
+        unsafe { &mut *reader }
+    };
+
+    try_!(reader.promote_to_cursor(connection, query, &parameters[..], query_timeout_sec));
 
     null_mut() // Ok(())
 }
