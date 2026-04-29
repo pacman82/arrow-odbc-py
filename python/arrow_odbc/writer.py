@@ -1,5 +1,5 @@
 from cffi import FFI
-from pyarrow import RecordBatchReader
+from pyarrow import RecordBatch, RecordBatchReader
 from pyarrow.cffi import ffi as arrow_ffi
 
 from .arrow_odbc import ffi, lib
@@ -25,13 +25,19 @@ class BatchWriter:
         lib.arrow_odbc_writer_free(self.handle)
 
     @classmethod
-    def _from_connection(
+    def from_connection(
         cls,
         connection_handle: "FFI.CData",
         reader: RecordBatchReader | BatchReader,
         chunk_size: int,
         table: str,
     ):
+        """
+        Create a ``BatchWriter`` from a connection handle and a ``RecordBatchReader`` or
+        ``BatchReader``.
+
+        This is a low-level constructor. Use :meth:``Connection.insert_into_table`` instead.
+        """
         table_bytes = table.encode("utf-8")
 
         # Allocate structures where we will export the Array data and the Array schema. They will be
@@ -56,7 +62,7 @@ class BatchWriter:
 
         return BatchWriter(handle=writer_out[0])
 
-    def write_batch(self, batch):
+    def write_batch(self, batch: RecordBatch):
         """
         Fills the internal buffers of the writer with data from the batch. Every
         time they are full, the data is send to the database. To make sure all

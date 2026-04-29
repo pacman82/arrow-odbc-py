@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 import pyarrow
 from cffi import FFI
-from pyarrow import Array, RecordBatch, Schema
+from pyarrow import Array, RecordBatch, Schema, StructArray
 from pyarrow.cffi import ffi as arrow_ffi
 
 from .arrow_odbc import ffi, lib
@@ -67,6 +67,7 @@ class BatchReaderRaii:
             array_ptr = int(ffi.cast("uintptr_t", array))
             schema_ptr = int(ffi.cast("uintptr_t", schema))
             struct_array = Array._import_from_c(array_ptr, schema_ptr)
+            assert isinstance(struct_array, StructArray)
             return RecordBatch.from_struct_array(struct_array)
 
     def bind_buffers(

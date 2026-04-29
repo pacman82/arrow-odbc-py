@@ -1,8 +1,8 @@
 from collections.abc import Sequence
-from typing import Any, Callable
+from typing import Callable, cast
 
 from cffi import FFI
-from pyarrow import RecordBatchReader, Schema
+from pyarrow import RecordBatchReader, Schema, Table
 
 from .arrow_odbc import ffi, lib
 from .buffer import to_bytes_and_len
@@ -256,7 +256,7 @@ class Connection:
         :param chunk_size: Number of records to insert in each roundtrip to the database.
             Independent of batch size (i.e. number of rows in an individual record batch).
         """
-        writer = BatchWriter._from_connection(
+        writer = BatchWriter.from_connection(
             connection_handle=self.handle,
             reader=reader,
             chunk_size=chunk_size,
@@ -270,7 +270,7 @@ class Connection:
 
     def from_table_to_db(
         self,
-        source: Any,
+        source: Table,
         target: str,
         chunk_size: int = 1000,
     ):
@@ -368,7 +368,7 @@ class Connection:
             if not all([p is None or hasattr(p, "encode") for p in parameters]):
                 raise TypeError(
                     "read_arrow_batches_from_odbc only supports string arguments for SQL query "
-                    "parameters"
+                    + "parameters"
                 )
 
             parameters_array = ffi.new("ArrowOdbcParameter *[]", len(parameters))
@@ -497,7 +497,8 @@ def connect(
     )
     raise_on_error(error)
     # Take ownership of the ArrowOdbcConnection. The destructor of Connection will free it.
-    connection = Connection(handle=connection_out[0])
+    handle = cast("FFI.CData", connection_out[0])
+    connection = Connection(handle=handle)
 
     # True is default
     if not autocommit:
