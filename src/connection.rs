@@ -180,10 +180,10 @@ pub unsafe extern "C" fn arrow_odbc_connection_rollback(
 ///
 /// # Safety
 ///
-/// * `reader` must point to a valid reader in empty state.
 /// * `connection` must point to a valid OdbcConnection. This function takes ownership of the
 ///   connection, even in case of an error. So The connection must not be freed explicitly
 ///   afterwards.
+/// * `reader` must point to a valid reader in empty state.
 /// * `query_buf` must point to a valid utf-8 string
 /// * `query_len` describes the len of `query_buf` in bytes.
 /// * `parameters` must contain only valid pointers. This function takes ownership of all of them
@@ -204,8 +204,8 @@ pub unsafe extern "C" fn arrow_odbc_connection_rollback(
 /// * `query_timout_sec`: Optional query timeout in seconds. If `NULL` no timeout is applied.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_connection_execute(
-    mut reader: NonNull<ArrowOdbcReader>,
     connection: NonNull<ArrowOdbcConnection>,
+    mut reader: NonNull<ArrowOdbcReader>,
     query_buf: *const u8,
     query_len: usize,
     parameters: *const *mut ArrowOdbcParameter,
