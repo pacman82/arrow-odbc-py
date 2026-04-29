@@ -185,7 +185,7 @@ class Connection:
         """
         reader = BatchReaderRaii()
 
-        self._query(
+        self._execute(
             reader=reader,
             query=query,
             parameters=parameters,
@@ -365,7 +365,7 @@ class Connection:
             systems you may want to set this to ``TextEncoding::Utf8`` to gain performance
             benefits, after you have verified that your system locale is set to UTF-8.
         """
-        self._query(
+        self._execute(
             reader=None,
             query=query,
             parameters=parameters,
@@ -397,14 +397,14 @@ class Connection:
         error = lib.arrow_odbc_connection_set_autocommit(self.handle, autocommit)
         raise_on_error(error)
 
-    def _query(
+    def _execute(
         self,
         reader: BatchReaderRaii | None,
         query: str,
         parameters: Sequence[str | None] | None,
         text_encoding: TextEncoding,
         query_timeout_sec: int | None,
-    ) -> None:
+    ):
         query_bytes = query.encode("utf-8")
 
         if parameters is None:
