@@ -5,6 +5,7 @@ from cffi import FFI
 from pyarrow import RecordBatchReader, Schema, Table
 
 from .arrow_odbc import ffi, lib
+from .batch_reader_protocol import BatchReaderProtocol
 from .buffer import to_bytes_and_len
 from .error import raise_on_error
 from .pool import enable_odbc_connection_pooling
@@ -217,7 +218,7 @@ class Connection:
 
     def insert_into_table(
         self,
-        reader: RecordBatchReader | BatchReader,
+        reader: BatchReaderProtocol,
         table: str,
         chunk_size: int,
     ):
