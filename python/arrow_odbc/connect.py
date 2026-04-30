@@ -393,10 +393,6 @@ class Connection:
         if self.handle:
             lib.arrow_odbc_connection_free(self.handle)
 
-    def _set_autocommit(self, autocommit: bool) -> None:
-        error = lib.arrow_odbc_connection_set_autocommit(self.handle, autocommit)
-        raise_on_error(error)
-
     def _execute(
         self,
         reader: BatchReaderRaii | None,
@@ -543,15 +539,10 @@ def connect(
         password_len,
         login_timeout_sec_ptr,
         packet_size_ptr,
+        autocommit,
         connection_out,
     )
     raise_on_error(error)
     # Take ownership of the ArrowOdbcConnection. The destructor of Connection will free it.
     handle = cast("FFI.CData", connection_out[0])
-    connection = Connection(handle=handle)
-
-    # True is default
-    if not autocommit:
-        connection._set_autocommit(False)
-
-    return connection
+    return Connection(handle=handle)

@@ -25,11 +25,6 @@ impl ArrowOdbcConnection {
         self.0.clone()
     }
 
-    pub fn set_autocommit(&self, enabled: bool) -> Result<(), odbc_api::Error> {
-        let connection = self.0.lock().unwrap();
-        connection.set_autocommit(enabled)
-    }
-
     pub fn commit(&self) -> Result<(), odbc_api::Error> {
         let connection = self.0.lock().unwrap();
         connection.commit()
@@ -69,6 +64,7 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
     password_len: usize,
     login_timeout_sec_ptr: *const u32,
     packet_size_ptr: *const u32,
+    autocommit: bool,
     connection_out: *mut *mut ArrowOdbcConnection,
 ) -> *mut ArrowOdbcError {
     let env = try_!(environment());
@@ -100,6 +96,11 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
         }
     ));
 
+    // Default is autocommit=true. We only need the function call in cas it is false.
+    if !autocommit {
+        try_!(connection.set_autocommit(autocommit));
+    }
+
     // Log dbms name to ease debugging of issues. Since ODBC calls are expensive, only query name
     // if we are actually logging the message.
     if log::max_level() <= log::LevelFilter::Debug {
@@ -129,21 +130,6 @@ unsafe fn append_attribute(
 
     let escaped = escape_attribute_value(attribute_value);
     *connection_string = format!("{connection_string}{attribute_name}={escaped};").into()
-}
-
-/// Set autocommit mode. Default is `true`.
-///
-/// # Safety
-///
-/// `connection` must point to a valid ArrowOdbcConnection.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn arrow_odbc_connection_set_autocommit(
-    connection: NonNull<ArrowOdbcConnection>,
-    enabled: bool,
-) -> *mut ArrowOdbcError {
-    let connection = unsafe { connection.as_ref() };
-    try_!(connection.set_autocommit(enabled));
-    null_mut()
 }
 
 /// Commit the current transaction. This is only meaningful if autocommit mode is disabled.
