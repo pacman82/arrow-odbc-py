@@ -27,7 +27,7 @@ def read_arrow_batches_from_odbc(
     packet_size: int | None = None,
     schema: Schema | None = None,
     map_schema: Callable[[Schema], Schema] | None = None,
-    fetch_concurrently=True,
+    fetch_concurrently: bool = True,
     query_timeout_sec: int | None = None,
     payload_text_encoding: TextEncoding = TextEncoding.AUTO,
 ) -> BatchReader:
