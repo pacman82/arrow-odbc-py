@@ -1,10 +1,10 @@
 from cffi import FFI
-from pyarrow import RecordBatch, RecordBatchReader
+from pyarrow import RecordBatch
 from pyarrow.cffi import ffi as arrow_ffi
 
 from .arrow_odbc import ffi, lib
+from .batch_reader_protocol import BatchReaderProtocol
 from .error import raise_on_error
-from .reader import BatchReader
 
 
 class BatchWriter:
@@ -28,7 +28,7 @@ class BatchWriter:
     def from_connection(
         cls,
         connection_handle: "FFI.CData",
-        reader: RecordBatchReader | BatchReader,
+        reader: BatchReaderProtocol,
         chunk_size: int,
         table: str,
     ):

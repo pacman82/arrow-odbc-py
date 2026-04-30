@@ -1,3 +1,4 @@
+from .batch_reader_protocol import BatchReaderProtocol
 from .connect import connect, Connection
 from .error import Error
 from .insert_into_table import insert_into_table, from_table_to_db
@@ -12,6 +13,7 @@ __all__ = [
     "connect",
     "Connection",
     "BatchReader",
+    "BatchReaderProtocol",
     "TextEncoding",
     "read_arrow_batches_from_odbc",
     "Error",

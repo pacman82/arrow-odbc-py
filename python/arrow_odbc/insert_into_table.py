@@ -1,10 +1,11 @@
-from typing import Any
+from pyarrow import Table
 
+from .batch_reader_protocol import BatchReaderProtocol
 from .connect import connect
 
 
 def insert_into_table(
-    reader: Any,
+    reader: BatchReaderProtocol,
     chunk_size: int,
     table: str,
     connection_string: str,
@@ -73,7 +74,7 @@ def insert_into_table(
 
 
 def from_table_to_db(
-    source: Any,
+    source: Table,
     target: str,
     connection_string: str,
     chunk_size: int = 1000,
