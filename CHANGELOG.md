@@ -1,5 +1,18 @@
 # Changelog
 
+## [10.4.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.3.0...v10.4.0) (2026-04-30)
+
+
+### Features
+
+* Add Connection.execute ([bc13dc5](https://github.com/pacman82/arrow-odbc-py/commit/bc13dc5085249b12c314cb2495285259f2e5ec5a))
+* Make BatcheReaderProtocol explicit ([34d7d52](https://github.com/pacman82/arrow-odbc-py/commit/34d7d52f23048f3c842e62cc363fb40422918f24))
+
+
+### Fixes
+
+* `Error` now sets the message eagerly on the Exception super class ([6a1aa17](https://github.com/pacman82/arrow-odbc-py/commit/6a1aa176c20fd31b63d317eb099bc7034bcdce30))
+
 ## [10.3.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.2.0...v10.3.0) (2026-04-19)
 
 
