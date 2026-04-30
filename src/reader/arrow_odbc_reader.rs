@@ -9,10 +9,7 @@ use arrow::{
 };
 use arrow_odbc::{
     ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder, arrow_schema_from,
-    odbc_api::{
-        ConnectionTransitions, Cursor, CursorImpl, ParameterCollectionRef, SharedConnection,
-        handles::StatementConnection,
-    },
+    odbc_api::{Cursor, CursorImpl, SharedConnection, handles::StatementConnection},
 };
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
@@ -125,32 +122,12 @@ impl ArrowOdbcReader {
         Ok(())
     }
 
-    /// Promote Connection to cursor state. If this operation fails, the reader will stay in
-    /// empty state.
     pub fn promote_to_cursor(
         &mut self,
-        conn: SharedConnection<'static>,
-        query: &str,
-        params: impl ParameterCollectionRef,
-        query_timeout_sec: Option<usize>,
-    ) -> Result<(), ArrowOdbcError> {
-        // Move self into a temporary instance we own, in order to take ownership of the inner
-        // reader and move it to a different state.
-        let mut tmp_self = ArrowOdbcReader::Empty;
-        swap(self, &mut tmp_self);
-
-        let dbms_name = conn.lock().unwrap().database_management_system_name()?;
-
-        match conn.into_cursor(query, params, query_timeout_sec) {
-            Ok(None) => (),
-            Ok(Some(cursor)) => {
-                *self = ArrowOdbcReader::Cursor { cursor, dbms_name };
-            }
-            Err(error) => {
-                return Err(error.error.into());
-            }
-        }
-        Ok(())
+        cursor: CursorImpl<StatementConnection<SharedConnection<'static>>>,
+        dbms_name: String,
+    ) {
+        *self = ArrowOdbcReader::Cursor { cursor, dbms_name };
     }
 
     /// After this method call we will be in the `Cursor` state or `NoMoreResultSets`, in case we

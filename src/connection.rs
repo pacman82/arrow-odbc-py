@@ -6,7 +6,8 @@ use std::{
 };
 
 use arrow_odbc::odbc_api::{
-    self, Connection, ConnectionOptions, SharedConnection, environment, escape_attribute_value,
+    self, Connection, ConnectionOptions, ConnectionTransitions, CursorImpl, ParameterCollectionRef,
+    SharedConnection, environment, escape_attribute_value, handles::StatementConnection,
 };
 use log::debug;
 
@@ -33,6 +34,26 @@ impl ArrowOdbcConnection {
     pub fn rollback(&self) -> Result<(), odbc_api::Error> {
         let connection = self.0.lock().unwrap();
         connection.rollback()
+    }
+
+    /// Execute the SQL statement and return the cursor (if the statement produced a result set).
+    /// Cursor creation is owned here so the reader does not need to know about connections.
+    pub fn execute(
+        &self,
+        query: &str,
+        params: impl ParameterCollectionRef,
+        query_timeout_sec: Option<usize>,
+    ) -> Result<Option<CursorImpl<StatementConnection<SharedConnection<'static>>>>, ArrowOdbcError>
+    {
+        match self.inner().into_cursor(query, params, query_timeout_sec) {
+            Ok(cursor) => Ok(cursor),
+            Err(failed) => Err(failed.error.into()),
+        }
+    }
+
+    pub fn database_management_system_name(&self) -> Result<String, odbc_api::Error> {
+        let connection = self.0.lock().unwrap();
+        connection.database_management_system_name()
     }
 }
 
@@ -198,7 +219,7 @@ pub unsafe extern "C" fn arrow_odbc_connection_execute(
     parameters_len: usize,
     query_timeout_sec: *const usize,
 ) -> *mut ArrowOdbcError {
-    let connection = unsafe { connection.as_ref() }.inner();
+    let connection = unsafe { connection.as_ref() };
     // Transtlate C Args into more idiomatic rust representations
     let query = unsafe { slice::from_raw_parts(query_buf, query_len) };
     let query = str::from_utf8(query).unwrap();
@@ -218,15 +239,14 @@ pub unsafe extern "C" fn arrow_odbc_connection_execute(
         Some(unsafe { *query_timeout_sec })
     };
 
-    let mut local_reader;
-    let reader = if reader.is_null() {
-        local_reader = ArrowOdbcReader::empty();
-        &mut local_reader
-    } else {
-        unsafe { &mut *reader }
-    };
+    let cursor = try_!(connection.execute(query, &parameters[..], query_timeout_sec));
 
-    try_!(reader.promote_to_cursor(connection, query, &parameters[..], query_timeout_sec));
+    if let Some(cursor) = cursor
+        && !reader.is_null()
+    {
+        let dbms_name = try_!(connection.database_management_system_name());
+        unsafe { &mut *reader }.promote_to_cursor(cursor, dbms_name);
+    }
 
     null_mut() // Ok(())
 }
