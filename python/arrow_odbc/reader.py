@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import cast
 
 import pyarrow
 from cffi import FFI
@@ -66,8 +67,7 @@ class BatchReaderRaii:
         else:
             array_ptr = int(ffi.cast("uintptr_t", array))
             schema_ptr = int(ffi.cast("uintptr_t", schema))
-            struct_array = Array._import_from_c(array_ptr, schema_ptr)
-            assert isinstance(struct_array, StructArray)
+            struct_array = cast(StructArray, Array._import_from_c(array_ptr, schema_ptr))
             return RecordBatch.from_struct_array(struct_array)
 
     def bind_buffers(
@@ -114,7 +114,7 @@ class BatchReaderRaii:
             # See if we managed to execute the query successfully and return an error if not
             raise_on_error(error)
             # Remember wether there is a new result set in a boolean
-            has_more_results = has_more_results_c[0] != 0
+            has_more_results = cast(int, has_more_results_c[0]) != 0
 
         return has_more_results
 
@@ -133,11 +133,11 @@ class BatchReader:
         # `self` is deleted. We also take care to keep this reader either in empty or reader state,
         # meaning we always have it ready to produce batches, or we consumed everything. We avoid
         # exposing the intermediate cursor state directly to users.
-        self.reader = reader
+        self.reader: BatchReaderRaii = reader
 
         # This is the schema of the batches returned by reader. We take care to keep it in sync in
         # case the state of reader changes.
-        self.schema = self.reader.schema()
+        self.schema: Schema = self.reader.schema()
 
     def __iter__(self):
         # Implement iterable protocol so reader can be used in for loops.
@@ -160,7 +160,7 @@ class BatchReader:
         falliable_allocations: bool = False,
         schema: Schema | None = None,
         map_schema: Callable[[Schema], Schema] | None = None,
-        fetch_concurrently=True,
+        fetch_concurrently: bool = True,
         payload_text_encoding: TextEncoding = TextEncoding.AUTO,
     ) -> bool:
         """
@@ -295,7 +295,7 @@ class BatchReader:
         return pyarrow.RecordBatchReader.from_batches(tmp.schema, tmp)
 
 
-def _export_schema_to_c(schema):
+def _export_schema_to_c(schema: Schema | None) -> "FFI.CData":
     if schema is None:
         ptr_schema = ffi.NULL
     else:

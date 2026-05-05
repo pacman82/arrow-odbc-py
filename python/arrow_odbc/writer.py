@@ -1,3 +1,5 @@
+from typing import cast
+
 from cffi import FFI
 from pyarrow import RecordBatch
 from pyarrow.cffi import ffi as arrow_ffi
@@ -60,7 +62,8 @@ class BatchWriter:
             )
             raise_on_error(error)
 
-        return BatchWriter(handle=writer_out[0])
+        handle = cast(FFI.CData, writer_out[0])
+        return BatchWriter(handle=handle)
 
     def write_batch(self, batch: RecordBatch):
         """
