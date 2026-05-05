@@ -356,15 +356,15 @@ wheels = [
 
 [[package]]
 name = "pyinstaller-hooks-contrib"
-version = "2026.4"
+version = "2026.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
     { name = "setuptools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c7/fe/9278c29394bf69169febc21f96b4252c3ee7c8ec22c2fc545004bed47e71/pyinstaller_hooks_contrib-2026.4.tar.gz", hash = "sha256:766c281acb1ecc32e21c8c667056d7ebf5da0aabd5e30c219f9c2a283620eeaa", size = 173050, upload-time = "2026-03-31T14:10:51.188Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1a/67/f4452d68793fb15beba4f19ef39a38a8822f0da7452b503c400d5a21f5c1/pyinstaller_hooks_contrib-2026.5.tar.gz", hash = "sha256:f066dfca8f7c45ff6336c9cf9fe25b4e48bfeb322a1aa24faaedfb8a8d1b0b08", size = 173689, upload-time = "2026-05-04T22:36:55.124Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/f4/035fb8c06deff827f540a9a4ed9122c54e5376fca3e42eddf0c263730775/pyinstaller_hooks_contrib-2026.4-py3-none-any.whl", hash = "sha256:1de1a5e49a878122010b88c7e295502bc69776c157c4a4dc78741a4e6178b00f", size = 455496, upload-time = "2026-03-31T14:10:49.867Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/5c/fd465d11da4d12b50d7eb5d2ee2ceb780d8d049dbb489f3828d131e387af/pyinstaller_hooks_contrib-2026.5-py3-none-any.whl", hash = "sha256:ea1535783fbdac4626351709e83f3ea80b681d3a4745763ebb407b5e27342eb9", size = 457314, upload-time = "2026-05-04T22:36:53.598Z" },
 ]
 
 [[package]]
@@ -521,14 +521,14 @@ wheels = [
 
 [[package]]
 name = "types-cffi"
-version = "2.0.0.20260429"
+version = "2.0.0.20260504"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "types-setuptools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0c/7d/56b9be8b0f9dfbffb7c73e248aacf178693ff3c6cf765b77c43a1e886e04/types_cffi-2.0.0.20260429.tar.gz", hash = "sha256:afe7d9777a2921139623af0b94647637a5bd0b938b77ec125e5e5e068a1727bd", size = 17562, upload-time = "2026-04-29T05:16:43.29Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/05/f9/6e10471a7a8fa5cbb11a7389a27233f3aa9750feb2e934c5ebc0bd74cb06/types_cffi-2.0.0.20260504.tar.gz", hash = "sha256:6d74e20d8646b2627a4d4cbaa94af6db91a8f6b4bd9143b6d1cea5ae2a22e80c", size = 17683, upload-time = "2026-05-04T05:22:53.794Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b8/2c/79fa47a70d534f63a54b6d22e28cc842f8c6d9ebec93048355b0020bc7a9/types_cffi-2.0.0.20260429-py3-none-any.whl", hash = "sha256:6a4237bfdbd50e4d0726929070d8b9983bde541726a5a6fe0e8e24e78c1b3826", size = 20103, upload-time = "2026-04-29T05:16:42.155Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/5d/7f74c961a5be35a8b830134a74c26bbbd3241e36e818315fd1f8a83a34ad/types_cffi-2.0.0.20260504-py3-none-any.whl", hash = "sha256:c2f9b881b861e24341f93643c0e6edc979b594dea899d8f1b0c423101b9b8f24", size = 20190, upload-time = "2026-05-04T05:22:52.653Z" },
 ]
 
 [[package]]
