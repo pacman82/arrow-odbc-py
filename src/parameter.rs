@@ -1,7 +1,6 @@
 use crate::reader::into_text_encoding;
-use arrow_odbc::odbc_api::{IntoParameter, parameter::InputParameter};
+use arrow_odbc::odbc_api::{IntoParameter, Utf16String, parameter::InputParameter};
 use std::slice;
-use widestring::U16String;
 
 /// Opaque type holding a parameter intended to be bound to a placeholder (`?`) in an SQL query.
 pub struct ArrowOdbcParameter(Box<dyn InputParameter>);
@@ -20,7 +19,7 @@ impl ArrowOdbcParameter {
         let arg = value
             .map(|bytes| {
                 let str_slice = str::from_utf8(bytes).unwrap();
-                U16String::from_str(str_slice)
+                Utf16String::from_str(str_slice)
             })
             .into_parameter();
         Box::new(arg)
@@ -68,8 +67,7 @@ pub unsafe extern "C" fn arrow_odbc_parameter_string_make(
 
 #[cfg(test)]
 mod tests {
-    use arrow_odbc::odbc_api::buffers::Indicator;
-    use widestring::Utf16Str;
+    use arrow_odbc::odbc_api::{Utf16Str, buffers::Indicator};
 
     use crate::parameter::ArrowOdbcParameter;
 
