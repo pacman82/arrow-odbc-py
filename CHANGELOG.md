@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.4.1](https://github.com/pacman82/arrow-odbc-py/compare/v10.4.0...v10.4.1) (2026-05-27)
+
+
+### Features
+
+* Update to upstream arrow-odbc Rust crate. ([a9af3ea](https://github.com/pacman82/arrow-odbc-py/commit/a9af3ea8427b2b91f7866582fe5d0f83088add30))
+
 ## [10.4.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.3.0...v10.4.0) (2026-04-30)
 
 
