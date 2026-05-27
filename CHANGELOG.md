@@ -7,6 +7,8 @@
 
 * Update to upstream arrow-odbc Rust crate. ([a9af3ea](https://github.com/pacman82/arrow-odbc-py/commit/a9af3ea8427b2b91f7866582fe5d0f83088add30))
 
+  The upstream `arrow-odbc` contains a fix speeding up inserting text buffers by avoiding reallocation of the transit buffers then inserting text.
+
 ## [10.4.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.3.0...v10.4.0) (2026-04-30)
 
 
