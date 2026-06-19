@@ -23,13 +23,6 @@ log = "0.4.32"
 
 [features]
 
-# On linux we assume use of a UTF-8 locale. So we set the narrow features implying that for queries,
-# connection strings and error messages the driver and driver manager supply utf8-strings. This
-# might also be slightly faster since no transcoding between UTF-8 and UTF-16 is required.
-# Overall speed always depends on the driver, but it is reasonable to assume this is faster, more
-# importantly, UTF-8 is likely to be more battled tested on these platforms, while UTF-16 is "only"
-# required by the standard.
-
 # On windows we can not assume the default locale to be UTF-8, so we compile odbc-api with default
 # features implying the use of UTF-16 for queries, connection strings and error messages. This
 # should work on any system. However if you would like to use the narrow UTF-8 function calls on
@@ -52,5 +45,5 @@ panic = 'abort'
 # Link time Optimization
 lto = true
 # Enable optimizing across crate boundaries. Default code units seems to be 16. Using only one
-# gives the compiler more freedo to inline.
+# gives the compiler more freedom to inline.
 codegen-units = 1
