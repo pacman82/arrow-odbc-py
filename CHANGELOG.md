@@ -3,9 +3,9 @@
 ## [10.4.2](https://github.com/pacman82/arrow-odbc-py/compare/v10.4.1...v10.4.2) (2026-06-19)
 
 
-### chore
+### Miscellaneous
 
-* Release 10.4.2 ([b00f076](https://github.com/pacman82/arrow-odbc-py/commit/b00f07628978a702562b7215b3e75502b1cedc34))
+* Update dependencies including upstream changes from arrow-odbc, odbc-api and arrow Rust crates
 
 ## [10.4.1](https://github.com/pacman82/arrow-odbc-py/compare/v10.4.0...v10.4.1) (2026-05-27)
 
