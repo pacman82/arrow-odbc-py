@@ -16,11 +16,11 @@ class BatchWriter:
 
     def __init__(
         self,
-        handle: "FFI.CData",
+        handle: FFI.CData,
     ):
         # We take ownership of the corresponding writer written in Rust and keep it alive until
         # `self` is deleted
-        self.handle: "FFI.CData" = handle
+        self.handle: FFI.CData = handle
 
     def __del__(self):
         # Free the resources associated with this handle.

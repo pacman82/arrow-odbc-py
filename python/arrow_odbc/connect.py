@@ -1,5 +1,5 @@
-from collections.abc import Sequence
-from typing import Callable, cast
+from collections.abc import Callable, Sequence
+from typing import cast
 
 from cffi import FFI
 from pyarrow import RecordBatchReader, Schema, Table
@@ -24,8 +24,8 @@ class Connection:
     A strong reference to an ODBC connection.
     """
 
-    def __init__(self, handle: "FFI.CData") -> None:
-        self.handle: "FFI.CData" = handle
+    def __init__(self, handle: FFI.CData) -> None:
+        self.handle: FFI.CData = handle
 
     @classmethod
     def enable_connection_pooling(cls) -> None:
@@ -411,7 +411,7 @@ class Connection:
         else:
             # Check precondition in order to save users some debugging, in case they directly pass a
             # non-string argument and do not use a type linter.
-            if not all([p is None or hasattr(p, "encode") for p in parameters]):
+            if not all(p is None or hasattr(p, "encode") for p in parameters):
                 raise TypeError(
                     "read_arrow_batches_from_odbc only supports string arguments for SQL query "
                     + "parameters"
@@ -425,7 +425,7 @@ class Connection:
 
         text_encoding_int = text_encoding.value
 
-        for p_index in range(0, parameters_len):
+        for p_index in range(parameters_len):
             (p_bytes, p_len) = encoded_parameters[p_index]
             parameters_array[p_index] = lib.arrow_odbc_parameter_string_make(
                 p_bytes, p_len, text_encoding_int

@@ -44,7 +44,7 @@ class BatchReaderRaii:
         lib.arrow_odbc_reader_make(reader_out)
         # We take ownership of the corresponding reader written in Rust and keep it alive until
         # `self` is deleted.
-        self.handle: "FFI.CData" = reader_out[0]
+        self.handle: FFI.CData = reader_out[0]
 
     def __del__(self):
         # Free the resources associated with this handle.
