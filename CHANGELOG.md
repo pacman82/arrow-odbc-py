@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.5.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.4.2...v10.5.0) (2026-10-04)
+
+
+### Features
+
+* improved inserting working out of the box ([c18246a](https://github.com/pacman82/arrow-odbc-py/commit/c18246a7184589ac965fdfde0dd4ddbccd9a321f))
+
 ## [10.4.2](https://github.com/pacman82/arrow-odbc-py/compare/v10.4.1...v10.4.2) (2026-06-19)
 
 
