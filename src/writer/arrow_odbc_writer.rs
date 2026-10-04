@@ -1,7 +1,9 @@
 use arrow_odbc::{
-    OdbcWriter, WriterError,
+    OdbcWriter, QuoteDefensively, QuoteOffensively,
+    WriterError::{self},
     arrow::{array::RecordBatch, datatypes::Schema},
-    odbc_api::{SharedConnection, handles::StatementConnection},
+    insert_statement_from_schema,
+    odbc_api::{ConnectionTransitions, SharedConnection, handles::StatementConnection},
 };
 
 /// Opaque type holding all the state associated with an ODBC writer implementation in Rust. This
@@ -15,8 +17,21 @@ impl ArrowOdbcWriter {
         table_name: &str,
         row_capacity: usize,
     ) -> Result<Self, WriterError> {
-        let odbc_writer =
-            OdbcWriter::from_connection(connection, schema, table_name, row_capacity)?;
+        let quote_char = connection
+            .lock()
+            .unwrap()
+            .identifier_quote_char()
+            .map_err(WriterError::QueryQuotingCharacter)?;
+        let sql = if let Some(quote_char) = quote_char {
+            insert_statement_from_schema(schema, table_name, &QuoteOffensively::new(quote_char))
+        } else {
+            insert_statement_from_schema(schema, table_name, &QuoteDefensively)
+        };
+
+        let statement = connection
+            .into_prepared(&sql)
+            .map_err(|source| WriterError::PreparingInsertStatement { source, sql })?;
+        let odbc_writer = OdbcWriter::new(row_capacity, schema, statement)?;
         Ok(ArrowOdbcWriter(odbc_writer))
     }
 
