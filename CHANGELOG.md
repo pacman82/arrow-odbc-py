@@ -7,6 +7,8 @@
 
 * improved inserting working out of the box ([c18246a](https://github.com/pacman82/arrow-odbc-py/commit/c18246a7184589ac965fdfde0dd4ddbccd9a321f))
 
+  Column names are now almost always quoted then generating insert statements. This is helpful in case tables have column names which could be confused with sql keywords. They remain unquoted in case the Database does not report a quoting identifier, or they appear to be quoted already.
+
 ## [10.4.2](https://github.com/pacman82/arrow-odbc-py/compare/v10.4.1...v10.4.2) (2026-06-19)
 
 
