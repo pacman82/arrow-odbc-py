@@ -1,3 +1,5 @@
+mod arrow_odbc_writer;
+
 use std::{
     ffi::c_void,
     ptr::{self, NonNull, null_mut},
@@ -5,17 +7,11 @@ use std::{
 };
 
 use arrow::ffi::{FFI_ArrowArray, FFI_ArrowSchema, from_ffi};
-use arrow_odbc::{
-    OdbcWriter,
-    arrow::{array::StructArray, datatypes::Schema, record_batch::RecordBatch},
-    odbc_api::{SharedConnection, handles::StatementConnection},
-};
+use arrow_odbc::arrow::{array::StructArray, datatypes::Schema, record_batch::RecordBatch};
 
 use crate::{ArrowOdbcConnection, ArrowOdbcError, try_};
 
-/// Opaque type holding all the state associated with an ODBC writer implementation in Rust. This
-/// type also has ownership of the ODBC Connection handle.
-pub struct ArrowOdbcWriter(OdbcWriter<StatementConnection<SharedConnection<'static>>>);
+pub use self::arrow_odbc_writer::ArrowOdbcWriter;
 
 /// Frees the resources associated with an ArrowOdbcWriter
 ///
@@ -58,10 +54,8 @@ pub unsafe extern "C" fn arrow_odbc_writer_make(
     let schema = schema as *const FFI_ArrowSchema;
     let schema: Schema = try_!(unsafe { &*schema }.try_into());
 
-    let writer = try_!(OdbcWriter::from_connection(
-        connection, &schema, table, chunk_size
-    ));
-    let writer_ptr = Box::into_raw(Box::new(ArrowOdbcWriter(writer)));
+    let writer = try_!(ArrowOdbcWriter::new(connection, &schema, table, chunk_size));
+    let writer_ptr = Box::into_raw(Box::new(writer));
     unsafe {
         *writer_out = writer_ptr;
     }
@@ -90,7 +84,7 @@ pub unsafe extern "C" fn arrow_odbc_writer_write_batch(
     let record_batch = RecordBatch::from(&struct_array);
 
     // Dereference writer
-    let writer = unsafe { &mut writer.as_mut().0 };
+    let writer = unsafe { &mut writer.as_mut() };
 
     try_!(writer.write_batch(&record_batch));
     null_mut() // Ok(())
@@ -104,7 +98,7 @@ pub unsafe extern "C" fn arrow_odbc_writer_flush(
     mut writer: NonNull<ArrowOdbcWriter>,
 ) -> *mut ArrowOdbcError {
     // Dereference writer
-    let writer = unsafe { &mut writer.as_mut().0 };
+    let writer = unsafe { &mut writer.as_mut() };
 
     try_!(writer.flush());
     null_mut()
