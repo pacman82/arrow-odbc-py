@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.6.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.5.0...v10.6.0) (2026-10-07)
+
+
+### Features
+
+* Identifier quotation character  is logged to debug ([bda3a9d](https://github.com/pacman82/arrow-odbc-py/commit/bda3a9d8bd9f39521504c53a91a1342117524a81))
+
 ## [10.5.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.4.2...v10.5.0) (2026-10-04)
 
 
