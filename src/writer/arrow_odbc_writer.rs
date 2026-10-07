@@ -5,6 +5,7 @@ use arrow_odbc::{
     insert_statement_from_schema,
     odbc_api::{ConnectionTransitions, SharedConnection, handles::StatementConnection},
 };
+use log::debug;
 
 /// Opaque type holding all the state associated with an ODBC writer implementation in Rust. This
 /// type also has ownership of the ODBC Connection handle.
@@ -23,8 +24,10 @@ impl ArrowOdbcWriter {
             .identifier_quote_char()
             .map_err(WriterError::QueryQuotingCharacter)?;
         let sql = if let Some(quote_char) = quote_char {
+            debug!("Identifier quotation character reported by database: '{quote_char}'");
             insert_statement_from_schema(schema, table_name, &QuoteOffensively::new(quote_char))
         } else {
+            debug!("No identifier quotation character reported by database");
             insert_statement_from_schema(schema, table_name, &QuoteDefensively)
         };
 
