@@ -6,6 +6,8 @@
 ### Fixes
 
 * Insert correct values in binary columns even after buffer resize. ([bd76875](https://github.com/pacman82/arrow-odbc-py/commit/bd76875126f8d5297771a885981bd0812368dd3a))
+  
+  Updated Rust dependencies. This includes an update of the arrow-odbc Rust crate. It contains a bug-fix for an issue which occurred if the transport buffer size needs to be enlarged, in any batch but the first. If these conditions were met, a corruption of data became likely if inserting into a binary column.
 
 ## [10.6.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.5.0...v10.6.0) (2026-10-07)
 
