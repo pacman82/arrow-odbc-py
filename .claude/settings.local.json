@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:mcr.microsoft.com)",
+      "WebFetch(domain:pyinstaller.org)",
+      "WebSearch",
+      "Bash(gh api *)",
+      "WebFetch(domain:github.com)",
+      "Bash(cargo clippy *)"
+    ]
+  }
+}
