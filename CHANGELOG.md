@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.6.1](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.0...v10.6.1) (2026-10-19)
+
+
+### Fixes
+
+* Insert correct values in binary columns even after buffer resize. ([bd76875](https://github.com/pacman82/arrow-odbc-py/commit/bd76875126f8d5297771a885981bd0812368dd3a))
+
 ## [10.6.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.5.0...v10.6.0) (2026-10-07)
 
 
