@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.6.2](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.1...v10.6.2) (2026-10-25)
+
+
+### Fixes
+
+* Update Rust dependencies ([34d0a9d](https://github.com/pacman82/arrow-odbc-py/commit/34d0a9de5bd44355a0c07d839bf7e6429de5399d))
+
 ## [10.6.1](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.0...v10.6.1) (2026-10-19)
 
 
