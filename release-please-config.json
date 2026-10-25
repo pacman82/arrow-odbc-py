@@ -14,7 +14,7 @@
   "changelog-sections": [
     { "type": "feat", "section": "Features" },
     { "type": "fix", "section": "Fixes" },
-    { "type": "docs", "section": "Features" },
-    { "type": "perf", "section": "Features" }
+    { "type": "docs", "section": "Documentation" },
+    { "type": "perf", "section": "Performance" }
   ]
 }
