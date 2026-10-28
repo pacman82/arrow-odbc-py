@@ -13,7 +13,7 @@ wheels = [
 
 [[package]]
 name = "arrow-odbc"
-version = "10.6.2"
+version = "10.6.3"
 source = { editable = "." }
 dependencies = [
     { name = "cffi" },

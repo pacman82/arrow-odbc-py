@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.6.3](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.2...v10.6.3) (2026-10-28)
+
+
+### Fixes
+
+* various upstream fixes from arrow-odbc crate ([264a917](https://github.com/pacman82/arrow-odbc-py/commit/264a9177b5bb85301dd538464ce797a8ff1bbf88))
+
 ## [10.6.2](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.1...v10.6.2) (2026-10-25)
 
 This release features bug fixes and performance improvements. All thanks to the contributions of @jplauri to the upstream `arrow-odbc` Rust crate.
