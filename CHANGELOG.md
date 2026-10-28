@@ -2,10 +2,18 @@
 
 ## [10.6.3](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.2...v10.6.3) (2026-10-28)
 
+Includes upstream fixes of the Rust arrow-odbc crate. Thanks to @jplauri for his contributions.
 
 ### Fixes
 
-* various upstream fixes from arrow-odbc crate ([264a917](https://github.com/pacman82/arrow-odbc-py/commit/264a9177b5bb85301dd538464ce797a8ff1bbf88))
+- Arrow Arrays with time zone information are reported as unsupported instead of causing a panic
+- Read decimals with a scale above their precision
+- Read negative decimals with scale equal to precision
+
+### Performance
+
+- Size wide text output by the fetched values, not the column width
+- Allocate one less byte per row than reading decimals with p > s
 
 ## [10.6.2](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.1...v10.6.2) (2026-10-25)
 
