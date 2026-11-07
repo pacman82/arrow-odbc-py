@@ -3,24 +3,26 @@ use arrow_odbc::{
     WriterError::{self},
     arrow::{array::RecordBatch, datatypes::Schema},
     insert_statement_from_schema,
-    odbc_api::{ConnectionTransitions, SharedConnection, handles::StatementConnection},
+    odbc_api::{ConnectionTransitions, handles::StatementConnection},
 };
 use log::debug;
 
+use crate::connection::ConnectionType;
+
 /// Opaque type holding all the state associated with an ODBC writer implementation in Rust. This
 /// type also has ownership of the ODBC Connection handle.
-pub struct ArrowOdbcWriter(OdbcWriter<StatementConnection<SharedConnection<'static>>>);
+pub struct ArrowOdbcWriter(OdbcWriter<StatementConnection<ConnectionType>>);
 
 impl ArrowOdbcWriter {
     pub fn new(
-        connection: SharedConnection<'static>,
+        connection: ConnectionType,
         schema: &Schema,
         table_name: &str,
         row_capacity: usize,
     ) -> Result<Self, WriterError> {
+        let connection = connection.lock();
         let quote_char = connection
-            .lock()
-            .unwrap()
+            .connection()
             .identifier_quote_char()
             .map_err(WriterError::QueryQuotingCharacter)?;
         let sql = if let Some(quote_char) = quote_char {

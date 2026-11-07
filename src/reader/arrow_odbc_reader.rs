@@ -1,6 +1,6 @@
 use std::mem::swap;
 
-use crate::error::ArrowOdbcError;
+use crate::{connection::ConnectionType, error::ArrowOdbcError};
 use arrow::{
     array::{Array, StructArray},
     datatypes::Schema,
@@ -9,7 +9,7 @@ use arrow::{
 };
 use arrow_odbc::{
     ConcurrentOdbcReader, OdbcReader, OdbcReaderBuilder, arrow_schema_from,
-    odbc_api::{Cursor, CursorImpl, SharedConnection, handles::StatementConnection},
+    odbc_api::{Cursor, CursorImpl, handles::StatementConnection},
 };
 
 /// Opaque type holding all the state associated with an ODBC reader implementation in Rust. This
@@ -39,21 +39,21 @@ pub enum ArrowOdbcReader {
     Cursor {
         /// Required to account for Database specific behavor then determining the arrow schema.
         dbms_name: String,
-        cursor: CursorImpl<StatementConnection<SharedConnection<'static>>>,
+        cursor: CursorImpl<StatementConnection<ConnectionType>>,
     },
     Reader {
         /// We want to support state transitions from `Reader` back to `Cursor` so we keep the name
         /// around. Another way to look at this, is that we want to determine a new schema again in
         /// case we process multiple result sets.
         dbms_name: String,
-        reader: OdbcReader<CursorImpl<StatementConnection<SharedConnection<'static>>>>,
+        reader: OdbcReader<CursorImpl<StatementConnection<ConnectionType>>>,
     },
     ConcurrentReader {
         /// We want to support state transitions from `Reader` back to `Cursor` so we keep the name
         /// around. Another way to look at this, is that we want to determine a new schema again in
         /// case we process multiple result sets.
         dbms_name: String,
-        reader: ConcurrentOdbcReader<CursorImpl<StatementConnection<SharedConnection<'static>>>>,
+        reader: ConcurrentOdbcReader<CursorImpl<StatementConnection<ConnectionType>>>,
     },
 }
 
@@ -124,7 +124,7 @@ impl ArrowOdbcReader {
 
     pub fn promote_to_cursor(
         &mut self,
-        cursor: CursorImpl<StatementConnection<SharedConnection<'static>>>,
+        cursor: CursorImpl<StatementConnection<ConnectionType>>,
         dbms_name: String,
     ) {
         *self = ArrowOdbcReader::Cursor { cursor, dbms_name };
