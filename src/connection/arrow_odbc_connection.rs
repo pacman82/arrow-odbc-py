@@ -42,7 +42,9 @@ impl ArrowOdbcConnection {
             )
         }?;
         // Binding the attributes is what makes extending the lifetime of the entra id token safe.
-        let connection = connection.with_state(Attributes { _entra_id: entra_id });
+        let connection = connection.with_state(Attributes {
+            _entra_id: entra_id,
+        });
 
         // Default is autocommit=true. We only need the function call in cas it is false.
         if !autocommit {
