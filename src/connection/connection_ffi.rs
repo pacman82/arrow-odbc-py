@@ -64,11 +64,9 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
         login_timeout_sec,
         packet_size,
     };
-    let connection = try_!(ArrowOdbcConnection::new(
-        &connection_string,
-        options,
-        autocommit
-    ));
+    // Safety: No access token is set, so any driver can be used.
+    let connection =
+        try_!(unsafe { ArrowOdbcConnection::new(&connection_string, options, autocommit, None) });
 
     unsafe { *connection_out = Box::into_raw(Box::new(connection)) };
     null_mut()

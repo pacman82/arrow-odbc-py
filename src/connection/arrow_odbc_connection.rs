@@ -1,6 +1,7 @@
 use arrow_odbc::odbc_api::{
     self, ConnectionOptions, ConnectionTransitions, ConnectionWithState, CursorImpl,
-    ParameterCollectionRef, Shared, environment, handles::StatementConnection, sys::SsAccessToken,
+    MicrosoftConnectionOptions, ParameterCollectionRef, Shared, environment,
+    handles::StatementConnection, sys::SsAccessToken,
 };
 use log::debug;
 
@@ -12,13 +13,36 @@ pub type ConnectionType = Shared<ConnectionWithState<'static, Attributes>>;
 pub struct ArrowOdbcConnection(ConnectionType);
 
 impl ArrowOdbcConnection {
-    pub fn new(
+    /// # Safety
+    ///
+    /// If `entra_id` is set, the connection must be opened using the Microsoft ODBC Driver for SQL
+    /// Server.
+    pub unsafe fn new(
         connection_string: &str,
         options: ConnectionOptions,
         autocommit: bool,
+        entra_id: Option<&str>,
     ) -> Result<Self, odbc_api::Error> {
         let env = environment()?;
-        let connection = env.connect_with_connection_string(connection_string, options)?;
+        let entra_id = entra_id.map(SsAccessToken::from_text);
+        // Safety: The token is bound to the connection using `with_state` right after connecting.
+        // Moving the box does not move the token itself.
+        let access_token = entra_id
+            .as_deref()
+            // Safety: We bind the access token in Attributes via .with_state to the connection. So
+            // the pointer will be valid for as long as the connection lives.
+            .map(|token| unsafe { &*(token as *const SsAccessToken) });
+        let microsoft_options = MicrosoftConnectionOptions { access_token };
+        // Safety: The caller guarantees the Microsoft driver is used, if an access token is set.
+        let connection = unsafe {
+            env.connect_with_connection_string_and_driver_specific_options(
+                connection_string,
+                options,
+                microsoft_options,
+            )
+        }?;
+        // Binding the attributes is what makes extending the lifetime of the entra id token safe.
+        let connection = connection.with_state(Attributes { entra_id });
 
         // Default is autocommit=true. We only need the function call in cas it is false.
         if !autocommit {
@@ -32,10 +56,7 @@ impl ArrowOdbcConnection {
             debug!("Database managment system name as reported by ODBC: {dbms_name}");
         }
 
-        let attributes = Attributes { entra_id: None };
-        Ok(ArrowOdbcConnection(Shared::new(
-            connection.with_state(attributes),
-        )))
+        Ok(ArrowOdbcConnection(Shared::new(connection)))
     }
 
     /// Take the inner connection out of its wrapper
