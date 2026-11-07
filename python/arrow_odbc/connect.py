@@ -538,6 +538,9 @@ def connect(
         user_len,
         password_bytes,
         password_len,
+        # Entra ID access token. Not exposed to the end user yet.
+        FFI.NULL,
+        0,
         login_timeout_sec_ptr,
         packet_size_ptr,
         autocommit,
