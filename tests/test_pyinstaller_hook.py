@@ -23,6 +23,6 @@ def test_frozen_app_can_import_arrow_odbc(tmp_path: Path) -> None:
 
     suffix = ".exe" if sys.platform == "win32" else ""
     frozen = tmp_path / "dist" / app_name / f"{app_name}{suffix}"
-    run = subprocess.run([str(frozen)], capture_output=True, text=True)
+    run = subprocess.run([str(frozen)], check=True, capture_output=True, text=True)
     assert run.returncode == 0, f"stdout={run.stdout!r}\nstderr={run.stderr!r}"
     assert "loaded" in run.stdout

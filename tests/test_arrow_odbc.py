@@ -1,7 +1,8 @@
 import datetime
 import os
+from collections.abc import Sequence
 from subprocess import check_output
-from typing import Any, Sequence
+from typing import Any
 
 import duckdb
 import pyarrow as pa
