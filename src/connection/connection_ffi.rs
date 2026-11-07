@@ -4,8 +4,7 @@ use std::{
     slice, str,
 };
 
-use arrow_odbc::odbc_api::{ConnectionOptions, environment, escape_attribute_value};
-use log::debug;
+use arrow_odbc::odbc_api::{ConnectionOptions, escape_attribute_value};
 
 use crate::{ArrowOdbcError, ArrowOdbcReader, parameter::ArrowOdbcParameter, try_};
 
@@ -42,8 +41,6 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
     autocommit: bool,
     connection_out: *mut *mut ArrowOdbcConnection,
 ) -> *mut ArrowOdbcError {
-    let env = try_!(environment());
-
     let connection_string =
         unsafe { slice::from_raw_parts(connection_string_buf, connection_string_len) };
     let mut connection_string = Cow::Borrowed(str::from_utf8(connection_string).unwrap());
@@ -63,27 +60,17 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
         Some(unsafe { *packet_size_ptr })
     };
 
-    let connection = try_!(env.connect_with_connection_string(
+    let options = ConnectionOptions {
+        login_timeout_sec,
+        packet_size,
+    };
+    let connection = try_!(ArrowOdbcConnection::new(
         &connection_string,
-        ConnectionOptions {
-            login_timeout_sec,
-            packet_size
-        }
+        options,
+        autocommit
     ));
 
-    // Default is autocommit=true. We only need the function call in cas it is false.
-    if !autocommit {
-        try_!(connection.set_autocommit(autocommit));
-    }
-
-    // Log dbms name to ease debugging of issues. Since ODBC calls are expensive, only query name
-    // if we are actually logging the message.
-    if log::max_level() <= log::LevelFilter::Debug {
-        let dbms_name = try_!(connection.database_management_system_name());
-        debug!("Database managment system name as reported by ODBC: {dbms_name}");
-    }
-
-    unsafe { *connection_out = Box::into_raw(Box::new(ArrowOdbcConnection::new(connection))) };
+    unsafe { *connection_out = Box::into_raw(Box::new(connection)) };
     null_mut()
 }
 

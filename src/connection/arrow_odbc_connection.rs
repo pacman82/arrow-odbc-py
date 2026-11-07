@@ -1,7 +1,8 @@
 use arrow_odbc::odbc_api::{
-    self, Connection, ConnectionTransitions, ConnectionWithState, CursorImpl,
-    ParameterCollectionRef, Shared, handles::StatementConnection, sys::SsAccessToken,
+    self, ConnectionOptions, ConnectionTransitions, ConnectionWithState, CursorImpl,
+    ParameterCollectionRef, Shared, environment, handles::StatementConnection, sys::SsAccessToken,
 };
+use log::debug;
 
 use crate::ArrowOdbcError;
 
@@ -11,9 +12,30 @@ pub type ConnectionType = Shared<ConnectionWithState<'static, Attributes>>;
 pub struct ArrowOdbcConnection(ConnectionType);
 
 impl ArrowOdbcConnection {
-    pub fn new(connection: Connection<'static>) -> Self {
+    pub fn new(
+        connection_string: &str,
+        options: ConnectionOptions,
+        autocommit: bool,
+    ) -> Result<Self, odbc_api::Error> {
+        let env = environment()?;
+        let connection = env.connect_with_connection_string(connection_string, options)?;
+
+        // Default is autocommit=true. We only need the function call in cas it is false.
+        if !autocommit {
+            connection.set_autocommit(autocommit)?;
+        }
+
+        // Log dbms name to ease debugging of issues. Since ODBC calls are expensive, only query
+        // name if we are actually logging the message.
+        if log::max_level() <= log::LevelFilter::Debug {
+            let dbms_name = connection.database_management_system_name()?;
+            debug!("Database managment system name as reported by ODBC: {dbms_name}");
+        }
+
         let attributes = Attributes { entra_id: None };
-        ArrowOdbcConnection(Shared::new(connection.with_state(attributes)))
+        Ok(ArrowOdbcConnection(Shared::new(
+            connection.with_state(attributes),
+        )))
     }
 
     /// Take the inner connection out of its wrapper
