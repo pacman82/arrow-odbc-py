@@ -458,6 +458,7 @@ def connect(
     login_timeout_sec: int | None = None,
     packet_size: int | None = None,
     autocommit: bool = True,
+    entra_id: str | None = None,
 ) -> Connection:
     """
     Opens a connection to an ODBC data source.
@@ -513,12 +514,16 @@ def connect(
         ``True`` ensures that you do not have to worry about this and that your changes are always
         visible immediately. Setting it to ``False`` allows you to execute multiple inserts and
         queries in the same transaction. Insert performance might also differ based on commit mode.
+    :param entra_id: Microsoft Entra ID access token used to authenticate. Only supported by the
+        Microsoft ODBC Driver for SQL Server. Using it with any other driver results in undefined
+        behavior.
     :return: A ``Connection`` is returned.
     """
     connection_string_bytes = connection_string.encode("utf-8")
 
     (user_bytes, user_len) = to_bytes_and_len(user)
     (password_bytes, password_len) = to_bytes_and_len(password)
+    (entra_id_bytes, entra_id_len) = to_bytes_and_len(entra_id)
     # We use a pointer to pass the login time, so NULL can represent None
     if login_timeout_sec is None:
         login_timeout_sec_ptr = FFI.NULL
@@ -538,9 +543,8 @@ def connect(
         user_len,
         password_bytes,
         password_len,
-        # Entra ID access token. Not exposed to the end user yet.
-        FFI.NULL,
-        0,
+        entra_id_bytes,
+        entra_id_len,
         login_timeout_sec_ptr,
         packet_size_ptr,
         autocommit,
