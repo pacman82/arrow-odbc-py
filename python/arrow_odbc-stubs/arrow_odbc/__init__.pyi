@@ -9,7 +9,7 @@ from cffi import FFI
 ffi: FFI
 
 class _Lib:
-    # --- connection.rs ---
+    # --- connection_ffi.rs ---
     def arrow_odbc_connection_free(self, connection: FFI.CData) -> None: ...
     def arrow_odbc_connection_make(
         self,

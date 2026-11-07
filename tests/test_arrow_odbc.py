@@ -59,6 +59,19 @@ def test_connection_options():
     )
 
 
+def test_entra_id_is_passed_to_driver():
+    """
+    We have no Microsoft Entra ID to test against. Yet the Microsoft driver rejects an access token
+    in combination with user and password. Seeing this error proves the token reaches the driver.
+    """
+    expected_error = (
+        "Cannot use Access Token with any of the following options: "
+        "Authentication, Integrated Security, User, Password."
+    )
+    with raises(Error, match=expected_error):
+        connect(connection_string=MSSQL, entra_id="dummy-token")
+
+
 def test_should_report_error_on_invalid_connection_string_reading():
     """
     We want to forward the original ODBC errors to the end user. Of course foo

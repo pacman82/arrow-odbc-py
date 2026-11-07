@@ -29,6 +29,7 @@ def read_arrow_batches_from_odbc(
     fetch_concurrently: bool = True,
     query_timeout_sec: int | None = None,
     payload_text_encoding: TextEncoding = TextEncoding.AUTO,
+    entra_id: str | None = None,
 ) -> BatchReader:
     """
     Execute the query and read the result as an iterator over Arrow batches.
@@ -148,6 +149,9 @@ def read_arrow_batches_from_odbc(
             you may want to set the encoding to ``TextEncoding.Utf16``. On windows systems you may
             want to set this to ``TextEncoding::Utf8`` to gain performance benefits, after you have
             verified that your system locale is set to UTF-8.
+    :param entra_id: Microsoft Entra ID access token used to authenticate. Only supported by the
+        Microsoft ODBC Driver for SQL Server. Using it with any other driver results in undefined
+        behavior.
     :return: A ``BatchReader`` is returned, which implements the iterator protocol and iterates over
         individual arrow batches.
     """
@@ -157,6 +161,7 @@ def read_arrow_batches_from_odbc(
         password=password,
         login_timeout_sec=login_timeout_sec,
         packet_size=packet_size,
+        entra_id=entra_id,
     )
 
     return connection.read_arrow_batches(
