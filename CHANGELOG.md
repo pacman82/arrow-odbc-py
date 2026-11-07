@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.7.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.3...v10.7.0) (2026-11-07)
+
+
+### Features
+
+* Support for Microsoft Entra ID access tokens ([06699e6](https://github.com/pacman82/arrow-odbc-py/commit/06699e6650b8713fbe607df7f6e318a5a50272e9))
+
 ## [10.6.3](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.2...v10.6.3) (2026-10-28)
 
 Includes upstream fixes of the Rust arrow-odbc crate. Thanks to @jplauri for his contributions.
