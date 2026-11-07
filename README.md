@@ -26,9 +26,7 @@ Fill Apache Arrow arrays from ODBC data sources. This package is build on top of
 from arrow_odbc import connect
 
 connection_string = (
-    "Driver={ODBC Driver 18 for SQL Server};"
-    "Server=localhost;"
-    "TrustServerCertificate=yes;"
+    "Driver={ODBC Driver 18 for SQL Server};Server=localhost;TrustServerCertificate=yes;"
 )
 
 connection = connect(

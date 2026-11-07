@@ -12,14 +12,19 @@ def test_frozen_app_can_import_arrow_odbc(tmp_path: Path) -> None:
     app = tmp_path / f"{app_name}.py"
     app.write_text("import arrow_odbc\nprint('loaded')\n")
 
-    pyi_main.run([
-        "--workpath", str(tmp_path / "build"),
-        "--distpath", str(tmp_path / "dist"),
-        "--specpath", str(tmp_path),
-        "--noconfirm",
-        "--log-level=WARN",
-        str(app),
-    ])
+    pyi_main.run(
+        [
+            "--workpath",
+            str(tmp_path / "build"),
+            "--distpath",
+            str(tmp_path / "dist"),
+            "--specpath",
+            str(tmp_path),
+            "--noconfirm",
+            "--log-level=WARN",
+            str(app),
+        ]
+    )
 
     suffix = ".exe" if sys.platform == "win32" else ""
     frozen = tmp_path / "dist" / app_name / f"{app_name}{suffix}"
