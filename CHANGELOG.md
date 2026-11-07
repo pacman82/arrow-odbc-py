@@ -3,9 +3,18 @@
 ## [10.7.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.3...v10.7.0) (2026-11-07)
 
 
+Includes upstream fixes of the Rust arrow-odbc crate. Thanks to @jplauri for his contributions.
+
 ### Features
 
 * Support for Microsoft Entra ID access tokens ([06699e6](https://github.com/pacman82/arrow-odbc-py/commit/06699e6650b8713fbe607df7f6e318a5a50272e9))
+
+  Thanks to @ogceekay for the suggestion.
+
+### Fixes
+
+* Write historic timestamps with offsets in seconds as UTC
+* Insert timezone-aware timestamps before 1970 with fractional seconds
 
 ## [10.6.3](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.2...v10.6.3) (2026-10-28)
 
@@ -13,14 +22,14 @@ Includes upstream fixes of the Rust arrow-odbc crate. Thanks to @jplauri for his
 
 ### Fixes
 
-- Arrow Arrays with time zone information are reported as unsupported instead of causing a panic
-- Read decimals with a scale above their precision
-- Read negative decimals with scale equal to precision
+* Arrow Arrays with time zone information are reported as unsupported instead of causing a panic
+* Read decimals with a scale above their precision
+* Read negative decimals with scale equal to precision
 
 ### Performance
 
-- Size wide text output by the fetched values, not the column width
-- Allocate one less byte per row than reading decimals with p > s
+* Size wide text output by the fetched values, not the column width
+* Allocate one less byte per row than reading decimals with p > s
 
 ## [10.6.2](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.1...v10.6.2) (2026-10-25)
 
@@ -28,50 +37,50 @@ This release features bug fixes and performance improvements. All thanks to the 
 
 ### Fixes
 
-- `Date64` values had been translated into incorrect values than inserted into the database.
+* `Date64` values had been translated into incorrect values than inserted into the database.
 
   `arrow-odbc` previously treated Arrow's `Date64` as whole days then inserting them into a database. In truth Arrow stores these dates in milliseconds after epoch, not days after epoch. This caused wrong values to be inserted into the database.
 
-- Fixed a panic then inserting into a column containing fixed sized binary data (e.g. `BINARY(2)`).
+* Fixed a panic then inserting into a column containing fixed sized binary data (e.g. `BINARY(2)`).
 
 ### Performance
 
-- Speed up fetching text via UTF 16
+* Speed up fetching text via UTF 16
 
   Fetching text as UTF-16 is the default on windows systems. So, mostly windows users will benefit from this. The UTF-16 has to be translated into UTF-8. Previously the work to check whether the UTF-16 is valid had been performed twice. As a result of this change, in case the database driver would return invalid UTF-8, one would now see replacement characters in the resulting UTF-8, rather than a panic. That behavior change is so far hypothetical, because ODBC drivers are required to return valid UTF-16 for wide text arrays, and I do not know any driver which does not.
 
   Next to avoiding double validation another pessimisation has been removed. Upstream `encoding_rs::convert_utf16_to_str` required clearing the conversion buffer in the past in order to avoid creating invalid UTF-8, due to leftover bytes from the previous element. Now this scenario is handled gracefully by the upstream function itself.
 
-- Speed up inserting decimals
+* Speed up inserting decimals
 
   Inserting decimals has been speed up by leaning more on built-in 64 bit arithmetic then converting them to string representation for transport.
 
-- Speed up fetching many short text fields via UTF-8.
+* Speed up fetching many short text fields via UTF-8.
 
   Fetching text as UTF-8 is the default on non-Windows Systems, so mostly Linux and MacOS users stand to benefit from this performance gain. This optimization only works if trimming is deactivated.
 
   The optimization works by performing UTF-8 validation in bulk for many small texts.
 
-- Avoid allocactions then reading binary data
+* Avoid allocactions then reading binary data
 
   For each batch the values in the transport buffers are scanned, in order to calculate the size of the target buffers precisely instead of letting them grow dynamically.
 
-- Speed up fetching `BIT` columns
-- Speed up inserting into binary buffers
+* Speed up fetching `BIT` columns
+* Speed up inserting into binary buffers
 
   All elements to be inserted are scanned ahead of time to avoiding growing and reallocating the transport buffer.
 
-- Speed up fetching into Arrow `Date32` arrays.
-- Avoid allocations then reading into fixed sized binary arrays
-- Speed up inserting text via UTF-16
+* Speed up fetching into Arrow `Date32` arrays.
+* Avoid allocations then reading into fixed sized binary arrays
+* Speed up inserting text via UTF-16
 
   UTF-16 is the default transport in windows, so mostly windows users are gaining from this optimization
 
-- Speed up inserting primitive numeric types (e.g. signed 32 and 64 Bit integers)
+* Speed up inserting primitive numeric types (e.g. signed 32 and 64 Bit integers)
 
   In case the binary representation is identical between Arrow and ODBC values are now copied in bulk, rather than element by element
 
-- Reuse initialized UTF-16 conversion scratch buffer
+* Reuse initialized UTF-16 conversion scratch buffer
 
 ## [10.6.1](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.0...v10.6.1) (2026-10-19)
 
