@@ -42,7 +42,7 @@ impl ArrowOdbcConnection {
             )
         }?;
         // Binding the attributes is what makes extending the lifetime of the entra id token safe.
-        let connection = connection.with_state(Attributes { entra_id });
+        let connection = connection.with_state(Attributes { _entra_id: entra_id });
 
         // Default is autocommit=true. We only need the function call in cas it is false.
         if !autocommit {
@@ -94,5 +94,7 @@ impl ArrowOdbcConnection {
 /// Additional connection attributes passed to the ODBC driver by pointer, but owned by the
 /// [`ArrowOdbcConnection`].
 pub struct Attributes {
-    entra_id: Option<Box<SsAccessToken>>,
+    /// Exists only to keep the access token alive. The token itself is used via a pointer bound to
+    /// the ODBC connection handle.
+    _entra_id: Option<Box<SsAccessToken>>,
 }

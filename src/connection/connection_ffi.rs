@@ -25,9 +25,12 @@ pub unsafe extern "C" fn arrow_odbc_connection_free(connection: NonNull<ArrowOdb
 ///
 /// # Safety
 ///
-/// `connection_string_buf` must point to a valid utf-8 encoded string. `connection_string_len` must
-/// hold the length of text in `connection_string_buf`.
-/// `user` and or `password` are optional and are allowed to be `NULL`.
+/// * `connection_string_buf` must point to a valid utf-8 encoded string. `connection_string_len`
+///   must hold the length of text in `connection_string_buf`.
+/// * `user` and or `password` are optional and are allowed to be `NULL`.
+/// * `entra_id_buf` is optional and allowed to be `NULL`. Otherwise it must point to a valid utf-8
+///   encoded access token of `entra_id_len` bytes, and the connection string must refer to the
+///   Microsoft ODBC Driver for SQL Server.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn arrow_odbc_connection_make(
     connection_string_buf: *const u8,
@@ -36,6 +39,8 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
     user_len: usize,
     password: *const u8,
     password_len: usize,
+    entra_id_buf: *const u8,
+    entra_id_len: usize,
     login_timeout_sec_ptr: *const u32,
     packet_size_ptr: *const u32,
     autocommit: bool,
@@ -64,9 +69,17 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
         login_timeout_sec,
         packet_size,
     };
-    // Safety: No access token is set, so any driver can be used.
-    let connection =
-        try_!(unsafe { ArrowOdbcConnection::new(&connection_string, options, autocommit, None) });
+    let entra_id = if entra_id_buf.is_null() {
+        None
+    } else {
+        let entra_id = unsafe { slice::from_raw_parts(entra_id_buf, entra_id_len) };
+        Some(str::from_utf8(entra_id).expect("Python side must always encode in UTF-8"))
+    };
+
+    // Safety: The caller guarantees the Microsoft driver is used, if an access token is set.
+    let connection = try_!(unsafe {
+        ArrowOdbcConnection::new(&connection_string, options, autocommit, entra_id)
+    });
 
     unsafe { *connection_out = Box::into_raw(Box::new(connection)) };
     null_mut()

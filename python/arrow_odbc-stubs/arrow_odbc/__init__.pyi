@@ -19,6 +19,8 @@ class _Lib:
         user_len: int,
         password: bytes | FFI.CData,
         password_len: int,
+        entra_id_buf: bytes | FFI.CData,
+        entra_id_len: int,
         login_timeout_sec_ptr: FFI.CData,
         packet_size_ptr: FFI.CData,
         autocommit: bool,
