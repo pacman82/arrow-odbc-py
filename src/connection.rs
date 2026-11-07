@@ -2,38 +2,38 @@ use std::{
     borrow::Cow,
     ptr::{NonNull, null_mut},
     slice, str,
-    sync::{Arc, Mutex},
 };
 
 use arrow_odbc::odbc_api::{
-    self, Connection, ConnectionOptions, ConnectionTransitions, CursorImpl, ParameterCollectionRef,
-    SharedConnection, environment, escape_attribute_value, handles::StatementConnection,
+    self, ConnectionOptions, ConnectionTransitions, ConnectionWithState, CursorImpl,
+    ParameterCollectionRef, Shared, environment, escape_attribute_value,
+    handles::StatementConnection,
 };
 use log::debug;
 
 use crate::{ArrowOdbcError, ArrowOdbcReader, parameter::ArrowOdbcParameter, try_};
 
+pub type ConnectionType = Shared<ConnectionWithState<'static, ()>>;
+
 /// Opaque type to transport connection to an ODBC Datasource over language boundry
-pub struct ArrowOdbcConnection(SharedConnection<'static>);
+pub struct ArrowOdbcConnection(ConnectionType);
 
 impl ArrowOdbcConnection {
-    pub fn new(connection: Connection<'static>) -> Self {
-        ArrowOdbcConnection(Arc::new(Mutex::new(connection)))
+    pub fn new(connection: ConnectionWithState<'static, ()>) -> Self {
+        ArrowOdbcConnection(Shared::new(connection))
     }
 
     /// Take the inner connection out of its wrapper
-    pub fn inner(&self) -> SharedConnection<'static> {
+    pub fn inner(&self) -> Shared<ConnectionWithState<'static, ()>> {
         self.0.clone()
     }
 
     pub fn commit(&self) -> Result<(), odbc_api::Error> {
-        let connection = self.0.lock().unwrap();
-        connection.commit()
+        self.0.lock().connection().commit()
     }
 
     pub fn rollback(&self) -> Result<(), odbc_api::Error> {
-        let connection = self.0.lock().unwrap();
-        connection.rollback()
+        self.0.lock().connection().rollback()
     }
 
     /// Execute the SQL statement and return the cursor (if the statement produced a result set).
@@ -43,17 +43,15 @@ impl ArrowOdbcConnection {
         query: &str,
         params: impl ParameterCollectionRef,
         query_timeout_sec: Option<usize>,
-    ) -> Result<Option<CursorImpl<StatementConnection<SharedConnection<'static>>>>, ArrowOdbcError>
-    {
-        match self.inner().into_cursor(query, params, query_timeout_sec) {
+    ) -> Result<Option<CursorImpl<StatementConnection<ConnectionType>>>, ArrowOdbcError> {
+        match self.0.lock().into_cursor(query, params, query_timeout_sec) {
             Ok(cursor) => Ok(cursor),
             Err(failed) => Err(failed.error.into()),
         }
     }
 
     pub fn database_management_system_name(&self) -> Result<String, odbc_api::Error> {
-        let connection = self.0.lock().unwrap();
-        connection.database_management_system_name()
+        self.0.lock().connection().database_management_system_name()
     }
 }
 
@@ -128,6 +126,8 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
         let dbms_name = try_!(connection.database_management_system_name());
         debug!("Database managment system name as reported by ODBC: {dbms_name}");
     }
+
+    let connection = connection.with_state(());
 
     unsafe { *connection_out = Box::into_raw(Box::new(ArrowOdbcConnection::new(connection))) };
     null_mut()
