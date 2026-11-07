@@ -7,24 +7,24 @@ use std::{
 use arrow_odbc::odbc_api::{
     self, ConnectionOptions, ConnectionTransitions, ConnectionWithState, CursorImpl,
     ParameterCollectionRef, Shared, environment, escape_attribute_value,
-    handles::StatementConnection,
+    handles::StatementConnection, sys::SsAccessToken,
 };
 use log::debug;
 
 use crate::{ArrowOdbcError, ArrowOdbcReader, parameter::ArrowOdbcParameter, try_};
 
-pub type ConnectionType = Shared<ConnectionWithState<'static, ()>>;
+pub type ConnectionType = Shared<ConnectionWithState<'static, Attributes>>;
 
 /// Opaque type to transport connection to an ODBC Datasource over language boundry
 pub struct ArrowOdbcConnection(ConnectionType);
 
 impl ArrowOdbcConnection {
-    pub fn new(connection: ConnectionWithState<'static, ()>) -> Self {
+    pub fn new(connection: ConnectionWithState<'static, Attributes>) -> Self {
         ArrowOdbcConnection(Shared::new(connection))
     }
 
     /// Take the inner connection out of its wrapper
-    pub fn inner(&self) -> Shared<ConnectionWithState<'static, ()>> {
+    pub fn inner(&self) -> ConnectionType {
         self.0.clone()
     }
 
@@ -53,6 +53,12 @@ impl ArrowOdbcConnection {
     pub fn database_management_system_name(&self) -> Result<String, odbc_api::Error> {
         self.0.lock().connection().database_management_system_name()
     }
+}
+
+/// Additional connection attributes passed to the ODBC driver by pointer, but owned by the
+/// [`ArrowOdbcConnection`].
+pub struct Attributes {
+    entra_id: Option<Box<SsAccessToken>>,
 }
 
 /// Frees the resources associated with an ArrowOdbcConnection
@@ -127,7 +133,8 @@ pub unsafe extern "C" fn arrow_odbc_connection_make(
         debug!("Database managment system name as reported by ODBC: {dbms_name}");
     }
 
-    let connection = connection.with_state(());
+    let attributes = Attributes { entra_id: None };
+    let connection = connection.with_state(attributes);
 
     unsafe { *connection_out = Box::into_raw(Box::new(ArrowOdbcConnection::new(connection))) };
     null_mut()
