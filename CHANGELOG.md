@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.7.1](https://github.com/pacman82/arrow-odbc-py/compare/v10.7.0...v10.7.1) (2026-11-15)
+
+
+### Fixes
+
+* Error instead of panic if NULL mapped to non-nullable field ([f7618fe](https://github.com/pacman82/arrow-odbc-py/commit/f7618fe0b31c4ab92cedb177895671999b1aa3f7))
+
 ## [10.7.0](https://github.com/pacman82/arrow-odbc-py/compare/v10.6.3...v10.7.0) (2026-11-07)
 
 
